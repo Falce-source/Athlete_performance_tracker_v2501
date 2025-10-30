@@ -1,4 +1,6 @@
+import sys
 import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.persistencia.sql import (
     init_db, crear_usuario, crear_atleta,
     obtener_usuarios, obtener_atletas,
