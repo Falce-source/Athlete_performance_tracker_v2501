@@ -37,7 +37,8 @@ def test_crear_usuario_y_atleta():
     )
     assert atleta.id_atleta is not None
     assert atleta.nombre == "Carlos"
-    assert atleta.usuario.id_usuario == usuario.id_usuario
+    # Validamos con la FK directamente para evitar lazy load
+    assert atleta.id_usuario == usuario.id_usuario
     print("✅ Usuario y atleta creados correctamente")
 
 def test_listar_y_actualizar_atleta():

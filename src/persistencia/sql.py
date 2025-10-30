@@ -10,7 +10,7 @@ from datetime import datetime
 
 DATABASE_URL = "sqlite:///base.db"
 engine = create_engine(DATABASE_URL, echo=False)
-SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
+SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)  # <- clave
 Base = declarative_base()
 
 # ─────────────────────────────────────────────
