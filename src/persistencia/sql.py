@@ -10,7 +10,7 @@ from datetime import datetime
 
 DATABASE_URL = "sqlite:///base.db"
 engine = create_engine(DATABASE_URL, echo=False)
-SessionLocal = sessionmaker(bind=engine)
+SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 Base = declarative_base()
 
 # ─────────────────────────────────────────────
@@ -65,6 +65,8 @@ def crear_usuario(nombre, email, rol):
     with SessionLocal() as session:
         usuario = Usuario(nombre=nombre, email=email, rol=rol)
         session.add(usuario)
+        session.flush()
+        session.refresh(usuario)
         session.commit()
         return usuario
 
@@ -80,6 +82,8 @@ def crear_atleta(**kwargs):
     with SessionLocal() as session:
         atleta = Atleta(**kwargs)
         session.add(atleta)
+        session.flush()
+        session.refresh(atleta)
         session.commit()
         return atleta
 
