@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 from src.persistencia import sql
 
 def mostrar_perfil():
@@ -46,7 +47,7 @@ def mostrar_perfil():
     st.markdown("---")
 
     # ───────────────────────────────
-    # Selector de atletas existentes
+    # Tabla de atletas con filtros
     # ───────────────────────────────
     st.subheader("📋 Atletas registrados")
 
@@ -55,8 +56,37 @@ def mostrar_perfil():
         st.info("No hay atletas registrados todavía")
         return
 
+    # Convertir a DataFrame para mostrar en tabla
+    df = pd.DataFrame([{
+        "ID": a.id_atleta,
+        "Nombre": a.nombre,
+        "Apellidos": a.apellidos,
+        "Edad": a.edad,
+        "Deporte": a.deporte,
+        "Nivel": a.nivel,
+        "Equipo": a.equipo,
+    } for a in atletas])
+
+    # Filtros
+    col1, col2 = st.columns(2)
+    with col1:
+        deporte_filtro = st.selectbox("Filtrar por deporte", ["Todos"] + sorted(df["Deporte"].dropna().unique().tolist()))
+    with col2:
+        nivel_filtro = st.selectbox("Filtrar por nivel", ["Todos"] + sorted(df["Nivel"].dropna().unique().tolist()))
+
+    df_filtrado = df.copy()
+    if deporte_filtro != "Todos":
+        df_filtrado = df_filtrado[df_filtrado["Deporte"] == deporte_filtro]
+    if nivel_filtro != "Todos":
+        df_filtrado = df_filtrado[df_filtrado["Nivel"] == nivel_filtro]
+
+    st.dataframe(df_filtrado, use_container_width=True)
+
+    # ───────────────────────────────
+    # Selector de atleta individual
+    # ───────────────────────────────
     opciones = {f"{a.nombre} {a.apellidos or ''} (ID {a.id_atleta})": a.id_atleta for a in atletas}
-    seleccion = st.selectbox("Selecciona un atleta", list(opciones.keys()))
+    seleccion = st.selectbox("Selecciona un atleta para ver detalles", list(opciones.keys()))
 
     if seleccion:
         id_atleta = opciones[seleccion]
