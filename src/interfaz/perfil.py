@@ -83,7 +83,7 @@ def mostrar_perfil():
     st.dataframe(df_filtrado, use_container_width=True)
 
     # ───────────────────────────────
-    # Selector de atleta individual
+    # Selector de atleta individual + eliminación
     # ───────────────────────────────
     opciones = {f"{a.nombre} {a.apellidos or ''} (ID {a.id_atleta})": a.id_atleta for a in atletas}
     seleccion = st.selectbox("Selecciona un atleta para ver detalles", list(opciones.keys()))
@@ -108,3 +108,8 @@ def mostrar_perfil():
             "Consentimiento": atleta.consentimiento,
             "Creado en": str(atleta.creado_en),
         })
+
+        # Botón de eliminación
+        if st.button(f"🗑️ Eliminar atleta '{atleta.nombre}'", type="primary"):
+            sql.borrar_atleta(atleta.id_atleta)
+            st.warning(f"Atleta '{atleta.nombre}' eliminado correctamente. 🔄 Recarga la página para actualizar la lista.")
