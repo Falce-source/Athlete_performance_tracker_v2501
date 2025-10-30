@@ -56,7 +56,6 @@ def mostrar_perfil():
         st.info("No hay atletas registrados todavía")
         return
 
-    # Convertir a DataFrame para mostrar en tabla
     df = pd.DataFrame([{
         "ID": a.id_atleta,
         "Nombre": a.nombre,
@@ -67,7 +66,6 @@ def mostrar_perfil():
         "Equipo": a.equipo,
     } for a in atletas])
 
-    # Filtros
     col1, col2 = st.columns(2)
     with col1:
         deporte_filtro = st.selectbox("Filtrar por deporte", ["Todos"] + sorted(df["Deporte"].dropna().unique().tolist()))
@@ -83,7 +81,7 @@ def mostrar_perfil():
     st.dataframe(df_filtrado, use_container_width=True)
 
     # ───────────────────────────────
-    # Selector de atleta individual + eliminación
+    # Selector de atleta individual
     # ───────────────────────────────
     opciones = {f"{a.nombre} {a.apellidos or ''} (ID {a.id_atleta})": a.id_atleta for a in atletas}
     seleccion = st.selectbox("Selecciona un atleta para ver detalles", list(opciones.keys()))
@@ -92,24 +90,18 @@ def mostrar_perfil():
         id_atleta = opciones[seleccion]
         atleta = sql.obtener_atleta_por_id(id_atleta)
 
-        st.write("### Datos del atleta")
-        st.json({
-            "ID": atleta.id_atleta,
-            "Nombre": atleta.nombre,
-            "Apellidos": atleta.apellidos,
-            "Edad": atleta.edad,
-            "Talla": atleta.talla,
-            "Contacto": atleta.contacto,
-            "Deporte": atleta.deporte,
-            "Modalidad": atleta.modalidad,
-            "Nivel": atleta.nivel,
-            "Equipo": atleta.equipo,
-            "Alergias": atleta.alergias,
-            "Consentimiento": atleta.consentimiento,
-            "Creado en": str(atleta.creado_en),
-        })
-
-        # Botón de eliminación
-        if st.button(f"🗑️ Eliminar atleta '{atleta.nombre}'", type="primary"):
-            sql.borrar_atleta(atleta.id_atleta)
-            st.warning(f"Atleta '{atleta.nombre}' eliminado correctamente. 🔄 Recarga la página para actualizar la lista.")
+        st.markdown(f"""
+        ### 📝 Detalles del atleta
+        - **ID:** {atleta.id_atleta}
+        - **Nombre:** {atleta.nombre} {atleta.apellidos or ""}
+        - **Edad:** {atleta.edad or "—"}
+        - **Talla:** {atleta.talla or "—"} cm
+        - **Contacto:** {atleta.contacto or "—"}
+        - **Deporte:** {atleta.deporte or "—"}
+        - **Modalidad:** {atleta.modalidad or "—"}
+        - **Nivel:** {atleta.nivel or "—"}
+        - **Equipo:** {atleta.equipo or "—"}
+        - **Alergias:** {atleta.alergias or "—"}
+        - **Consentimiento:** {"✅ Sí" if atleta.consentimiento else "❌ No"}
+        - **Creado en:** {str(atleta.creado_en)}
+        """)
