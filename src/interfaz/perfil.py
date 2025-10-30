@@ -81,7 +81,7 @@ def mostrar_perfil():
     st.dataframe(df_filtrado, use_container_width=True)
 
     # ───────────────────────────────
-    # Selector de atleta individual
+    # Selector de atleta individual + edición/eliminación
     # ───────────────────────────────
     opciones = {f"{a.nombre} {a.apellidos or ''} (ID {a.id_atleta})": a.id_atleta for a in atletas}
     seleccion = st.selectbox("Selecciona un atleta para ver detalles", list(opciones.keys()))
@@ -105,3 +105,46 @@ def mostrar_perfil():
         - **Consentimiento:** {"✅ Sí" if atleta.consentimiento else "❌ No"}
         - **Creado en:** {str(atleta.creado_en)}
         """)
+
+        # ───────────────────────────────
+        # Formulario de edición
+        # ───────────────────────────────
+        with st.expander("✏️ Editar atleta"):
+            with st.form(f"form_editar_{id_atleta}"):
+                nuevo_nombre = st.text_input("Nombre", atleta.nombre)
+                nuevos_apellidos = st.text_input("Apellidos", atleta.apellidos or "")
+                nueva_edad = st.number_input("Edad", min_value=0, max_value=120, step=1, value=atleta.edad or 0)
+                nueva_talla = st.number_input("Talla (cm)", min_value=100, max_value=250, step=1, value=atleta.talla or 170)
+                nuevo_contacto = st.text_input("Contacto", atleta.contacto or "")
+                nuevo_deporte = st.text_input("Deporte", atleta.deporte or "")
+                nueva_modalidad = st.text_input("Modalidad", atleta.modalidad or "")
+                nuevo_nivel = st.selectbox("Nivel", ["Iniciado", "Intermedio", "Avanzado", "Elite"], index=["Iniciado","Intermedio","Avanzado","Elite"].index(atleta.nivel) if atleta.nivel else 0)
+                nuevo_equipo = st.text_input("Equipo", atleta.equipo or "")
+                nuevas_alergias = st.text_area("Alergias", atleta.alergias or "")
+                nuevo_consentimiento = st.checkbox("Consentimiento informado", value=atleta.consentimiento)
+
+                actualizar = st.form_submit_button("💾 Guardar cambios")
+
+                if actualizar:
+                    sql.actualizar_atleta(
+                        id_atleta=atleta.id_atleta,
+                        nombre=nuevo_nombre,
+                        apellidos=nuevos_apellidos,
+                        edad=int(nueva_edad),
+                        talla=int(nueva_talla),
+                        contacto=nuevo_contacto,
+                        deporte=nuevo_deporte,
+                        modalidad=nueva_modalidad,
+                        nivel=nuevo_nivel,
+                        equipo=nuevo_equipo,
+                        alergias=nuevas_alergias,
+                        consentimiento=nuevo_consentimiento,
+                    )
+                    st.success(f"✅ Atleta '{nuevo_nombre}' actualizado correctamente. 🔄 Recarga la página para ver los cambios.")
+
+        # ───────────────────────────────
+        # Botón de eliminación
+        # ───────────────────────────────
+        if st.button(f"🗑️ Eliminar atleta '{atleta.nombre}'", type="primary"):
+            sql.borrar_atleta(atleta.id_atleta)
+            st.warning(f"Atleta '{atleta.nombre}' eliminado correctamente. 🔄 Recarga la página para actualizar la lista.")
