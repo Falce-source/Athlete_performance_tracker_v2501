@@ -1,0 +1,10 @@
+streamlit
+pandas
+numpy
+plotly
+altair
+google-api-python-client
+google-auth
+google-auth-oauthlib
+sqlalchemy
+pytest
