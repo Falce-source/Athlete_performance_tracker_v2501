@@ -1,5 +1,5 @@
 import streamlit as st
-from interfaz import perfil
+from src.interfaz import perfil
 
 # ─────────────────────────────────────────────
 # CONFIGURACIÓN GENERAL
