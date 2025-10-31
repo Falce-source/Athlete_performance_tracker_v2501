@@ -50,6 +50,26 @@ class Atleta(Base):
 
     usuario = relationship("Usuario", back_populates="atletas")
 
+  # Relación con Evento
+    eventos = relationship("Evento", back_populates="atleta", cascade="all, delete-orphan")
+
+class Evento(Base):
+    __tablename__ = "eventos"
+
+    id_evento = Column(Integer, primary_key=True, autoincrement=True)
+    id_atleta = Column(Integer, ForeignKey("atletas.id_atleta"), nullable=False)
+
+    titulo = Column(String, nullable=False)          # Ej: "Entrenamiento fuerza"
+    descripcion = Column(Text)                       # Detalles opcionales
+    fecha = Column(DateTime, nullable=False)         # Cuándo ocurre
+    lugar = Column(String)                           # Ej: "Gimnasio municipal"
+    tipo = Column(String)                            # Ej: "Entrenamiento", "Competición", "Revisión médica"
+
+    creado_en = Column(DateTime, default=datetime.utcnow)
+
+    # Relación con Atleta
+    atleta = relationship("Atleta", back_populates="eventos")
+
 # ─────────────────────────────────────────────
 # INICIALIZACIÓN
 # ─────────────────────────────────────────────
@@ -120,4 +140,39 @@ def borrar_atleta(id_atleta):
         atleta = session.query(Atleta).filter_by(id_atleta=id_atleta).first()
         if atleta:
             session.delete(atleta)
+            session.commit()
+
+# ─────────────────────────────────────────────
+# FUNCIONES CRUD: EVENTOS
+# ─────────────────────────────────────────────
+
+def crear_evento(id_atleta, titulo, fecha, descripcion=None, lugar=None, tipo=None):
+    with SessionLocal() as session:
+        evento = Evento(
+            id_atleta=id_atleta,
+            titulo=titulo,
+            fecha=fecha,
+            descripcion=descripcion,
+            lugar=lugar,
+            tipo=tipo,
+        )
+        session.add(evento)
+        session.flush()
+        session.refresh(evento)
+        session.commit()
+        return evento
+
+def obtener_eventos():
+    with SessionLocal() as session:
+        return session.query(Evento).all()
+
+def obtener_eventos_por_atleta(id_atleta):
+    with SessionLocal() as session:
+        return session.query(Evento).filter_by(id_atleta=id_atleta).all()
+
+def borrar_evento(id_evento):
+    with SessionLocal() as session:
+        evento = session.query(Evento).filter_by(id_evento=id_evento).first()
+        if evento:
+            session.delete(evento)
             session.commit()
