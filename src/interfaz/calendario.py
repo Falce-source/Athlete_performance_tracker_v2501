@@ -28,30 +28,43 @@ def mostrar_calendario():
     with st.form("form_estado_diario", clear_on_submit=True):
         fecha = st.date_input("Fecha", datetime.now(UTC).date())
 
+        # Datos de ciclo (expander con varias opciones)
         with st.expander("🩸 Datos de ciclo"):
             sintomas = st.selectbox("Síntomas menstruales", ["Ninguno", "Dolor leve", "Dolor moderado", "Dolor intenso"])
             menstruacion = st.selectbox("Menstruación", ["No", "Día 1", "Día 2", "Día 3", "Día 4+"])
             ovulacion = st.selectbox("Ovulación", ["No", "Estimada", "Confirmada"])
 
-        # Altitud y calor como selectbox (no expander)
-        altitud = st.selectbox("⛰️ Entrenamiento en altitud", ["No", "Sí"], key="altitud_select")
+        # Altitud y respiratorio → checkboxes simples
+        altitud = st.checkbox("⛰️ Entrenamiento en altitud", key="altitud_checkbox")
+        respiratorio = st.checkbox("🌬️ Entrenamiento respiratorio", key="respiratorio_checkbox")
+
+        # Calor → selectbox (manteniendo tu idea original)
         calor = st.selectbox("🔥 Entrenamiento en calor", ["No", "Sí"], key="calor_select")
 
-        with st.expander("🌬️ Entrenamiento respiratorio"):
-            respiratorio = st.checkbox("Sí", key="respiratorio_checkbox")
-
+        # Citas/tests (expander con varias opciones)
         with st.expander("📅 Citas / Tests"):
             cita_test = st.selectbox("Selecciona", ["No", "Cita", "Test"], key="cita_test_select")
 
+        # Competición → fecha + contador de días
         with st.expander("🏆 Competición"):
-            competicion = st.checkbox("Sí", key="competicion_checkbox")
+            fecha_competicion = st.date_input("Fecha de competición", value=None, key="fecha_competicion")
+            dias_restantes = None
+            if fecha_competicion:
+                dias_restantes = (fecha_competicion - datetime.now(UTC).date()).days
+                st.info(f"⏳ Quedan {dias_restantes} días para la competición")
 
+        # Lesiones/molestias
         with st.expander("🤕 Lesiones / molestias"):
             lesion = st.text_input("Descripción de la lesión o molestia", key="lesion_text")
 
-        with st.expander("🚫 Baja"):
-            baja = st.checkbox("No entrena / compite", key="baja_checkbox")
+        # Comentarios opcionales
+        with st.expander("📝 Notas adicionales"):
+            add_comment = st.checkbox("Añadir comentario", key="add_comment_checkbox")
+            comentario_extra = None
+            if add_comment:
+                comentario_extra = st.text_area("Escribe tu comentario", key="comentario_extra")
 
+        # Botón de envío
         submitted = st.form_submit_button("Guardar estado")
         if submitted:
             sql.crear_evento_calendario(
@@ -66,15 +79,14 @@ def mostrar_calendario():
                     "calor": calor,
                     "respiratorio": respiratorio,
                     "cita_test": cita_test,
-                    "competicion": competicion,
+                    "fecha_competicion": str(fecha_competicion) if fecha_competicion else None,
+                    "dias_restantes": dias_restantes,
                     "lesion": lesion,
-                    "baja": baja,
+                    "comentario_extra": comentario_extra,
                 },
                 notas=None
             )
             st.success("✅ Estado diario registrado correctamente")
-
-    st.markdown("---")
 
     # ───────────────────────────────
     # Sesiones del día (planificado vs completado)
