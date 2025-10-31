@@ -1,6 +1,6 @@
 import streamlit as st
 from src.interfaz import perfil
-from src.interfaz import eventos  # ← nuevo
+from src.interfaz import calendario   # ← nuevo
 
 # ─────────────────────────────────────────────
 # CONFIGURACIÓN GENERAL
@@ -20,10 +20,12 @@ opcion = st.sidebar.radio(
     [
         "🏠 Inicio",
         "👤 Perfil atleta",
-        "📅 Eventos",            # ← nuevo
-        # Aquí podrás añadir más secciones:
-        # "📅 Calendario",
+        "📅 Calendario",   # ← nuevo
         # "📊 Métricas",
+        # "🧪 Tests",
+        # "🏋️ Fuerza",
+        # "🍽️ Nutrición",
+        # "💬 Comentarios",
         # "⚙️ Configuración"
     ]
 )
@@ -38,5 +40,5 @@ if opcion == "🏠 Inicio":
 elif opcion == "👤 Perfil atleta":
     perfil.mostrar_perfil()
 
-elif opcion == "📅 Eventos":  # ← nuevo
-    eventos.mostrar_eventos()
+elif opcion == "📅 Calendario":
+    calendario.mostrar_calendario()
