@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime, UTC
 from src.persistencia import sql
+import json
+from datetime import date
 
 def mostrar_calendario():
     st.header("📅 Calendario del atleta")
@@ -87,6 +89,53 @@ def mostrar_calendario():
                 notas=None
             )
             st.success("✅ Estado diario registrado correctamente")
+
+    st.markdown("---")
+
+    # ───────────────────────────────
+    # Eventos del calendario (incluye competiciones con contador)
+    # ───────────────────────────────
+    st.subheader("📌 Eventos del calendario")
+
+    eventos = sql.obtener_eventos_por_atleta(id_atleta)
+    if not eventos:
+        st.info("No hay eventos registrados todavía")
+    else:
+        data = []
+        for e in eventos:
+            try:
+                valor = json.loads(e.valor) if e.valor else {}
+            except Exception:
+                valor = {}
+
+            fila = {
+                "Fecha": e.fecha.strftime("%Y-%m-%d"),
+                "Tipo": e.tipo_evento,
+                "Notas": e.notas or ""
+            }
+
+            # Si hay fecha de competición, calculamos días restantes
+            if valor.get("fecha_competicion"):
+                try:
+                    fecha_comp = date.fromisoformat(valor["fecha_competicion"])
+                    dias_restantes = (fecha_comp - date.today()).days
+                    fila["Competición"] = f"{fecha_comp} (faltan {dias_restantes} días)"
+                except Exception:
+                    fila["Competición"] = valor["fecha_competicion"]
+
+            # Guardamos también otros campos relevantes
+            if "sintomas" in valor:
+                fila["Síntomas"] = valor["sintomas"]
+            if "altitud" in valor:
+                fila["Altitud"] = "Sí" if valor["altitud"] else "No"
+            if "calor" in valor:
+                fila["Calor"] = valor["calor"]
+
+            data.append(fila)
+
+        st.dataframe(pd.DataFrame(data), use_container_width=True)
+
+    st.markdown("---")
 
     # ───────────────────────────────
     # Sesiones del día (planificado vs completado)
