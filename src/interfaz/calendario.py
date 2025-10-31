@@ -5,6 +5,10 @@ from src.persistencia import sql
 import json
 from datetime import date
 
+def badge(text, color="#eee", text_color="#000"):
+    """Devuelve un span HTML con estilo tipo chip/badge."""
+    return f"<span style='background-color:{color}; color:{text_color}; padding:2px 6px; border-radius:8px; font-size:90%'>{text}</span>"
+
 def mostrar_calendario():
     st.header("📅 Calendario del atleta")
 
@@ -119,7 +123,12 @@ def mostrar_calendario():
                 try:
                     fecha_comp = date.fromisoformat(valor["fecha_competicion"])
                     dias_restantes = (fecha_comp - date.today()).days
-                    fila["Competición"] = f"{fecha_comp} (faltan {dias_restantes} días)"
+                    if dias_restantes <= 7:
+                        fila["Competición"] = f"<span style='color:red; font-weight:bold'>{fecha_comp} (faltan {dias_restantes} días)</span>"
+                    elif dias_restantes <= 30:
+                        fila["Competición"] = f"<span style='color:orange'>{fecha_comp} (faltan {dias_restantes} días)</span>"
+                    else:
+                        fila["Competición"] = f"{fecha_comp} (faltan {dias_restantes} días)"
                 except Exception:
                     fila["Competición"] = valor["fecha_competicion"]
 
@@ -162,7 +171,8 @@ def mostrar_calendario():
                     st.markdown(f"- **Menstruación**: {fila.get('Menstruacion','-')}")
                     st.markdown(f"- **Ovulación**: {fila.get('Ovulacion','-')}")
                     if "Lesión" in fila:
-                        st.markdown(f"- 🤕 {fila['Lesión']}")
+                        st.markdown(badge("Lesión activa", "#ffeeba", "#856404"), unsafe_allow_html=True)
+                        st.markdown(f"- {fila['Lesión']}")
                     if "Comentario" in fila:
                         st.markdown(f"- 📝 {fila['Comentario']}")
 
@@ -170,11 +180,11 @@ def mostrar_calendario():
                 with col2:
                     st.markdown("#### 🏋️ Entrenamiento")
                     if fila.get("Altitud") == "Sí":
-                        st.markdown("- ⛰️ Altitud")
+                        st.markdown(badge("⛰️ Altitud", "#d1ecf1", "#0c5460"), unsafe_allow_html=True)
                     if fila.get("Respiratorio") == "Sí":
-                        st.markdown("- 🌬️ Respiratorio")
+                        st.markdown(badge("🌬️ Respiratorio", "#d4edda", "#155724"), unsafe_allow_html=True)
                     if fila.get("Calor") == "Sí":
-                        st.markdown("- 🔥 Calor")
+                        st.markdown(badge("🔥 Calor", "#f8d7da", "#721c24"), unsafe_allow_html=True)
 
                 # Columna 3 → Eventos
                 with col3:
@@ -182,11 +192,9 @@ def mostrar_calendario():
                     if "Cita_test" in fila:
                         st.markdown(f"- 📌 {fila['Cita_test']}")
                     if "Competición" in fila:
-                        st.markdown(f"- 🏆 {fila['Competición']}")
+                        st.markdown(f"- 🏆 {fila['Competición']}", unsafe_allow_html=True)
 
                 st.markdown("---")
-
-    st.markdown("---")
 
     # ───────────────────────────────
     # Sesiones del día (planificado vs completado)
