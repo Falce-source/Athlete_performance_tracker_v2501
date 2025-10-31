@@ -2,7 +2,9 @@ from sqlalchemy import (
     create_engine, Column, Integer, String, Text, Boolean, DateTime, ForeignKey
 )
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
-from datetime import datetime
+from datetime import datetime, timezone
+from sqlalchemy import JSON  # si usas SQLAlchemy 1.4+ puedes definir JSON
+import json
 
 # ─────────────────────────────────────────────
 # CONFIGURACIÓN BÁSICA
@@ -176,3 +178,117 @@ def borrar_evento(id_evento):
         if evento:
             session.delete(evento)
             session.commit()
+
+# ─────────────────────────────────────────────
+# MODELOS EXTRA: CALENDARIO, SESIONES, MÉTRICAS, COMENTARIOS
+# ─────────────────────────────────────────────
+
+class CalendarioEvento(Base):
+    __tablename__ = "calendario_eventos"
+
+    id_evento = Column(Integer, primary_key=True, autoincrement=True)
+    id_atleta = Column(Integer, ForeignKey("atletas.id_atleta"), nullable=False)
+    fecha = Column(DateTime, nullable=False)
+    tipo_evento = Column(String, nullable=False)
+    valor = Column(Text)  # guardamos JSON serializado
+    notas = Column(Text)
+    creado_en = Column(DateTime, default=datetime.utcnow)
+
+class Sesion(Base):
+    __tablename__ = "sesiones"
+
+    id_sesion = Column(Integer, primary_key=True, autoincrement=True)
+    id_atleta = Column(Integer, ForeignKey("atletas.id_atleta"), nullable=False)
+    fecha = Column(DateTime, nullable=False)
+    tipo_sesion = Column(String, nullable=False)
+    planificado_json = Column(Text)
+    realizado_json = Column(Text)
+
+class Metrica(Base):
+    __tablename__ = "metricas"
+
+    id_metrica = Column(Integer, primary_key=True, autoincrement=True)
+    id_atleta = Column(Integer, ForeignKey("atletas.id_atleta"), nullable=False)
+    fecha = Column(DateTime, nullable=False)
+    tipo_metrica = Column(String, nullable=False)
+    valor = Column(String)
+    unidad = Column(String)
+
+class Comentario(Base):
+    __tablename__ = "comentarios"
+
+    id_comentario = Column(Integer, primary_key=True, autoincrement=True)
+    id_atleta = Column(Integer, ForeignKey("atletas.id_atleta"), nullable=False)
+    id_autor = Column(Integer, ForeignKey("usuarios.id_usuario"), nullable=True)
+    texto = Column(Text, nullable=False)
+    visible_para = Column(String, default="staff")
+    fecha = Column(DateTime, default=datetime.utcnow)
+
+# ─────────────────────────────────────────────
+# CRUD: CALENDARIO
+# ─────────────────────────────────────────────
+def crear_evento_calendario(id_atleta, fecha, tipo_evento, valor, notas=None):
+    with SessionLocal() as session:
+        evento = CalendarioEvento(
+            id_atleta=id_atleta,
+            fecha=fecha,
+            tipo_evento=tipo_evento,
+            valor=json.dumps(valor) if isinstance(valor, dict) else valor,
+            notas=notas,
+        )
+        session.add(evento)
+        session.commit()
+        session.refresh(evento)
+        return evento
+
+def obtener_eventos_por_atleta(id_atleta):
+    with SessionLocal() as session:
+        return session.query(CalendarioEvento).filter_by(id_atleta=id_atleta).all()
+
+# ─────────────────────────────────────────────
+# CRUD: SESIONES
+# ─────────────────────────────────────────────
+def obtener_sesiones_por_atleta(id_atleta):
+    with SessionLocal() as session:
+        return session.query(Sesion).filter_by(id_atleta=id_atleta).order_by(Sesion.fecha.desc()).all()
+
+# ─────────────────────────────────────────────
+# CRUD: MÉTRICAS
+# ─────────────────────────────────────────────
+def crear_metrica(id_atleta, tipo_metrica, valor, unidad):
+    with SessionLocal() as session:
+        metrica = Metrica(
+            id_atleta=id_atleta,
+            fecha=datetime.now(timezone.utc),
+            tipo_metrica=tipo_metrica,
+            valor=str(valor),
+            unidad=unidad
+        )
+        session.add(metrica)
+        session.commit()
+        session.refresh(metrica)
+        return metrica
+
+def obtener_metricas_por_tipo(id_atleta, tipo_metrica):
+    with SessionLocal() as session:
+        return session.query(Metrica).filter_by(id_atleta=id_atleta, tipo_metrica=tipo_metrica).order_by(Metrica.fecha).all()
+
+# ─────────────────────────────────────────────
+# CRUD: COMENTARIOS
+# ─────────────────────────────────────────────
+def crear_comentario(id_atleta, texto, visible_para="staff", id_autor=None):
+    with SessionLocal() as session:
+        comentario = Comentario(
+            id_atleta=id_atleta,
+            id_autor=id_autor,
+            texto=texto,
+            visible_para=visible_para,
+        )
+        session.add(comentario)
+        session.commit()
+        session.refresh(comentario)
+        return comentario
+
+def obtener_comentarios_por_atleta(id_atleta):
+    with SessionLocal() as session:
+        return session.query(Comentario).filter_by(id_atleta=id_atleta).order_by(Comentario.fecha.desc()).all()
