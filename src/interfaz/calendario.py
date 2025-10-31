@@ -33,27 +33,24 @@ def mostrar_calendario():
             menstruacion = st.selectbox("Menstruación", ["No", "Día 1", "Día 2", "Día 3", "Día 4+"])
             ovulacion = st.selectbox("Ovulación", ["No", "Estimada", "Confirmada"])
 
-        with st.expander("⛰️ Entrenamiento en altitud"):
-            altitud = st.checkbox("Sí")
-
-        with st.expander("🔥 Entrenamiento en calor"):
-            calor = st.checkbox("Sí")
-            notas_calor = st.text_input("Notas sobre calor")
+        # Altitud y calor como selectbox (no expander)
+        altitud = st.selectbox("⛰️ Entrenamiento en altitud", ["No", "Sí"], key="altitud_select")
+        calor = st.selectbox("🔥 Entrenamiento en calor", ["No", "Sí"], key="calor_select")
 
         with st.expander("🌬️ Entrenamiento respiratorio"):
-            respiratorio = st.checkbox("Sí")
+            respiratorio = st.checkbox("Sí", key="respiratorio_checkbox")
 
         with st.expander("📅 Citas / Tests"):
-            cita_test = st.selectbox("Selecciona", ["No", "Cita", "Test"])
+            cita_test = st.selectbox("Selecciona", ["No", "Cita", "Test"], key="cita_test_select")
 
         with st.expander("🏆 Competición"):
-            competicion = st.checkbox("Sí")
+            competicion = st.checkbox("Sí", key="competicion_checkbox")
 
         with st.expander("🤕 Lesiones / molestias"):
-            lesion = st.text_input("Descripción de la lesión o molestia")
+            lesion = st.text_input("Descripción de la lesión o molestia", key="lesion_text")
 
         with st.expander("🚫 Baja"):
-            baja = st.checkbox("No entrena / compite")
+            baja = st.checkbox("No entrena / compite", key="baja_checkbox")
 
         submitted = st.form_submit_button("Guardar estado")
         if submitted:
@@ -67,7 +64,6 @@ def mostrar_calendario():
                     "ovulacion": ovulacion,
                     "altitud": altitud,
                     "calor": calor,
-                    "notas_calor": notas_calor,
                     "respiratorio": respiratorio,
                     "cita_test": cita_test,
                     "competicion": competicion,
