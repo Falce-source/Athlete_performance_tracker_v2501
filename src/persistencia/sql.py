@@ -95,12 +95,24 @@ def obtener_atleta_por_id(id_atleta):
     with SessionLocal() as session:
         return session.query(Atleta).filter_by(id_atleta=id_atleta).first()
 
-def actualizar_atleta(id_atleta, campo, valor):
+def actualizar_atleta(id_atleta, **kwargs):
+    """
+    Actualiza uno o varios campos de un atleta existente.
+    Uso:
+        actualizar_atleta(3, nombre="Nuevo", nivel="Avanzado")
+    """
     with SessionLocal() as session:
         atleta = session.query(Atleta).filter_by(id_atleta=id_atleta).first()
-        if atleta:
-            setattr(atleta, campo, valor)
-            session.commit()
+        if not atleta:
+            return None
+
+        # Solo actualizamos los campos que existen en el modelo
+        for campo, valor in kwargs.items():
+            if hasattr(atleta, campo):
+                setattr(atleta, campo, valor)
+
+        session.commit()
+        session.refresh(atleta)
         return atleta
 
 def borrar_atleta(id_atleta):
