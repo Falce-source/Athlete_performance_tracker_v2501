@@ -26,7 +26,7 @@ def main():
     e = crear_evento(
         id_atleta=a.id_atleta,
         titulo="Entrenamiento de prueba",
-        fecha=datetime.utcnow() + timedelta(days=1),
+        fecha=datetime.now(UTC) + timedelta(days=1),
         lugar="Gimnasio",
         tipo="Entrenamiento",
     )
