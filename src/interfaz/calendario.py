@@ -157,6 +157,9 @@ def mostrar_calendario():
         if vista == "Tabla":
             df = pd.DataFrame(data)
 
+            # Reemplazar NaN/None por guiones
+            df = df.fillna("-")
+
             # Convertimos a HTML para poder usar estilos y badges
             def style_cell(val, col):
                 if col == "Competición" and isinstance(val, str):
@@ -176,9 +179,9 @@ def mostrar_calendario():
                         return f"<span style='background-color:{color}; color:{text_color}; padding:2px 6px; border-radius:8px;'>{val}</span>"
                 if col == "Ovulacion" and val == "Confirmada":
                     return f"<span style='background-color:#ffcccc; color:#900; padding:2px 6px; border-radius:8px;'>{val}</span>"
-                if col == "Lesión" and val:
+                if col == "Lesión" and val and val != "-":
                     return f"<span style='background-color:#ffeeba; color:#856404; padding:2px 6px; border-radius:8px;'>{val}</span>"
-                return val
+                return val if val != "nan" else "-"
 
             # Aplicamos estilos a cada celda
             styled_rows = []
@@ -196,8 +199,10 @@ def mostrar_calendario():
         # Vista tarjetas (3 columnas con fecha arriba)
         else:
             for fila in data:
-                st.markdown(f"### 📅 {fila['Fecha']}")
+                # Normalizar valores vacíos a "-"
+                fila = {k: ("-" if (v is None or v == "" or str(v).lower() == "nan") else v) for k, v in fila.items()}
 
+                st.markdown(f"### 📅 {fila['Fecha']}")
                 col1, col2, col3 = st.columns(3)
 
                 # Columna 1 → Estado diario
