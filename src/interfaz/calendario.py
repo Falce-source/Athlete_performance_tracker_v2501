@@ -101,6 +101,8 @@ def mostrar_calendario():
     if not eventos:
         st.info("No hay eventos registrados todavía")
     else:
+        vista = st.radio("Formato de visualización", ["Tabla", "Tarjetas"], horizontal=True)
+
         data = []
         for e in eventos:
             try:
@@ -114,7 +116,6 @@ def mostrar_calendario():
                 "Notas": e.notas or ""
             }
 
-            # Si hay fecha de competición, calculamos días restantes
             if valor.get("fecha_competicion"):
                 try:
                     fecha_comp = date.fromisoformat(valor["fecha_competicion"])
@@ -123,17 +124,44 @@ def mostrar_calendario():
                 except Exception:
                     fila["Competición"] = valor["fecha_competicion"]
 
-            # Guardamos también otros campos relevantes
             if "sintomas" in valor:
                 fila["Síntomas"] = valor["sintomas"]
             if "altitud" in valor:
                 fila["Altitud"] = "Sí" if valor["altitud"] else "No"
             if "calor" in valor:
                 fila["Calor"] = valor["calor"]
+            if "respiratorio" in valor:
+                fila["Respiratorio"] = "Sí" if valor["respiratorio"] else "No"
+            if "lesion" in valor and valor["lesion"]:
+                fila["Lesión"] = valor["lesion"]
+            if "comentario_extra" in valor and valor["comentario_extra"]:
+                fila["Comentario"] = valor["comentario_extra"]
 
             data.append(fila)
 
-        st.dataframe(pd.DataFrame(data), use_container_width=True)
+        if vista == "Tabla":
+            st.dataframe(pd.DataFrame(data), use_container_width=True)
+        else:
+            for fila in data:
+                with st.container():
+                    st.markdown(f"### 📌 {fila['Tipo']} — {fila['Fecha']}")
+                    if "Competición" in fila:
+                        st.markdown(f"🏆 {fila['Competición']}")
+                    if "Síntomas" in fila:
+                        st.markdown(f"🩸 **Síntomas**: {fila['Síntomas']}")
+                    if fila.get("Altitud") == "Sí":
+                        st.markdown("⛰️ Entrenamiento en altitud")
+                    if fila.get("Calor") == "Sí":
+                        st.markdown("🔥 Entrenamiento en calor")
+                    if fila.get("Respiratorio") == "Sí":
+                        st.markdown("🌬️ Respiratorio")
+                    if "Lesión" in fila:
+                        st.markdown(f"🤕 Lesión: {fila['Lesión']}")
+                    if "Comentario" in fila:
+                        st.markdown(f"📝 Nota: {fila['Comentario']}")
+                    if fila.get("Notas"):
+                        st.markdown(f"📌 Observaciones: {fila['Notas']}")
+                    st.markdown("---")
 
     st.markdown("---")
 
