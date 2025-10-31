@@ -35,13 +35,11 @@ def mostrar_calendario():
             sintomas = st.selectbox("Síntomas menstruales", ["Ninguno", "Dolor leve", "Dolor moderado", "Dolor intenso"])
             menstruacion = st.selectbox("Menstruación", ["No", "Día 1", "Día 2", "Día 3", "Día 4+"])
             ovulacion = st.selectbox("Ovulación", ["No", "Estimada", "Confirmada"])
-
-        # Altitud y respiratorio → checkboxes simples
+        
+        # Altitud, respiratorio y calor → todos como checkboxes simples
         altitud = st.checkbox("⛰️ Entrenamiento en altitud", key="altitud_checkbox")
         respiratorio = st.checkbox("🌬️ Entrenamiento respiratorio", key="respiratorio_checkbox")
-
-        # Calor → selectbox (manteniendo tu idea original)
-        calor = st.selectbox("🔥 Entrenamiento en calor", ["No", "Sí"], key="calor_select")
+        calor = st.checkbox("🔥 Entrenamiento en calor", key="calor_checkbox")
 
         # Citas/tests (expander con varias opciones)
         with st.expander("📅 Citas / Tests"):
@@ -129,7 +127,7 @@ def mostrar_calendario():
             if "altitud" in valor:
                 fila["Altitud"] = "Sí" if valor["altitud"] else "No"
             if "calor" in valor:
-                fila["Calor"] = valor["calor"]
+                fila["Calor"] = "Sí" if valor["calor"] else "No"
             if "respiratorio" in valor:
                 fila["Respiratorio"] = "Sí" if valor["respiratorio"] else "No"
             if "lesion" in valor and valor["lesion"]:
@@ -144,23 +142,60 @@ def mostrar_calendario():
         else:
             for fila in data:
                 with st.container():
-                    st.markdown(f"### 📌 {fila['Tipo']} — {fila['Fecha']}")
-                    if "Competición" in fila:
-                        st.markdown(f"🏆 {fila['Competición']}")
-                    if "Síntomas" in fila:
-                        st.markdown(f"🩸 **Síntomas**: {fila['Síntomas']}")
-                    if fila.get("Altitud") == "Sí":
-                        st.markdown("⛰️ Entrenamiento en altitud")
-                    if fila.get("Calor") == "Sí":
-                        st.markdown("🔥 Entrenamiento en calor")
-                    if fila.get("Respiratorio") == "Sí":
-                        st.markdown("🌬️ Respiratorio")
+                    # ────────────────
+                    # Tarjeta Estado diario
+                    # ────────────────
+                    st.markdown("""
+                    <div style="border:1px solid #ddd; border-radius:8px; padding:12px; margin-bottom:10px; background-color:#f9f9f9;">
+                    <h4>🧍 Estado diario</h4>
+                    """, unsafe_allow_html=True)
+
+                    st.markdown("#### 🩸 Datos de ciclo")
+                    st.markdown(f"- **Síntomas**: {fila.get('Síntomas','-')}")
+                    st.markdown(f"- **Menstruación**: {fila.get('Menstruacion','-')}")
+                    st.markdown(f"- **Ovulación**: {fila.get('Ovulacion','-')}")
+
                     if "Lesión" in fila:
-                        st.markdown(f"🤕 Lesión: {fila['Lesión']}")
+                        st.markdown("#### 🤕 Lesiones / molestias")
+                        st.markdown(f"- {fila['Lesión']}")
+
                     if "Comentario" in fila:
-                        st.markdown(f"📝 Nota: {fila['Comentario']}")
-                    if fila.get("Notas"):
-                        st.markdown(f"📌 Observaciones: {fila['Notas']}")
+                        st.markdown("#### 📝 Notas adicionales")
+                        st.markdown(f"- {fila['Comentario']}")
+
+                    st.markdown("</div>", unsafe_allow_html=True)
+
+                    # ────────────────
+                    # Tarjeta Entrenamiento
+                    # ────────────────
+                    st.markdown("""
+                    <div style="border:1px solid #ddd; border-radius:8px; padding:12px; margin-bottom:10px; background-color:#f0f9ff;">
+                    <h4>🏋️ Entrenamiento</h4>
+                    """, unsafe_allow_html=True)
+
+                    if fila.get("Altitud") == "Sí":
+                        st.markdown("- ⛰️ Entrenamiento en altitud")
+                    if fila.get("Respiratorio") == "Sí":
+                        st.markdown("- 🌬️ Entrenamiento respiratorio")
+                    if fila.get("Calor") == "Sí":
+                        st.markdown("- 🔥 Entrenamiento en calor")
+
+                    st.markdown("</div>", unsafe_allow_html=True)
+
+                    # ────────────────
+                    # Tarjeta Eventos
+                    # ────────────────
+                    st.markdown("""
+                    <div style="border:1px solid #ddd; border-radius:8px; padding:12px; margin-bottom:10px; background-color:#fff9f0;">
+                    <h4>📅 Eventos</h4>
+                    """, unsafe_allow_html=True)
+
+                    if "Cita_test" in fila:
+                        st.markdown(f"- 📌 **Cita/Test**: {fila['Cita_test']}")
+                    if "Competición" in fila:
+                        st.markdown(f"- 🏆 {fila['Competición']}")
+
+                    st.markdown("</div>", unsafe_allow_html=True)
                     st.markdown("---")
 
     st.markdown("---")
