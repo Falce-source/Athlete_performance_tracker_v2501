@@ -155,7 +155,43 @@ def mostrar_calendario():
 
         # Vista tabla
         if vista == "Tabla":
-            st.dataframe(pd.DataFrame(data), use_container_width=True)
+            df = pd.DataFrame(data)
+
+            # Convertimos a HTML para poder usar estilos y badges
+            def style_cell(val, col):
+                if col == "Competición" and isinstance(val, str):
+                    if "faltan" in val:
+                        try:
+                            dias = int(val.split("faltan")[1].split("días")[0])
+                            if dias <= 7:
+                                return f"<span style='color:red; font-weight:bold'>{val}</span>"
+                            elif dias <= 30:
+                                return f"<span style='color:orange'>{val}</span>"
+                        except Exception:
+                            return val
+                if col in ["Altitud", "Respiratorio", "Calor"]:
+                    if val == "Sí":
+                        color = "#d4edda" if col == "Respiratorio" else "#d1ecf1" if col == "Altitud" else "#f8d7da"
+                        text_color = "#155724" if col == "Respiratorio" else "#0c5460" if col == "Altitud" else "#721c24"
+                        return f"<span style='background-color:{color}; color:{text_color}; padding:2px 6px; border-radius:8px;'>{val}</span>"
+                if col == "Ovulacion" and val == "Confirmada":
+                    return f"<span style='background-color:#ffcccc; color:#900; padding:2px 6px; border-radius:8px;'>{val}</span>"
+                if col == "Lesión" and val:
+                    return f"<span style='background-color:#ffeeba; color:#856404; padding:2px 6px; border-radius:8px;'>{val}</span>"
+                return val
+
+            # Aplicamos estilos a cada celda
+            styled_rows = []
+            for _, row in df.iterrows():
+                styled_row = {}
+                for col, val in row.items():
+                    styled_row[col] = style_cell(val, col)
+                styled_rows.append(styled_row)
+
+            styled_df = pd.DataFrame(styled_rows)
+
+            # Renderizamos como tabla HTML con estilos
+            st.markdown(styled_df.to_html(escape=False, index=False), unsafe_allow_html=True)
 
         # Vista tarjetas (3 columnas con fecha arriba)
         else:
