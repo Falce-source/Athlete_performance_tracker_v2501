@@ -73,8 +73,8 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
         if resto_icons:
             lines.append(" ".join(resto_icons))
         if lines:
-            # Usamos <br> para saltos de línea en HTML
-            title += "<br>" + "<br>".join(lines)
+            # Usamos \n para saltos de línea (se renderizan con CSS pre-line)
+            title += "\n" + "\n".join(lines)
 
         fc_events.append({
             "title": title,
@@ -99,14 +99,19 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
         "navLinks": True,
         "height": "auto",
         "eventDisplay": "block",
-        "dayMaxEventRows": False,  # permitir que la fila crezca según eventos
-        # 👇 clave: reescribir el HTML del evento para respetar <br>
-        "eventDidMount": """function(info) {
-            info.el.innerHTML = info.event.title;
-        }"""
+        "dayMaxEventRows": False  # permitir que la fila crezca según eventos
     }
 
-    # Renderizar calendario (ahora <br> se interpreta como salto de línea)
+    # CSS para que los \n en los títulos se muestren como saltos de línea
+    st.markdown("""
+    <style>
+    .fc-event-title {
+        white-space: pre-line !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Renderizar calendario (ahora \n se interpreta como salto de línea)
     cal = calendar(events=fc_events, options=calendar_options)
 
     # Mostrar detalles en un modal al hacer clic en un evento
