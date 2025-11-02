@@ -29,13 +29,13 @@ def mostrar_calendario():
     # ───────────────────────────────
     # Eventos del calendario (incluye competiciones con contador)
     # ───────────────────────────────
-    st.subheader("📌 Eventos del calendario")
+    st.subheader("🗓️ Calendario")
 
     eventos = sql.obtener_eventos_por_atleta(id_atleta)
     if not eventos:
         st.info("No hay eventos registrados todavía")
     else:
-        vista = st.radio("Formato de visualización", ["Tabla", "Calendario"], horizontal=True)
+        vista = st.radio("", ["Tabla", "Calendario"], horizontal=True, index=0)
 
         # Construcción de data
         data = []

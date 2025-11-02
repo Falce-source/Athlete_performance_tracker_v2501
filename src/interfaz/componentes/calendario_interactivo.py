@@ -33,7 +33,7 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
             title_parts.append(f"🏃 {ev.get('Sesion_tipo','')}")
 
         fc_events.append({
-            "title": " | ".join(title_parts) if title_parts else ev.get("Tipo","Evento"),
+            "title": "<br>".join(title_parts) if title_parts else ev.get("Tipo","Evento"),
             "start": fecha,
             "allDay": True
         })
@@ -51,7 +51,8 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
         "navLinks": True,
         "height": "auto",
         "dayMaxEventRows": True,
-        "eventDisplay": "block"
+        "eventDisplay": "block",
+        "eventContent": {"html": True}
     }
 
     # Renderizar calendario
@@ -98,7 +99,7 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
             if submitted:
                 sql.crear_evento_calendario(
                     id_atleta=id_atleta,
-                    fecha=datetime.datetime.fromisoformat(st.session_state["fecha_seleccionada"]),
+                    fecha=datetime.date.fromisoformat(st.session_state["fecha_seleccionada"][:10]),
                     tipo_evento="estado_diario",
                     valor={
                         "sintomas": sintomas,
