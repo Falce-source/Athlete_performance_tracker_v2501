@@ -100,9 +100,9 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
         "height": "auto",
         "eventDisplay": "block",
         "dayMaxEventRows": False,  # permitir que la fila crezca según eventos
-        # 👇 clave: renderizar HTML en los títulos de eventos
-        "eventContent": """function(arg) {
-            return { html: arg.event.title };
+        # 👇 clave: reescribir el HTML del evento para respetar <br>
+        "eventDidMount": """function(info) {
+            info.el.innerHTML = info.event.title;
         }"""
     }
 
