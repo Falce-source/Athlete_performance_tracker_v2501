@@ -98,10 +98,8 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
         "selectable": True,
         "navLinks": True,
         "height": "auto",
-        "eventDisplay": "block",
-        "dayMaxEventRows": False,  # permitir que la fila crezca según eventos
-        # Renderizar HTML en los títulos de eventos
-        "eventContent": "function(arg){return {html: arg.event.title}}"
+       "eventDisplay": "block",
+        "dayMaxEventRows": False  # permitir que la fila crezca según eventos
     }
 
     # Renderizar calendario
@@ -111,7 +109,8 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
     if cal and "eventClick" in cal:
         props = cal["eventClick"]["event"].get("extendedProps", {})
         if props:
-            with st.dialog("📋 Detalles del estado diario"):
+            @st.dialog("📋 Detalles del estado diario")
+            def mostrar_detalles():
                 st.markdown("### 🩸 Datos de ciclo")
                 for k in ["Síntomas","Menstruacion","Ovulacion"]:
                     if props.get(k):
@@ -126,6 +125,8 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
                 for k in ["Competición","Lesión","Cita_test","Comentario"]:
                     if props.get(k):
                         st.write(f"- **{k}**: {props[k]}")
+
+            mostrar_detalles()
 
     # Si el usuario hace click en un día (usar dateStr para evitar desfases)
     if cal and "dateClick" in cal:
