@@ -65,16 +65,12 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
             if k in details: resto_icons.append(EVENT_STYLES[t]["icon"])
 
         title = "🧍 Estado diario"
-        lines = []
         if ciclo_icons:
-            lines.append(" ".join(ciclo_icons))
+            title += "<div>" + " ".join(ciclo_icons) + "</div>"
         if entreno_icons:
-            lines.append(" ".join(entreno_icons))
+            title += "<div>" + " ".join(entreno_icons) + "</div>"
         if resto_icons:
-            lines.append(" ".join(resto_icons))
-        if lines:
-            # Usamos \n para saltos de línea (se renderizan con CSS pre-line)
-            title += "\n" + "\n".join(lines)
+            title += "<div>" + " ".join(resto_icons) + "</div>"
 
         fc_events.append({
             "title": title,
@@ -102,11 +98,15 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
         "dayMaxEventRows": False  # permitir que la fila crezca según eventos
     }
 
-    # CSS para que los \n en los títulos se muestren como saltos de línea
+    # CSS para que los <div> en los títulos se muestren en líneas separadas
     st.markdown("""
     <style>
     .fc-event-title {
-        white-space: pre-line !important;
+        white-space: normal !important;
+        display: block !important;
+    }
+    .fc-event-title div {
+        display: block;
     }
     </style>
     """, unsafe_allow_html=True)
