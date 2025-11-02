@@ -35,7 +35,7 @@ def mostrar_calendario():
     if not eventos:
         st.info("No hay eventos registrados todavía")
     else:
-        vista = st.radio("", ["Tabla", "Calendario"], horizontal=True, index=0)
+        vista = st.radio("", ["Calendario", "Tabla"], horizontal=True, index=0)
 
         # Construcción de data
         data = []
@@ -128,49 +128,8 @@ def mostrar_calendario():
             # Renderizamos como tabla HTML con estilos
             st.markdown(styled_df.to_html(escape=False, index=False), unsafe_allow_html=True)
 
-        # Vista tarjetas (3 columnas con fecha arriba)
-        elif vista == "Tarjetas":
-            for fila in data:
-                # Normalizar valores vacíos a "-"
-                fila = {k: ("-" if (v is None or v == "" or str(v).lower() == "nan") else v) for k, v in fila.items()}
-
-                st.markdown(f"### 📅 {fila['Fecha']}")
-                col1, col2, col3 = st.columns(3)
-
-                # Columna 1 → Estado diario
-                with col1:
-                    st.markdown("#### 🧍 Estado diario")
-                    st.markdown(f"- **Síntomas**: {fila.get('Síntomas','-')}")
-                    st.markdown(f"- **Menstruación**: {fila.get('Menstruacion','-')}")
-                    st.markdown(f"- **Ovulación**: {fila.get('Ovulacion','-')}")
-                    if "Lesión" in fila:
-                        st.markdown(badge("Lesión activa", "#ffeeba", "#856404"), unsafe_allow_html=True)
-                        st.markdown(f"- {fila['Lesión']}")
-                    if "Comentario" in fila:
-                        st.markdown(f"- 📝 {fila['Comentario']}")
-
-                # Columna 2 → Entrenamiento
-                with col2:
-                    st.markdown("#### 🏋️ Entrenamiento")
-                    if fila.get("Altitud") == "Sí":
-                        st.markdown(badge("⛰️ Altitud", "#d1ecf1", "#0c5460"), unsafe_allow_html=True)
-                    if fila.get("Respiratorio") == "Sí":
-                        st.markdown(badge("🌬️ Respiratorio", "#d4edda", "#155724"), unsafe_allow_html=True)
-                    if fila.get("Calor") == "Sí":
-                        st.markdown(badge("🔥 Calor", "#f8d7da", "#721c24"), unsafe_allow_html=True)
-
-                # Columna 3 → Eventos
-                with col3:
-                    st.markdown("#### 📅 Eventos")
-                    if "Cita_test" in fila:
-                        st.markdown(f"- 📌 {fila['Cita_test']}")
-                    if "Competición" in fila:
-                        st.markdown(f"- 🏆 {fila['Competición']}", unsafe_allow_html=True)
-
-                st.markdown("---")
-
         # Vista calendario interactivo (FullCalendar)
-        elif vista == "Calendario":
+        if vista == "Calendario":
             from src.interfaz.componentes.calendario_interactivo import mostrar_calendario_interactivo
             mostrar_calendario_interactivo(data, id_atleta)
 
