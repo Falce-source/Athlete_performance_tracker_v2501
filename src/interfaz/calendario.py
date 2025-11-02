@@ -237,10 +237,10 @@ def mostrar_calendario():
 
                 st.markdown("---")
 
-        # Vista calendario interactivo
+        # Vista calendario interactivo (FullCalendar)
         elif vista == "Calendario":
             from src.interfaz.componentes.calendario_interactivo import mostrar_calendario_interactivo
-            mostrar_calendario_interactivo(data)
+            mostrar_calendario_interactivo(data, id_atleta)
 
     # ───────────────────────────────
     # Sesiones del día (planificado vs completado)

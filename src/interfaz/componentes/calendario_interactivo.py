@@ -1,78 +1,94 @@
 import streamlit as st
+from streamlit_calendar import calendar
 import datetime
-import calendar
+from src.persistencia import sql
 
-def badge(text, color="#eee", text_color="#000"):
-    """Devuelve un span HTML con estilo tipo chip/badge."""
-    return f"<span style='background-color:{color}; color:{text_color}; padding:2px 6px; border-radius:8px; font-size:85%'>{text}</span>"
-
-def mostrar_calendario_interactivo(eventos):
+def mostrar_calendario_interactivo(eventos, id_atleta):
     """
-    Renderiza un calendario mensual con los eventos y sesiones.
-    `eventos` es una lista de diccionarios con al menos 'Fecha' y otros campos.
+    Renderiza un calendario interactivo tipo TrainingPeaks usando streamlit-calendar.
+    - eventos: lista de diccionarios con al menos 'Fecha' y otros campos.
+    - id_atleta: necesario para registrar nuevos estados diarios.
     """
 
-    st.markdown("### 🗓️ Vista calendario")
+    st.markdown("### 🗓️ Calendario interactivo")
 
-    # Agrupar eventos por fecha
-    eventos_por_fecha = {}
-    for e in eventos:
-        fecha = e.get("Fecha")
-        if fecha not in eventos_por_fecha:
-            eventos_por_fecha[fecha] = []
-        eventos_por_fecha[fecha].append(e)
+    # Transformar tus eventos a formato FullCalendar
+    fc_events = []
+    for ev in eventos:
+        fecha = ev.get("Fecha")
+        if not fecha:
+            continue
+        title_parts = []
+        if ev.get("Síntomas") and ev["Síntomas"] != "-":
+            title_parts.append(f"🧍 {ev['Síntomas']}")
+        if ev.get("Menstruacion") and ev["Menstruacion"] != "-":
+            title_parts.append(f"🩸 {ev['Menstruacion']}")
+        if ev.get("Ovulacion") and ev["Ovulacion"] != "-":
+            title_parts.append(f"🔄 {ev['Ovulacion']}")
+        if ev.get("Lesión") and ev["Lesión"] != "-":
+            title_parts.append(f"🤕 {ev['Lesión']}")
+        if ev.get("Competición"):
+            title_parts.append(f"🏆 {ev['Competición']}")
+        if ev.get("Tipo") == "sesion":
+            title_parts.append(f"🏃 {ev.get('Sesion_tipo','')}")
 
-    # Selector de mes/año
-    hoy = datetime.date.today()
-    year = st.selectbox("Año", [hoy.year-1, hoy.year, hoy.year+1], index=1)
-    month = st.selectbox("Mes", list(range(1, 13)), index=hoy.month-1)
+        fc_events.append({
+            "title": " | ".join(title_parts) if title_parts else ev.get("Tipo","Evento"),
+            "start": fecha,
+            "allDay": True
+        })
 
-    # Construir calendario del mes
-    cal = calendar.Calendar(firstweekday=0)
-    weeks = cal.monthdatescalendar(year, month)
+    # Configuración del calendario
+    calendar_options = {
+        "initialView": "dayGridMonth",
+        "headerToolbar": {
+            "left": "prev,next today",
+            "center": "title",
+            "right": "dayGridMonth,timeGridWeek,listWeek"
+        },
+        "editable": False,
+        "selectable": True,
+        "navLinks": True,
+        "height": "auto"
+    }
 
-    for week in weeks:
-        cols = st.columns(7)
-        for i, day in enumerate(week):
-            with cols[i]:
-                if day.month == month:
-                    st.markdown(f"**{day.day}**")
+    # Renderizar calendario
+    cal = calendar(events=fc_events, options=calendar_options)
 
-                    fecha_str = day.strftime("%Y-%m-%d")
-                    if fecha_str in eventos_por_fecha:
-                        for ev in eventos_por_fecha[fecha_str]:
-                            chips = []
+    # Si el usuario hace click en un día
+    if cal and "dateClick" in cal:
+        fecha_sel = cal["dateClick"]["date"]
+        st.session_state["fecha_seleccionada"] = fecha_sel
 
-                            # Estado diario
-                            if ev.get("Síntomas") and ev["Síntomas"] != "-":
-                                chips.append(badge(f"🧍 {ev['Síntomas']}", "#e2e3e5", "#383d41"))
-                            if ev.get("Menstruacion") and ev["Menstruacion"] != "-":
-                                chips.append(badge(f"🩸 {ev['Menstruacion']}", "#f8d7da", "#721c24"))
-                            if ev.get("Ovulacion") and ev["Ovulacion"] != "-":
-                                chips.append(badge(f"🔄 {ev['Ovulacion']}", "#d1ecf1", "#0c5460"))
-                            if ev.get("Lesión") and ev["Lesión"] != "-":
-                                chips.append(badge(f"🤕 {ev['Lesión']}", "#ffeeba", "#856404"))
-                            if ev.get("Comentario") and ev["Comentario"] != "-":
-                                chips.append(badge(f"📝 {ev['Comentario']}", "#fefefe", "#333"))
+    # Mostrar formulario emergente si hay fecha seleccionada
+    if "fecha_seleccionada" in st.session_state:
+        st.markdown("---")
+        st.subheader(f"➕ Registrar estado diario para {st.session_state['fecha_seleccionada']}")
+        with st.form("form_estado_diario_popup", clear_on_submit=True):
+            sintomas = st.selectbox("Síntomas menstruales", ["Ninguno","Dolor leve","Dolor moderado","Dolor intenso"])
+            menstruacion = st.selectbox("Menstruación", ["No","Día 1","Día 2","Día 3","Día 4+"])
+            ovulacion = st.selectbox("Ovulación", ["No","Estimada","Confirmada"])
+            altitud = st.checkbox("⛰️ Entrenamiento en altitud")
+            respiratorio = st.checkbox("🌬️ Entrenamiento respiratorio")
+            calor = st.checkbox("🔥 Entrenamiento en calor")
+            comentario = st.text_area("📝 Comentario opcional")
 
-                            # Entrenamiento
-                            if ev.get("Altitud") == "Sí":
-                                chips.append(badge("⛰️ Altitud", "#d1ecf1", "#0c5460"))
-                            if ev.get("Respiratorio") == "Sí":
-                                chips.append(badge("🌬️ Respiratorio", "#d4edda", "#155724"))
-                            if ev.get("Calor") == "Sí":
-                                chips.append(badge("🔥 Calor", "#f8d7da", "#721c24"))
-
-                            # Eventos especiales
-                            if ev.get("Cita_test") and ev["Cita_test"] != "No":
-                                chips.append(badge(f"📌 {ev['Cita_test']}", "#e2e3e5", "#383d41"))
-                            if ev.get("Competición"):
-                                chips.append(badge(f"🏆 {ev['Competición']}", "#fff3cd", "#856404"))
-
-                            # Sesiones
-                            if ev.get("Tipo") == "sesion":
-                                chips.append(badge(f"🏃 {ev.get('Sesion_tipo','')}", "#cce5ff", "#004085"))
-
-                            # Renderizar todos los chips en línea
-                            if chips:
-                                st.markdown(" ".join(chips), unsafe_allow_html=True)
+            submitted = st.form_submit_button("Guardar estado")
+            if submitted:
+                sql.crear_evento_calendario(
+                    id_atleta=id_atleta,
+                    fecha=datetime.datetime.fromisoformat(st.session_state["fecha_seleccionada"]),
+                    tipo_evento="estado_diario",
+                    valor={
+                        "sintomas": sintomas,
+                        "menstruacion": menstruacion,
+                        "ovulacion": ovulacion,
+                        "altitud": altitud,
+                        "respiratorio": respiratorio,
+                        "calor": calor,
+                        "comentario_extra": comentario
+                    },
+                    notas=None
+                )
+                st.success("✅ Estado diario registrado correctamente")
+                del st.session_state["fecha_seleccionada"]
