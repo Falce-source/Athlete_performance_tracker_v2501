@@ -102,8 +102,8 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
         "dayMaxEventRows": False  # permitir que la fila crezca según eventos
     }
 
-    # Renderizar calendario
-    cal = calendar(events=fc_events, options=calendar_options)
+    # Renderizar calendario (permitir HTML en títulos con <br>)
+    cal = calendar(events=fc_events, options=calendar_options, custom_events=True)
 
     # Mostrar detalles en un modal al hacer clic en un evento
     if cal and "eventClick" in cal:
