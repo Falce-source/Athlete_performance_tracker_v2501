@@ -53,10 +53,24 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
                 icons.append(EVENT_STYLES[tipo]["icon"])
                 details[key] = val
 
-        # Construir título con iconos activos
+        # Clasificación de iconos en tres líneas
+        ciclo_icons = []
+        entreno_icons = []
+        resto_icons = []
+        for k, t in [("Síntomas","sintomas"),("Menstruacion","menstruacion"),("Ovulacion","ovulacion")]:
+            if k in details: ciclo_icons.append(EVENT_STYLES[t]["icon"])
+        for k, t in [("Altitud","altitud"),("Respiratorio","respiratorio"),("Calor","calor")]:
+            if k in details: entreno_icons.append(EVENT_STYLES[t]["icon"])
+        for k, t in [("Competición","competicion"),("Lesión","lesion"),("Cita_test","cita_test"),("Comentario","nota")]:
+            if k in details: resto_icons.append(EVENT_STYLES[t]["icon"])
+
         title = "🧍 Estado diario"
-        if icons:
-            title += " " + " ".join(icons)
+        lines = []
+        if ciclo_icons: lines.append(" ".join(ciclo_icons))
+        if entreno_icons: lines.append(" ".join(entreno_icons))
+        if resto_icons: lines.append(" ".join(resto_icons))
+        if lines:
+            title += "\\n" + "\\n".join(lines)
 
         fc_events.append({
             "title": title,
@@ -87,14 +101,25 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
     # Renderizar calendario
     cal = calendar(events=fc_events, options=calendar_options)
 
-    # Mostrar detalles al hacer clic en un evento
+    # Mostrar detalles en un modal al hacer clic en un evento
     if cal and "eventClick" in cal:
         props = cal["eventClick"]["event"].get("extendedProps", {})
         if props:
-            st.markdown("---")
-            st.subheader("📋 Detalles del estado diario")
-            for k, v in props.items():
-                st.write(f"**{k}**: {v}")
+            with st.dialog("📋 Detalles del estado diario"):
+                st.markdown("### 🩸 Datos de ciclo")
+                for k in ["Síntomas","Menstruacion","Ovulacion"]:
+                    if props.get(k):
+                        st.write(f"- **{k}**: {props[k]}")
+
+                st.markdown("### ⛰️ Condiciones de entrenamiento")
+                for k in ["Altitud","Respiratorio","Calor"]:
+                    if props.get(k):
+                        st.write(f"- **{k}**: {props[k]}")
+
+                st.markdown("### 📌 Otros")
+                for k in ["Competición","Lesión","Cita_test","Comentario"]:
+                    if props.get(k):
+                        st.write(f"- **{k}**: {props[k]}")
 
     # Si el usuario hace click en un día (usar dateStr para evitar desfases)
     if cal and "dateClick" in cal:
