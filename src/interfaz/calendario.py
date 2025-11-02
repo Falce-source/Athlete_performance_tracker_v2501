@@ -103,7 +103,7 @@ def mostrar_calendario():
     if not eventos:
         st.info("No hay eventos registrados todavía")
     else:
-        vista = st.radio("Formato de visualización", ["Tabla", "Tarjetas"], horizontal=True)
+        vista = st.radio("Formato de visualización", ["Tabla", "Tarjetas", "Calendario"], horizontal=True)
 
         # Construcción de data
         data = []
@@ -197,7 +197,7 @@ def mostrar_calendario():
             st.markdown(styled_df.to_html(escape=False, index=False), unsafe_allow_html=True)
 
         # Vista tarjetas (3 columnas con fecha arriba)
-        else:
+        elif vista == "Tarjetas":
             for fila in data:
                 # Normalizar valores vacíos a "-"
                 fila = {k: ("-" if (v is None or v == "" or str(v).lower() == "nan") else v) for k, v in fila.items()}
@@ -236,6 +236,11 @@ def mostrar_calendario():
                         st.markdown(f"- 🏆 {fila['Competición']}", unsafe_allow_html=True)
 
                 st.markdown("---")
+
+        # Vista calendario interactivo
+        elif vista == "Calendario":
+            from src.interfaz.componentes.calendario_interactivo import mostrar_calendario_interactivo
+            mostrar_calendario_interactivo(data)
 
     # ───────────────────────────────
     # Sesiones del día (planificado vs completado)
