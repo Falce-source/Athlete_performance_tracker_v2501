@@ -49,7 +49,9 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
         "editable": False,
         "selectable": True,
         "navLinks": True,
-        "height": "auto"
+        "height": "auto",
+        "dayMaxEventRows": True,
+        "eventDisplay": "block"
     }
 
     # Renderizar calendario
@@ -65,13 +67,32 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
         st.markdown("---")
         st.subheader(f"➕ Registrar estado diario para {st.session_state['fecha_seleccionada']}")
         with st.form("form_estado_diario_popup", clear_on_submit=True):
-            sintomas = st.selectbox("Síntomas menstruales", ["Ninguno","Dolor leve","Dolor moderado","Dolor intenso"])
-            menstruacion = st.selectbox("Menstruación", ["No","Día 1","Día 2","Día 3","Día 4+"])
-            ovulacion = st.selectbox("Ovulación", ["No","Estimada","Confirmada"])
+            # 1. Datos de ciclo
+            with st.expander("🩸 Datos de ciclo"):
+                sintomas = st.selectbox("Síntomas menstruales", ["Ninguno","Dolor leve","Dolor moderado","Dolor intenso"])
+                menstruacion = st.selectbox("Menstruación", ["No","Día 1","Día 2","Día 3","Día 4+"])
+                ovulacion = st.selectbox("Ovulación", ["No","Estimada","Confirmada"])
+
+            # 2-4. Entrenamientos especiales
             altitud = st.checkbox("⛰️ Entrenamiento en altitud")
             respiratorio = st.checkbox("🌬️ Entrenamiento respiratorio")
             calor = st.checkbox("🔥 Entrenamiento en calor")
-            comentario = st.text_area("📝 Comentario opcional")
+
+            # 5. Citas/tests
+            with st.expander("📅 Citas / Tests"):
+                cita_test = st.selectbox("Selecciona", ["No","Cita","Test"])
+
+            # 6. Competición
+            with st.expander("🏆 Competición"):
+                fecha_competicion = st.date_input("Fecha de competición", value=None)
+
+            # 7. Lesiones/molestias
+            with st.expander("🤕 Lesiones / molestias"):
+                lesion = st.text_input("Descripción de la lesión o molestia")
+
+            # 8. Notas adicionales
+            with st.expander("📝 Notas adicionales"):
+                comentario_extra = st.text_area("Escribe tu comentario")
 
             submitted = st.form_submit_button("Guardar estado")
             if submitted:
@@ -86,7 +107,10 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
                         "altitud": altitud,
                         "respiratorio": respiratorio,
                         "calor": calor,
-                        "comentario_extra": comentario
+                        "cita_test": cita_test,
+                        "fecha_competicion": str(fecha_competicion) if fecha_competicion else None,
+                        "lesion": lesion,
+                        "comentario_extra": comentario_extra
                     },
                     notas=None
                 )
