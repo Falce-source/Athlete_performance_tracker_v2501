@@ -2,6 +2,10 @@ import streamlit as st
 import datetime
 import calendar
 
+def badge(text, color="#eee", text_color="#000"):
+    """Devuelve un span HTML con estilo tipo chip/badge."""
+    return f"<span style='background-color:{color}; color:{text_color}; padding:2px 6px; border-radius:8px; font-size:85%'>{text}</span>"
+
 def mostrar_calendario_interactivo(eventos):
     """
     Renderiza un calendario mensual con los eventos y sesiones.
@@ -37,38 +41,38 @@ def mostrar_calendario_interactivo(eventos):
                     fecha_str = day.strftime("%Y-%m-%d")
                     if fecha_str in eventos_por_fecha:
                         for ev in eventos_por_fecha[fecha_str]:
-                            detalles = []
+                            chips = []
 
                             # Estado diario
                             if ev.get("Síntomas") and ev["Síntomas"] != "-":
-                                detalles.append(f"🧍 {ev['Síntomas']}")
+                                chips.append(badge(f"🧍 {ev['Síntomas']}", "#e2e3e5", "#383d41"))
                             if ev.get("Menstruacion") and ev["Menstruacion"] != "-":
-                                detalles.append(f"🩸 {ev['Menstruacion']}")
+                                chips.append(badge(f"🩸 {ev['Menstruacion']}", "#f8d7da", "#721c24"))
                             if ev.get("Ovulacion") and ev["Ovulacion"] != "-":
-                                detalles.append(f"🔄 {ev['Ovulacion']}")
+                                chips.append(badge(f"🔄 {ev['Ovulacion']}", "#d1ecf1", "#0c5460"))
                             if ev.get("Lesión") and ev["Lesión"] != "-":
-                                detalles.append(f"🤕 {ev['Lesión']}")
+                                chips.append(badge(f"🤕 {ev['Lesión']}", "#ffeeba", "#856404"))
                             if ev.get("Comentario") and ev["Comentario"] != "-":
-                                detalles.append(f"📝 {ev['Comentario']}")
+                                chips.append(badge(f"📝 {ev['Comentario']}", "#fefefe", "#333"))
 
                             # Entrenamiento
                             if ev.get("Altitud") == "Sí":
-                                detalles.append("⛰️ Altitud")
+                                chips.append(badge("⛰️ Altitud", "#d1ecf1", "#0c5460"))
                             if ev.get("Respiratorio") == "Sí":
-                                detalles.append("🌬️ Respiratorio")
+                                chips.append(badge("🌬️ Respiratorio", "#d4edda", "#155724"))
                             if ev.get("Calor") == "Sí":
-                                detalles.append("🔥 Calor")
+                                chips.append(badge("🔥 Calor", "#f8d7da", "#721c24"))
 
                             # Eventos especiales
                             if ev.get("Cita_test") and ev["Cita_test"] != "No":
-                                detalles.append(f"📌 {ev['Cita_test']}")
+                                chips.append(badge(f"📌 {ev['Cita_test']}", "#e2e3e5", "#383d41"))
                             if ev.get("Competición"):
-                                detalles.append(f"🏆 {ev['Competición']}")
+                                chips.append(badge(f"🏆 {ev['Competición']}", "#fff3cd", "#856404"))
 
                             # Sesiones
                             if ev.get("Tipo") == "sesion":
-                                detalles.append(f"🏃 {ev.get('Sesion_tipo','')}")
+                                chips.append(badge(f"🏃 {ev.get('Sesion_tipo','')}", "#cce5ff", "#004085"))
 
-                            # Renderizar todos los detalles
-                            for d in detalles:
-                                st.markdown(f"- {d}")
+                            # Renderizar todos los chips en línea
+                            if chips:
+                                st.markdown(" ".join(chips), unsafe_allow_html=True)
