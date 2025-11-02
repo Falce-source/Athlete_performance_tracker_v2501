@@ -66,11 +66,15 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
 
         title = "🧍 Estado diario"
         lines = []
-        if ciclo_icons: lines.append(" ".join(ciclo_icons))
-        if entreno_icons: lines.append(" ".join(entreno_icons))
-        if resto_icons: lines.append(" ".join(resto_icons))
+        if ciclo_icons:
+            lines.append(" ".join(ciclo_icons))
+        if entreno_icons:
+            lines.append(" ".join(entreno_icons))
+        if resto_icons:
+            lines.append(" ".join(resto_icons))
         if lines:
-            title += "\\n" + "\\n".join(lines)
+            # Usamos <br> para saltos de línea en HTML
+            title += "<br>" + "<br>".join(lines)
 
         fc_events.append({
             "title": title,
@@ -95,7 +99,9 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
         "navLinks": True,
         "height": "auto",
         "eventDisplay": "block",
-        "dayMaxEventRows": False  # permitir que la fila crezca según eventos
+        "dayMaxEventRows": False,  # permitir que la fila crezca según eventos
+        # Renderizar HTML en los títulos de eventos
+        "eventContent": "function(arg){return {html: arg.event.title}}"
     }
 
     # Renderizar calendario
