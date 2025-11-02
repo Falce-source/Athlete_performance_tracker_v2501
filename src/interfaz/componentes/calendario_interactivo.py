@@ -116,7 +116,6 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
                 sql.crear_evento_calendario(
                     id_atleta=id_atleta,
                     fecha=fecha_guardar,
-                     tipo_evento="estado_diario",
                     tipo_evento="estado_diario",
                     valor={
                         "sintomas": sintomas,
