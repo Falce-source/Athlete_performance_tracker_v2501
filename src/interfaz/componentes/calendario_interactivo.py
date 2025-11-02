@@ -145,92 +145,127 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
     # Renderizar calendario (ahora \n se interpreta como salto de línea)
     cal = calendar(events=fc_events, options=calendar_options)
 
-    # Mostrar detalles en un modal solo al hacer clic en la cabecera
+    # Modal editable al hacer clic en la cabecera
     if cal and "eventClick" in cal:
         ev = cal["eventClick"]["event"]
         props = ev.get("extendedProps", {})
         if props and props.get("displayOrder") == 0:
-            @st.dialog("📋 Detalles del estado diario")
-            def mostrar_detalles():
-                st.markdown("### 🩸 Datos de ciclo")
-                for k in ["Síntomas","Menstruacion","Ovulacion"]:
-                    if props.get(k):
-                        st.write(f"- **{k}**: {props[k]}")
+            @st.dialog("📋 Editar estado diario")
+            def editar_estado():
+                with st.form("form_editar_estado", clear_on_submit=True):
+                    sintomas = st.selectbox("Síntomas menstruales",
+                        ["Ninguno","Dolor leve","Dolor moderado","Dolor intenso"],
+                        index=["Ninguno","Dolor leve","Dolor moderado","Dolor intenso"].index(props.get("Síntomas","Ninguno")))
+                    menstruacion = st.selectbox("Menstruación",
+                        ["No","Día 1","Día 2","Día 3","Día 4+"],
+                        index=["No","Día 1","Día 2","Día 3","Día 4+"].index(props.get("Menstruacion","No")))
+                    ovulacion = st.selectbox("Ovulación",
+                        ["No","Estimada","Confirmada"],
+                        index=["No","Estimada","Confirmada"].index(props.get("Ovulacion","No")))
 
-                st.markdown("### ⛰️ Condiciones de entrenamiento")
-                for k in ["Altitud","Respiratorio","Calor"]:
-                    if props.get(k):
-                        st.write(f"- **{k}**: {props[k]}")
+                    altitud = st.checkbox("⛰️ Entrenamiento en altitud", value=bool(props.get("Altitud")))
+                    respiratorio = st.checkbox("🌬️ Entrenamiento respiratorio", value=bool(props.get("Respiratorio")))
+                    calor = st.checkbox("🔥 Entrenamiento en calor", value=bool(props.get("Calor")))
 
-                st.markdown("### 📌 Otros")
-                for k in ["Competición","Lesión","Cita_test","Comentario"]:
-                    if props.get(k):
-                        st.write(f"- **{k}**: {props[k]}")
+                    cita_test = st.selectbox("📅 Citas / Tests", ["No","Cita","Test"],
+                        index=["No","Cita","Test"].index(props.get("Cita_test","No")))
+                    fecha_competicion = st.date_input("🏆 Fecha de competición",
+                        value=datetime.date.fromisoformat(props.get("fecha_competicion")) if props.get("fecha_competicion") else None)
+                    lesion = st.text_input("🤕 Lesión", value=props.get("Lesión",""))
+                    comentario_extra = st.text_area("📝 Notas adicionales", value=props.get("Comentario",""))
 
-            mostrar_detalles()
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        submitted = st.form_submit_button("💾 Guardar cambios")
+                    with col2:
+                        eliminar = st.form_submit_button("🗑️ Eliminar")
 
-    # Si el usuario hace click en un día (usar dateStr para evitar desfases)
+                    if submitted:
+                        sql.actualizar_evento_calendario(
+                            id_atleta=id_atleta,
+                            fecha=ev["start"],
+                            valores_actualizados={
+                                "sintomas": sintomas,
+                                "menstruacion": menstruacion,
+                                "ovulacion": ovulacion,
+                                "altitud": altitud,
+                                "respiratorio": respiratorio,
+                                "calor": calor,
+                                "cita_test": cita_test,
+                                "fecha_competicion": str(fecha_competicion) if fecha_competicion else None,
+                                "lesion": lesion,
+                                "comentario_extra": comentario_extra
+                            }
+                        )
+                        st.success("✅ Estado diario actualizado")
+                        st.rerun()  # recarga para cerrar modal y refrescar calendario
+
+                    if eliminar:
+                        sql.eliminar_evento_calendario(id_atleta=id_atleta, fecha=ev["start"])
+                        st.success("🗑️ Estado diario eliminado")
+                        st.rerun()  # recarga para cerrar modal y refrescar calendario
+
+            editar_estado()
+
+    # Modal de registro al hacer clic en un día vacío
     if cal and "dateClick" in cal:
         fecha_sel = cal["dateClick"].get("dateStr") or cal["dateClick"].get("date")
-        st.session_state["fecha_seleccionada"] = fecha_sel
 
-    # Mostrar formulario emergente si hay fecha seleccionada
-    if "fecha_seleccionada" in st.session_state:
-        st.markdown("---")
-        st.subheader(f"➕ Registrar estado diario para {st.session_state['fecha_seleccionada']}")
-        with st.form("form_estado_diario_popup", clear_on_submit=True):
-            # 1. Datos de ciclo
-            with st.expander("🩸 Datos de ciclo"):
-                sintomas = st.selectbox("Síntomas menstruales", ["Ninguno","Dolor leve","Dolor moderado","Dolor intenso"])
-                menstruacion = st.selectbox("Menstruación", ["No","Día 1","Día 2","Día 3","Día 4+"])
-                ovulacion = st.selectbox("Ovulación", ["No","Estimada","Confirmada"])
+        @st.dialog(f"➕ Registrar estado diario para {fecha_sel}")
+        def registrar_estado():
+            with st.form("form_estado_diario_popup", clear_on_submit=True):
+                # 1. Datos de ciclo
+                with st.expander("🩸 Datos de ciclo"):
+                    sintomas = st.selectbox("Síntomas menstruales", ["Ninguno","Dolor leve","Dolor moderado","Dolor intenso"])
+                    menstruacion = st.selectbox("Menstruación", ["No","Día 1","Día 2","Día 3","Día 4+"])
+                    ovulacion = st.selectbox("Ovulación", ["No","Estimada","Confirmada"])
 
-            # 2-4. Entrenamientos especiales
-            altitud = st.checkbox("⛰️ Entrenamiento en altitud")
-            respiratorio = st.checkbox("🌬️ Entrenamiento respiratorio")
-            calor = st.checkbox("🔥 Entrenamiento en calor")
+                # 2-4. Entrenamientos especiales
+                altitud = st.checkbox("⛰️ Entrenamiento en altitud")
+                respiratorio = st.checkbox("🌬️ Entrenamiento respiratorio")
+                calor = st.checkbox("🔥 Entrenamiento en calor")
 
-            # 5. Citas/tests
-            with st.expander("📅 Citas / Tests"):
-                cita_test = st.selectbox("Selecciona", ["No","Cita","Test"])
+                # 5. Citas/tests
+                with st.expander("📅 Citas / Tests"):
+                    cita_test = st.selectbox("Selecciona", ["No","Cita","Test"])
 
-            # 6. Competición
-            with st.expander("🏆 Competición"):
-                fecha_competicion = st.date_input("Fecha de competición", value=None)
+                # 6. Competición
+                with st.expander("🏆 Competición"):
+                    fecha_competicion = st.date_input("Fecha de competición", value=None)
 
-            # 7. Lesiones/molestias
-            with st.expander("🤕 Lesiones / molestias"):
-                lesion = st.text_input("Descripción de la lesión o molestia")
+                # 7. Lesiones/molestias
+                with st.expander("🤕 Lesiones / molestias"):
+                    lesion = st.text_input("Descripción de la lesión o molestia")
 
-            # 8. Notas adicionales
-            with st.expander("📝 Notas adicionales"):
-                comentario_extra = st.text_area("Escribe tu comentario")
+                # 8. Notas adicionales
+                with st.expander("📝 Notas adicionales"):
+                    comentario_extra = st.text_area("Escribe tu comentario")
 
-            submitted = st.form_submit_button("Guardar estado")
-            if submitted:
-                # Guardar como datetime UTC a medianoche para consistencia
-                fecha_guardar = datetime.datetime.combine(
-                    datetime.date.fromisoformat(st.session_state["fecha_seleccionada"][:10]),
-                    datetime.time.min,
-                    tzinfo=datetime.timezone.utc
-                )
-                sql.crear_evento_calendario(
-                    id_atleta=id_atleta,
-                    fecha=fecha_guardar,
-                    tipo_evento="estado_diario",
-                    valor={
-                        "sintomas": sintomas,
-                        "menstruacion": menstruacion,
-                        "ovulacion": ovulacion,
-                        "altitud": altitud,
-                        "respiratorio": respiratorio,
-                        "calor": calor,
-                        "cita_test": cita_test,
-                        "fecha_competicion": str(fecha_competicion) if fecha_competicion else None,
-                        "lesion": lesion,
-                        "comentario_extra": comentario_extra
-                    },
-                    notas=None
-                )
-                st.success("✅ Estado diario registrado correctamente")
-                del st.session_state["fecha_seleccionada"]
+                submitted = st.form_submit_button("Guardar estado")
+                if submitted:
+                    fecha_guardar = datetime.datetime.combine(
+                        datetime.date.fromisoformat(fecha_sel[:10]),
+                        datetime.time.min,
+                        tzinfo=datetime.timezone.utc
+                    )
+                    sql.crear_evento_calendario(
+                        id_atleta=id_atleta,
+                        fecha=fecha_guardar,
+                        tipo_evento="estado_diario",
+                        valor={
+                            "sintomas": sintomas,
+                            "menstruacion": menstruacion,
+                            "ovulacion": ovulacion,
+                            "altitud": altitud,
+                            "respiratorio": respiratorio,
+                            "calor": calor,
+                            "cita_test": cita_test,
+                            "fecha_competicion": str(fecha_competicion) if fecha_competicion else None,
+                            "lesion": lesion,
+                            "comentario_extra": comentario_extra
+                        },
+                        notas=None
+                    )
+                    st.success("✅ Estado diario registrado correctamente")
+
+        registrar_estado()
