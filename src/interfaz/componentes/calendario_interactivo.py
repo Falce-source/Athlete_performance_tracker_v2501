@@ -12,31 +12,43 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
 
     st.markdown("### 🗓️ Calendario interactivo")
 
-    # Transformar tus eventos a formato FullCalendar
+    # Transformar eventos a varias líneas por día (apilado vertical nativo)
     fc_events = []
     for ev in eventos:
         fecha = ev.get("Fecha")
         if not fecha:
             continue
-        title_parts = []
-        if ev.get("Síntomas") and ev["Síntomas"] != "-":
-            title_parts.append(f"🧍 {ev['Síntomas']}")
-        if ev.get("Menstruacion") and ev["Menstruacion"] != "-":
-            title_parts.append(f"🩸 {ev['Menstruacion']}")
-        if ev.get("Ovulacion") and ev["Ovulacion"] != "-":
-            title_parts.append(f"🔄 {ev['Ovulacion']}")
-        if ev.get("Lesión") and ev["Lesión"] != "-":
-            title_parts.append(f"🤕 {ev['Lesión']}")
-        if ev.get("Competición"):
-            title_parts.append(f"🏆 {ev['Competición']}")
-        if ev.get("Tipo") == "sesion":
-            title_parts.append(f"🏃 {ev.get('Sesion_tipo','')}")
 
-        fc_events.append({
-            "title": "<br>".join(title_parts) if title_parts else ev.get("Tipo","Evento"),
-            "start": fecha,
-            "allDay": True
-        })
+        def add_event(line: str):
+            fc_events.append({
+                "title": line,
+                "start": fecha,
+                "allDay": True
+            })
+
+        if ev.get("Síntomas") and ev["Síntomas"] != "-":
+            add_event(f"🧍 Síntomas: {ev['Síntomas']}")
+        if ev.get("Menstruacion") and ev["Menstruacion"] != "-":
+            add_event(f"🩸 Menstruación: {ev['Menstruacion']}")
+        if ev.get("Ovulacion") and ev["Ovulacion"] != "-":
+            add_event(f"🔄 Ovulación: {ev['Ovulacion']}")
+        if ev.get("Altitud") == "Sí":
+            add_event("⛰️ Entrenamiento en altitud")
+        if ev.get("Respiratorio") == "Sí":
+            add_event("🌬️ Entrenamiento respiratorio")
+        if ev.get("Calor") == "Sí":
+            add_event("🔥 Entrenamiento en calor")
+        if ev.get("Cita_test") and ev["Cita_test"] != "-":
+            add_event(f"📅 {ev['Cita_test']}")
+        if ev.get("Competición"):
+            add_event(f"🏆 {ev['Competición']}")
+        if ev.get("Lesión") and ev["Lesión"] != "-":
+            add_event(f"🤕 {ev['Lesión']}")
+        if ev.get("Comentario") and ev["Comentario"] != "-":
+            add_event(f"📝 {ev['Comentario']}")
+        # Fallback cuando no hay detalles
+        if not any(k in ev for k in ["Síntomas","Menstruacion","Ovulacion","Altitud","Respiratorio","Calor","Cita_test","Competición","Lesión","Comentario"]):
+            add_event(ev.get("Tipo", "Evento"))
 
     # Configuración del calendario
     calendar_options = {
@@ -50,16 +62,15 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
         "selectable": True,
         "navLinks": True,
         "height": "auto",
-        "dayMaxEventRows": True,
-        "eventDisplay": "block",
+        "eventDisplay": "block"
     }
 
     # Renderizar calendario
     cal = calendar(events=fc_events, options=calendar_options)
 
-    # Si el usuario hace click en un día
+    # Si el usuario hace click en un día (usar dateStr para evitar desfases)
     if cal and "dateClick" in cal:
-        fecha_sel = cal["dateClick"]["date"]
+        fecha_sel = cal["dateClick"].get("dateStr") or cal["dateClick"].get("date")
         st.session_state["fecha_seleccionada"] = fecha_sel
 
     # Mostrar formulario emergente si hay fecha seleccionada
@@ -96,11 +107,16 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
 
             submitted = st.form_submit_button("Guardar estado")
             if submitted:
+                # Guardar como datetime UTC a medianoche para consistencia
+                fecha_guardar = datetime.datetime.combine(
+                    datetime.date.fromisoformat(st.session_state["fecha_seleccionada"][:10]),
+                    datetime.time.min,
+                    tzinfo=datetime.timezone.utc
+                )
                 sql.crear_evento_calendario(
                     id_atleta=id_atleta,
-                    fecha=datetime.datetime.fromisoformat(
-                        st.session_state["fecha_seleccionada"].replace("Z", "+00:00")
-                    ).date(),
+                    fecha=fecha_guardar,
+                     tipo_evento="estado_diario",
                     tipo_evento="estado_diario",
                     valor={
                         "sintomas": sintomas,
