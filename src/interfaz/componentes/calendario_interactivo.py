@@ -98,12 +98,16 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
         "selectable": True,
         "navLinks": True,
         "height": "auto",
-       "eventDisplay": "block",
-        "dayMaxEventRows": False  # permitir que la fila crezca según eventos
+        "eventDisplay": "block",
+        "dayMaxEventRows": False,  # permitir que la fila crezca según eventos
+        # 👇 clave: renderizar HTML en los títulos de eventos
+        "eventContent": """function(arg) {
+            return { html: arg.event.title };
+        }"""
     }
 
-    # Renderizar calendario (permitir HTML en títulos con <br>)
-    cal = calendar(events=fc_events, options=calendar_options, custom_events=True)
+    # Renderizar calendario (ahora <br> se interpreta como salto de línea)
+    cal = calendar(events=fc_events, options=calendar_options)
 
     # Mostrar detalles en un modal al hacer clic en un evento
     if cal and "eventClick" in cal:
