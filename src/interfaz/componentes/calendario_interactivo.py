@@ -52,7 +52,6 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
         "height": "auto",
         "dayMaxEventRows": True,
         "eventDisplay": "block",
-        "eventContent": {"html": True}
     }
 
     # Renderizar calendario
@@ -99,7 +98,9 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
             if submitted:
                 sql.crear_evento_calendario(
                     id_atleta=id_atleta,
-                    fecha=datetime.date.fromisoformat(st.session_state["fecha_seleccionada"][:10]),
+                    fecha=datetime.datetime.fromisoformat(
+                        st.session_state["fecha_seleccionada"].replace("Z", "+00:00")
+                    ).date(),
                     tipo_evento="estado_diario",
                     valor={
                         "sintomas": sintomas,
