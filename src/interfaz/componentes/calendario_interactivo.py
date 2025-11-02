@@ -26,70 +26,47 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
 
     st.markdown("### 🗓️ Calendario interactivo")
 
-    # Construcción de eventos con estilos y prioridades
+    # Construcción de eventos agrupados por día
     fc_events = []
     for ev in eventos:
         fecha = ev.get("Fecha")
         if not fecha:
             continue
 
-        def add_event(tipo, valor, dias_restantes=None):
-            style = EVENT_STYLES.get(tipo, {})
-            icon = style.get("icon", "")
-            title = f"{icon} {valor}"
+        # Recoger iconos activos
+        icons = []
+        details = {}
+        for key, tipo in [
+            ("Síntomas", "sintomas"),
+            ("Menstruacion", "menstruacion"),
+            ("Ovulacion", "ovulacion"),
+            ("Altitud", "altitud"),
+            ("Respiratorio", "respiratorio"),
+            ("Calor", "calor"),
+            ("Cita_test", "cita_test"),
+            ("Competición", "competicion"),
+            ("Lesión", "lesion"),
+            ("Comentario", "nota"),
+        ]:
+            val = ev.get(key)
+            if val and val not in ["-", "No", "Ninguno", None]:
+                icons.append(EVENT_STYLES[tipo]["icon"])
+                details[key] = val
 
-            # Competición: color dinámico según días restantes
-            if tipo == "competicion" and dias_restantes is not None:
-                if dias_restantes <= 7:
-                    bg, border, text = "#FDE2E2", "#EF4444", "#7A1D1D"
-                elif dias_restantes <= 30:
-                    bg, border, text = "#FFF4E5", "#F59E0B", "#7C2D12"
-                else:
-                    bg, border, text = "#F3F4F6", "#6B7280", "#374151"
-            else:
-                bg, border, text = style.get("bg"), style.get("border"), style.get("text")
+        # Construir título con iconos activos
+        title = "🧍 Estado diario"
+        if icons:
+            title += " " + " ".join(icons)
 
-            fc_events.append({
-                "title": title,
-                "start": fecha,
-                "allDay": True,
-                "backgroundColor": bg,
-                "borderColor": border,
-                "textColor": text,
-                "priority": style.get("priority", 99)
-            })
-
-        if ev.get("Síntomas") and ev["Síntomas"] not in ["-", "No", "Ninguno", None]:
-            add_event("sintomas", ev["Síntomas"])
-        if ev.get("Menstruacion") and ev["Menstruacion"] not in ["-", "No", None]:
-            add_event("menstruacion", ev["Menstruacion"])
-        if ev.get("Ovulacion") and ev["Ovulacion"] not in ["-", "No", None]:
-            add_event("ovulacion", ev["Ovulacion"])
-        if ev.get("Altitud") == "Sí":
-            add_event("altitud", "Altitud")
-        if ev.get("Respiratorio") == "Sí":
-            add_event("respiratorio", "Respiratorio")
-        if ev.get("Calor") == "Sí":
-            add_event("calor", "Calor")
-        if ev.get("Cita_test") and ev["Cita_test"] not in ["-", "No", None]:
-            add_event("cita_test", ev["Cita_test"])
-        if ev.get("Competición"):
-            try:
-                fecha_comp = datetime.date.fromisoformat(ev["Competición"].split()[0])
-                dias_restantes = (fecha_comp - datetime.date.today()).days
-                add_event("competicion", f"{dias_restantes} días", dias_restantes)
-            except Exception:
-                add_event("competicion", ev["Competición"])
-        if ev.get("Lesión") and ev["Lesión"] not in ["-", None]:
-            add_event("lesion", ev["Lesión"])
-        if ev.get("Comentario") and ev["Comentario"] not in ["-", None]:
-            add_event("nota", ev["Comentario"])
-        # Fallback: solo si no hay ningún dato relevante
-        if not any(k in ev for k in ["Síntomas","Menstruacion","Ovulacion","Altitud","Respiratorio","Calor","Cita_test","Competición","Lesión","Comentario"]):
-            add_event("nota", ev.get("Tipo", "Evento"))
-
-    # Ordenar por prioridad
-    fc_events.sort(key=lambda e: e.get("priority", 99))
+        fc_events.append({
+            "title": title,
+            "start": fecha,
+            "allDay": True,
+            "backgroundColor": EVENT_STYLES["estado"]["bg"],
+            "borderColor": EVENT_STYLES["estado"]["border"],
+            "textColor": EVENT_STYLES["estado"]["text"],
+            "extendedProps": details
+        })
 
     # Configuración del calendario
     calendar_options = {
@@ -109,6 +86,15 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
 
     # Renderizar calendario
     cal = calendar(events=fc_events, options=calendar_options)
+
+    # Mostrar detalles al hacer clic en un evento
+    if cal and "eventClick" in cal:
+        props = cal["eventClick"]["event"].get("extendedProps", {})
+        if props:
+            st.markdown("---")
+            st.subheader("📋 Detalles del estado diario")
+            for k, v in props.items():
+                st.write(f"**{k}**: {v}")
 
     # Si el usuario hace click en un día (usar dateStr para evitar desfases)
     if cal and "dateClick" in cal:
