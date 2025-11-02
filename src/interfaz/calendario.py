@@ -55,32 +55,27 @@ def mostrar_calendario():
                 try:
                     fecha_comp = date.fromisoformat(valor["fecha_competicion"])
                     dias_restantes = (fecha_comp - date.today()).days
-                    if dias_restantes <= 7:
-                        fila["Competición"] = f"<span style='color:red; font-weight:bold'>{fecha_comp} (faltan {dias_restantes} días)</span>"
-                    elif dias_restantes <= 30:
-                        fila["Competición"] = f"<span style='color:orange'>{fecha_comp} (faltan {dias_restantes} días)</span>"
-                    else:
-                        fila["Competición"] = f"{fecha_comp} (faltan {dias_restantes} días)"
+                    fila["Competición"] = f"{dias_restantes} días"
                 except Exception:
                     fila["Competición"] = valor["fecha_competicion"]
 
-            if "sintomas" in valor:
+            if "sintomas" in valor and valor["sintomas"] not in ["No", "-", None, "Ninguno"]:
                 fila["Síntomas"] = valor["sintomas"]
-            if "menstruacion" in valor:
+            if "menstruacion" in valor and valor["menstruacion"] not in ["No", "-", None]:
                 fila["Menstruacion"] = valor["menstruacion"]
-            if "ovulacion" in valor:
+            if "ovulacion" in valor and valor["ovulacion"] not in ["No", "-", None]:
                 fila["Ovulacion"] = valor["ovulacion"]
-            if "altitud" in valor:
-                fila["Altitud"] = "Sí" if valor["altitud"] else "No"
-            if "respiratorio" in valor:
-                fila["Respiratorio"] = "Sí" if valor["respiratorio"] else "No"
-            if "calor" in valor:
-                fila["Calor"] = "Sí" if valor["calor"] else "No"
+            if "altitud" in valor and valor["altitud"]:
+                fila["Altitud"] = "Sí"
+            if "respiratorio" in valor and valor["respiratorio"]:
+                fila["Respiratorio"] = "Sí"
+            if "calor" in valor and valor["calor"]:
+                fila["Calor"] = "Sí"
             if "lesion" in valor and valor["lesion"]:
                 fila["Lesión"] = valor["lesion"]
             if "comentario_extra" in valor and valor["comentario_extra"]:
                 fila["Comentario"] = valor["comentario_extra"]
-            if "cita_test" in valor:
+            if "cita_test" in valor and valor["cita_test"] not in ["No", "-", None]:
                 fila["Cita_test"] = valor["cita_test"]
 
             data.append(fila)
