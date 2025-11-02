@@ -87,45 +87,45 @@ def mostrar_calendario():
 
         # Vista tabla
         if vista == "Tabla":
-            df = pd.DataFrame(data)
+            df = pd.DataFrame(data).fillna("-")
 
-            # Reemplazar NaN/None por guiones
-            df = df.fillna("-")
-
-            # Convertimos a HTML para poder usar estilos y badges
+            # Mapeo de estilos coherente con calendario_interactivo
             def style_cell(val, col):
-                if col == "Competición" and isinstance(val, str):
-                    if "faltan" in val:
-                        try:
-                            dias = int(val.split("faltan")[1].split("días")[0])
-                            if dias <= 7:
-                                return f"<span style='color:red; font-weight:bold'>{val}</span>"
-                            elif dias <= 30:
-                                return f"<span style='color:orange'>{val}</span>"
-                        except Exception:
-                            return val
-                if col in ["Altitud", "Respiratorio", "Calor"]:
-                    if val == "Sí":
-                        color = "#d4edda" if col == "Respiratorio" else "#d1ecf1" if col == "Altitud" else "#f8d7da"
-                        text_color = "#155724" if col == "Respiratorio" else "#0c5460" if col == "Altitud" else "#721c24"
-                        return f"<span style='background-color:{color}; color:{text_color}; padding:2px 6px; border-radius:8px;'>{val}</span>"
-                if col == "Ovulacion" and val == "Confirmada":
-                    return f"<span style='background-color:#ffcccc; color:#900; padding:2px 6px; border-radius:8px;'>{val}</span>"
-                if col == "Lesión" and val and val != "-":
-                    return f"<span style='background-color:#ffeeba; color:#856404; padding:2px 6px; border-radius:8px;'>{val}</span>"
+                if col == "Competición" and isinstance(val, str) and "días" in val:
+                    try:
+                        dias = int(val.split()[0])
+                        if dias <= 7:
+                            return f"<span style='background-color:#FDE2E2; color:#7A1D1D; font-weight:bold; padding:2px 6px; border-radius:8px;'>{val}</span>"
+                        elif dias <= 30:
+                            return f"<span style='background-color:#FFF4E5; color:#7C2D12; padding:2px 6px; border-radius:8px;'>{val}</span>"
+                        else:
+                            return f"<span style='background-color:#F3F4F6; color:#374151; padding:2px 6px; border-radius:8px;'>{val}</span>"
+                    except Exception:
+                        return val
+                if col == "Síntomas" and val not in ["-", "Ninguno"]:
+                    return f"<span style='background-color:#FDE2E2; color:#7A1D1D; padding:2px 6px; border-radius:8px;'>🩸 {val}</span>"
+                if col == "Menstruacion" and val not in ["-", "No"]:
+                    return f"<span style='background-color:#FEE2E2; color:#7A1D1D; padding:2px 6px; border-radius:8px;'>🩸 {val}</span>"
+                if col == "Ovulacion" and val not in ["-", "No"]:
+                    return f"<span style='background-color:#F3E8FF; color:#2E1065; padding:2px 6px; border-radius:8px;'>🔄 {val}</span>"
+                if col == "Altitud" and val == "Sí":
+                    return f"<span style='background-color:#E6F0FF; color:#0B3A82; padding:2px 6px; border-radius:8px;'>⛰️ {val}</span>"
+                if col == "Respiratorio" and val == "Sí":
+                    return f"<span style='background-color:#E0F7FA; color:#065F46; padding:2px 6px; border-radius:8px;'>🌬️ {val}</span>"
+                if col == "Calor" and val == "Sí":
+                    return f"<span style='background-color:#FFF4E5; color:#7C2D12; padding:2px 6px; border-radius:8px;'>🔥 {val}</span>"
+                if col == "Lesión" and val not in ["-", ""]:
+                    return f"<span style='background-color:#FFF4D6; color:#7A4B00; padding:2px 6px; border-radius:8px;'>🤕 {val}</span>"
+                if col == "Comentario" and val not in ["-", ""]:
+                    return f"<span style='background-color:#F9FAFB; color:#374151; padding:2px 6px; border-radius:8px;'>📝 {val}</span>"
                 return val if val != "nan" else "-"
 
-            # Aplicamos estilos a cada celda
             styled_rows = []
             for _, row in df.iterrows():
-                styled_row = {}
-                for col, val in row.items():
-                    styled_row[col] = style_cell(val, col)
+                styled_row = {col: style_cell(val, col) for col, val in row.items()}
                 styled_rows.append(styled_row)
 
             styled_df = pd.DataFrame(styled_rows)
-
-            # Renderizamos como tabla HTML con estilos
             st.markdown(styled_df.to_html(escape=False, index=False), unsafe_allow_html=True)
 
         # Vista calendario interactivo (FullCalendar)

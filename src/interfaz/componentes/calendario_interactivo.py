@@ -3,6 +3,20 @@ from streamlit_calendar import calendar
 import datetime
 from src.persistencia import sql
 
+# Estilos por tipo de evento
+EVENT_STYLES = {
+    "sintomas": {"icon": "🩸", "bg": "#FDE2E2", "border": "#EF4444", "text": "#7A1D1D", "priority": 3},
+    "menstruacion": {"icon": "🩸", "bg": "#FEE2E2", "border": "#DC2626", "text": "#7A1D1D", "priority": 3},
+    "ovulacion": {"icon": "🔄", "bg": "#F3E8FF", "border": "#8B5CF6", "text": "#2E1065", "priority": 3},
+    "estado": {"icon": "🧍", "bg": "#E8F6EF", "border": "#22C55E", "text": "#0B4E2E", "priority": 2},
+    "altitud": {"icon": "⛰️", "bg": "#E6F0FF", "border": "#3B82F6", "text": "#0B3A82", "priority": 2},
+    "respiratorio": {"icon": "🌬️", "bg": "#E0F7FA", "border": "#0EA5E9", "text": "#065F46", "priority": 2},
+    "calor": {"icon": "🔥", "bg": "#FFF4E5", "border": "#F97316", "text": "#7C2D12", "priority": 2},
+    "cita_test": {"icon": "📅", "bg": "#E2E8F0", "border": "#64748B", "text": "#1E293B", "priority": 4},
+    "competicion": {"icon": "🏆", "priority": 1},  # colores dinámicos
+    "lesion": {"icon": "🤕", "bg": "#FFF4D6", "border": "#F59E0B", "text": "#7A4B00", "priority": 1},
+    "nota": {"icon": "📝", "bg": "#F9FAFB", "border": "#6B7280", "text": "#374151", "priority": 5},
+}
 def mostrar_calendario_interactivo(eventos, id_atleta):
     """
     Renderiza un calendario interactivo tipo TrainingPeaks usando streamlit-calendar.
@@ -12,43 +26,70 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
 
     st.markdown("### 🗓️ Calendario interactivo")
 
-    # Transformar eventos a varias líneas por día (apilado vertical nativo)
+    # Construcción de eventos con estilos y prioridades
     fc_events = []
     for ev in eventos:
         fecha = ev.get("Fecha")
         if not fecha:
             continue
 
-        def add_event(line: str):
+        def add_event(tipo, valor, dias_restantes=None):
+            style = EVENT_STYLES.get(tipo, {})
+            icon = style.get("icon", "")
+            title = f"{icon} {valor}"
+
+            # Competición: color dinámico según días restantes
+            if tipo == "competicion" and dias_restantes is not None:
+                if dias_restantes <= 7:
+                    bg, border, text = "#FDE2E2", "#EF4444", "#7A1D1D"
+                elif dias_restantes <= 30:
+                    bg, border, text = "#FFF4E5", "#F59E0B", "#7C2D12"
+                else:
+                    bg, border, text = "#F3F4F6", "#6B7280", "#374151"
+            else:
+                bg, border, text = style.get("bg"), style.get("border"), style.get("text")
+
             fc_events.append({
-                "title": line,
+                "title": title,
                 "start": fecha,
-                "allDay": True
+                "allDay": True,
+                "backgroundColor": bg,
+                "borderColor": border,
+                "textColor": text,
+                "priority": style.get("priority", 99)
             })
 
         if ev.get("Síntomas") and ev["Síntomas"] != "-":
-            add_event(f"🧍 Síntomas: {ev['Síntomas']}")
+            add_event("sintomas", ev["Síntomas"])
         if ev.get("Menstruacion") and ev["Menstruacion"] != "-":
-            add_event(f"🩸 Menstruación: {ev['Menstruacion']}")
+            add_event("menstruacion", ev["Menstruacion"])
         if ev.get("Ovulacion") and ev["Ovulacion"] != "-":
-            add_event(f"🔄 Ovulación: {ev['Ovulacion']}")
+            add_event("ovulacion", ev["Ovulacion"])
         if ev.get("Altitud") == "Sí":
-            add_event("⛰️ Entrenamiento en altitud")
+            add_event("altitud", "Altitud")
         if ev.get("Respiratorio") == "Sí":
-            add_event("🌬️ Entrenamiento respiratorio")
+            add_event("respiratorio", "Respiratorio")
         if ev.get("Calor") == "Sí":
-            add_event("🔥 Entrenamiento en calor")
+            add_event("calor", "Calor")
         if ev.get("Cita_test") and ev["Cita_test"] != "-":
-            add_event(f"📅 {ev['Cita_test']}")
+            add_event("cita_test", ev["Cita_test"])
         if ev.get("Competición"):
-            add_event(f"🏆 {ev['Competición']}")
+            try:
+                fecha_comp = datetime.date.fromisoformat(ev["Competición"].split()[0])
+                dias_restantes = (fecha_comp - datetime.date.today()).days
+                add_event("competicion", f"{dias_restantes} días", dias_restantes)
+            except Exception:
+                add_event("competicion", ev["Competición"])
         if ev.get("Lesión") and ev["Lesión"] != "-":
-            add_event(f"🤕 {ev['Lesión']}")
+            add_event("lesion", ev["Lesión"])
         if ev.get("Comentario") and ev["Comentario"] != "-":
-            add_event(f"📝 {ev['Comentario']}")
-        # Fallback cuando no hay detalles
+            add_event("nota", ev["Comentario"])
+        # Fallback
         if not any(k in ev for k in ["Síntomas","Menstruacion","Ovulacion","Altitud","Respiratorio","Calor","Cita_test","Competición","Lesión","Comentario"]):
-            add_event(ev.get("Tipo", "Evento"))
+            add_event("nota", ev.get("Tipo", "Evento"))
+
+    # Ordenar por prioridad
+    fc_events.sort(key=lambda e: e.get("priority", 99))
 
     # Configuración del calendario
     calendar_options = {
@@ -62,7 +103,8 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
         "selectable": True,
         "navLinks": True,
         "height": "auto",
-        "eventDisplay": "block"
+        "eventDisplay": "block",
+        "dayMaxEventRows": False  # permitir que la fila crezca según eventos
     }
 
     # Renderizar calendario
