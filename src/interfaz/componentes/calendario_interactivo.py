@@ -64,23 +64,56 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
         for k, t in [("Competición","competicion"),("Lesión","lesion"),("Cita_test","cita_test"),("Comentario","nota")]:
             if k in details: resto_icons.append(EVENT_STYLES[t]["icon"])
 
-        title = "🧍 Estado diario"
-        if ciclo_icons:
-            title += "<div>" + " ".join(ciclo_icons) + "</div>"
-        if entreno_icons:
-            title += "<div>" + " ".join(entreno_icons) + "</div>"
-        if resto_icons:
-            title += "<div>" + " ".join(resto_icons) + "</div>"
-
+        # Evento principal: cabecera "Estado diario"
         fc_events.append({
-            "title": title,
+            "title": "🧍 Estado diario",
             "start": fecha,
             "allDay": True,
             "backgroundColor": EVENT_STYLES["estado"]["bg"],
             "borderColor": EVENT_STYLES["estado"]["border"],
             "textColor": EVENT_STYLES["estado"]["text"],
-            "extendedProps": details
+            "extendedProps": details,
+            "displayOrder": 0
         })
+
+        # Evento auxiliar: ciclo
+        if ciclo_icons:
+            fc_events.append({
+                "title": " ".join(ciclo_icons),
+                "start": fecha,
+                "allDay": True,
+                "backgroundColor": "transparent",
+                "borderColor": "transparent",
+                "textColor": EVENT_STYLES["estado"]["text"],
+                "extendedProps": details,
+                "displayOrder": 1
+            })
+
+        # Evento auxiliar: entreno
+        if entreno_icons:
+            fc_events.append({
+                "title": " ".join(entreno_icons),
+                "start": fecha,
+                "allDay": True,
+                "backgroundColor": "transparent",
+                "borderColor": "transparent",
+                "textColor": EVENT_STYLES["estado"]["text"],
+                "extendedProps": details,
+                "displayOrder": 2
+            })
+
+        # Evento auxiliar: resto
+        if resto_icons:
+            fc_events.append({
+                "title": " ".join(resto_icons),
+                "start": fecha,
+                "allDay": True,
+                "backgroundColor": "transparent",
+                "borderColor": "transparent",
+                "textColor": EVENT_STYLES["estado"]["text"],
+                "extendedProps": details,
+                "displayOrder": 3
+            })
 
     # Configuración del calendario
     calendar_options = {
@@ -95,18 +128,20 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
         "navLinks": True,
         "height": "auto",
         "eventDisplay": "block",
-        "dayMaxEventRows": False  # permitir que la fila crezca según eventos
+        "dayMaxEventRows": True,
+        "eventOrder": "displayOrder"
     }
 
-    # CSS para que los <div> en los títulos se muestren en líneas separadas
+    # CSS para compactar las filas de eventos
     st.markdown("""
     <style>
-    .fc-event-title {
-        white-space: normal !important;
-        display: block !important;
+    .fc-daygrid-event {
+        margin: 0 !important;
+        padding: 0 !important;
     }
-    .fc-event-title div {
-        display: block;
+    .fc-daygrid-event .fc-event-title {
+        line-height: 1.2em !important;
+        white-space: nowrap !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -114,10 +149,11 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
     # Renderizar calendario (ahora \n se interpreta como salto de línea)
     cal = calendar(events=fc_events, options=calendar_options)
 
-    # Mostrar detalles en un modal al hacer clic en un evento
+    # Mostrar detalles en un modal solo al hacer clic en la cabecera
     if cal and "eventClick" in cal:
-        props = cal["eventClick"]["event"].get("extendedProps", {})
-        if props:
+        ev = cal["eventClick"]["event"]
+        props = ev.get("extendedProps", {})
+        if props and ev.get("displayOrder") == 0:
             @st.dialog("📋 Detalles del estado diario")
             def mostrar_detalles():
                 st.markdown("### 🩸 Datos de ciclo")
