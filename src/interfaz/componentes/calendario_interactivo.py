@@ -59,11 +59,11 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
                 "priority": style.get("priority", 99)
             })
 
-        if ev.get("Síntomas") and ev["Síntomas"] != "-":
+        if ev.get("Síntomas") and ev["Síntomas"] not in ["-", "No", "Ninguno", None]:
             add_event("sintomas", ev["Síntomas"])
-        if ev.get("Menstruacion") and ev["Menstruacion"] != "-":
+        if ev.get("Menstruacion") and ev["Menstruacion"] not in ["-", "No", None]:
             add_event("menstruacion", ev["Menstruacion"])
-        if ev.get("Ovulacion") and ev["Ovulacion"] != "-":
+        if ev.get("Ovulacion") and ev["Ovulacion"] not in ["-", "No", None]:
             add_event("ovulacion", ev["Ovulacion"])
         if ev.get("Altitud") == "Sí":
             add_event("altitud", "Altitud")
@@ -71,7 +71,7 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
             add_event("respiratorio", "Respiratorio")
         if ev.get("Calor") == "Sí":
             add_event("calor", "Calor")
-        if ev.get("Cita_test") and ev["Cita_test"] != "-":
+        if ev.get("Cita_test") and ev["Cita_test"] not in ["-", "No", None]:
             add_event("cita_test", ev["Cita_test"])
         if ev.get("Competición"):
             try:
@@ -80,11 +80,11 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
                 add_event("competicion", f"{dias_restantes} días", dias_restantes)
             except Exception:
                 add_event("competicion", ev["Competición"])
-        if ev.get("Lesión") and ev["Lesión"] != "-":
+        if ev.get("Lesión") and ev["Lesión"] not in ["-", None]:
             add_event("lesion", ev["Lesión"])
-        if ev.get("Comentario") and ev["Comentario"] != "-":
+        if ev.get("Comentario") and ev["Comentario"] not in ["-", None]:
             add_event("nota", ev["Comentario"])
-        # Fallback
+        # Fallback: solo si no hay ningún dato relevante
         if not any(k in ev for k in ["Síntomas","Menstruacion","Ovulacion","Altitud","Respiratorio","Calor","Cita_test","Competición","Lesión","Comentario"]):
             add_event("nota", ev.get("Tipo", "Evento"))
 
