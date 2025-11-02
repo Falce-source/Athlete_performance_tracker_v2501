@@ -72,8 +72,7 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
             "backgroundColor": EVENT_STYLES["estado"]["bg"],
             "borderColor": EVENT_STYLES["estado"]["border"],
             "textColor": EVENT_STYLES["estado"]["text"],
-            "extendedProps": details,
-            "displayOrder": 0
+            "extendedProps": {**details, "displayOrder": 0}
         })
 
         # Evento auxiliar: ciclo
@@ -85,8 +84,7 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
                 "backgroundColor": "transparent",
                 "borderColor": "transparent",
                 "textColor": EVENT_STYLES["estado"]["text"],
-                "extendedProps": details,
-                "displayOrder": 1
+                "extendedProps": {**details, "displayOrder": 1}
             })
 
         # Evento auxiliar: entreno
@@ -98,8 +96,7 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
                 "backgroundColor": "transparent",
                 "borderColor": "transparent",
                 "textColor": EVENT_STYLES["estado"]["text"],
-                "extendedProps": details,
-                "displayOrder": 2
+                "extendedProps": {**details, "displayOrder": 2}
             })
 
         # Evento auxiliar: resto
@@ -111,8 +108,7 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
                 "backgroundColor": "transparent",
                 "borderColor": "transparent",
                 "textColor": EVENT_STYLES["estado"]["text"],
-                "extendedProps": details,
-                "displayOrder": 3
+                "extendedProps": {**details, "displayOrder": 3}
             })
 
     # Configuración del calendario
@@ -153,7 +149,7 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
     if cal and "eventClick" in cal:
         ev = cal["eventClick"]["event"]
         props = ev.get("extendedProps", {})
-        if props and ev.get("displayOrder") == 0:
+        if props and props.get("displayOrder") == 0:
             @st.dialog("📋 Detalles del estado diario")
             def mostrar_detalles():
                 st.markdown("### 🩸 Datos de ciclo")
