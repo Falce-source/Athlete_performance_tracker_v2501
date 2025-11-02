@@ -209,9 +209,11 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
 
     # Modal de registro al hacer clic en un día vacío
     if cal and "dateClick" in cal:
-        fecha_sel = cal["dateClick"].get("dateStr") or cal["dateClick"].get("date")
+        fecha_iso = cal["dateClick"].get("dateStr") or cal["dateClick"].get("date")
+        # Normalizamos a objeto date local
+        fecha_local = datetime.date.fromisoformat(fecha_iso[:10])
 
-        @st.dialog(f"➕ Registrar estado diario para {fecha_sel}")
+        @st.dialog(f"➕ Registrar estado diario para {fecha_local.strftime('%Y-%m-%d')}")
         def registrar_estado():
             with st.form("form_estado_diario_popup", clear_on_submit=True):
                 # 1. Datos de ciclo
@@ -244,7 +246,7 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
                 submitted = st.form_submit_button("Guardar estado")
                 if submitted:
                     fecha_guardar = datetime.datetime.combine(
-                        datetime.date.fromisoformat(fecha_sel[:10]),
+                        fecha_local,
                         datetime.time.min,
                         tzinfo=datetime.timezone.utc
                     )
