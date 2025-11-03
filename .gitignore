@@ -6,3 +6,6 @@ venv/
 data/
 secrets.toml
 token.json
+#Secrets locales
+secrets/
+.env
