@@ -8,3 +8,6 @@ google-auth
 google-auth-oauthlib
 sqlalchemy
 streamlit-calendar
+google-auth
+google-auth-oauthlib
+google-api-python-client
