@@ -2,7 +2,7 @@ from sqlalchemy import (
     create_engine, Column, Integer, String, Text, Boolean, DateTime, ForeignKey
 )
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from sqlalchemy import JSON  # si usas SQLAlchemy 1.4+ puedes definir JSON
 import json
 
@@ -26,7 +26,7 @@ class Usuario(Base):
     nombre = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
     rol = Column(String, nullable=False)  # admin, entrenadora, atleta
-    creado_en = Column(DateTime, default=datetime.utcnow)
+    creado_en = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
     atletas = relationship("Atleta", back_populates="usuario")
 
@@ -48,7 +48,7 @@ class Atleta(Base):
     equipo = Column(String)
     alergias = Column(Text)
     consentimiento = Column(Boolean, default=False)
-    creado_en = Column(DateTime, default=datetime.utcnow)
+    creado_en = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
     usuario = relationship("Usuario", back_populates="atletas")
 
@@ -63,11 +63,11 @@ class Evento(Base):
 
     titulo = Column(String, nullable=False)          # Ej: "Entrenamiento fuerza"
     descripcion = Column(Text)                       # Detalles opcionales
-    fecha = Column(DateTime, nullable=False)         # Cuándo ocurre
+    fecha = Column(DateTime(timezone=True), nullable=False)    # Cuándo ocurre
     lugar = Column(String)                           # Ej: "Gimnasio municipal"
     tipo = Column(String)                            # Ej: "Entrenamiento", "Competición", "Revisión médica"
 
-    creado_en = Column(DateTime, default=datetime.utcnow)
+    creado_en = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
     # Relación con Atleta
     atleta = relationship("Atleta", back_populates="eventos")
@@ -220,18 +220,18 @@ class CalendarioEvento(Base):
 
     id_evento = Column(Integer, primary_key=True, autoincrement=True)
     id_atleta = Column(Integer, ForeignKey("atletas.id_atleta"), nullable=False)
-    fecha = Column(DateTime, nullable=False)
+    fecha = Column(DateTime(timezone=True), nullable=False)
     tipo_evento = Column(String, nullable=False)
     valor = Column(Text)  # guardamos JSON serializado
     notas = Column(Text)
-    creado_en = Column(DateTime, default=datetime.utcnow)
+    creado_en = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
 class Sesion(Base):
     __tablename__ = "sesiones"
 
     id_sesion = Column(Integer, primary_key=True, autoincrement=True)
     id_atleta = Column(Integer, ForeignKey("atletas.id_atleta"), nullable=False)
-    fecha = Column(DateTime, nullable=False)
+    fecha = Column(DateTime(timezone=True), nullable=False)
     tipo_sesion = Column(String, nullable=False)
     planificado_json = Column(Text)
     realizado_json = Column(Text)
@@ -241,7 +241,7 @@ class Metrica(Base):
 
     id_metrica = Column(Integer, primary_key=True, autoincrement=True)
     id_atleta = Column(Integer, ForeignKey("atletas.id_atleta"), nullable=False)
-    fecha = Column(DateTime, nullable=False)
+    fecha = Column(DateTime(timezone=True), nullable=False)
     tipo_metrica = Column(String, nullable=False)
     valor = Column(String)
     unidad = Column(String)
@@ -254,7 +254,7 @@ class Comentario(Base):
     id_autor = Column(Integer, ForeignKey("usuarios.id_usuario"), nullable=True)
     texto = Column(Text, nullable=False)
     visible_para = Column(String, default="staff")
-    fecha = Column(DateTime, default=datetime.utcnow)
+    fecha = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
 # ─────────────────────────────────────────────
 # CRUD: CALENDARIO

@@ -47,7 +47,7 @@ def test_listar_y_actualizar_atleta():
     atleta = atletas[0]
     nivel_original = atleta.nivel
 
-    actualizado = actualizar_atleta(atleta.id_atleta, "nivel", "Elite")
+    actualizado = actualizar_atleta(atleta.id_atleta, nivel="Elite")
     assert actualizado.nivel == "Elite"
     print(f"✅ Atleta actualizado correctamente: {nivel_original} → {actualizado.nivel}")
 
