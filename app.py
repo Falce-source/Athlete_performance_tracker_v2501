@@ -3,6 +3,9 @@ from src.interfaz import perfil
 from src.interfaz import calendario   # ← nuevo
 from dotenv import load_dotenv
 import os
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaInMemoryUpload
 
 # Cargar variables desde .env
 load_dotenv()
@@ -12,6 +15,8 @@ DRIVE_CLIENT_SECRET = os.getenv("DRIVE_CLIENT_SECRET")
 DRIVE_REFRESH_TOKEN = os.getenv("DRIVE_REFRESH_TOKEN")
 DRIVE_FOLDER_ID = os.getenv("DRIVE_FOLDER_ID")
 DRIVE_SCOPE = os.getenv("DRIVE_SCOPE", "https://www.googleapis.com/auth/drive.file")
+
+# Verificacion de secrets
 
 st.subheader("🔐 Verificación de secrets")
 
@@ -24,6 +29,41 @@ try:
     st.success("✅ Todos los secrets están accesibles")
 except Exception as e:
     st.error(f"Error al leer secrets: {e}")
+
+st.subheader("📤 Prueba de conexión con Google Drive")
+
+def subir_archivo_prueba():
+    creds = Credentials(
+        None,
+        refresh_token=st.secrets["DRIVE_REFRESH_TOKEN"],
+        client_id=st.secrets["DRIVE_CLIENT_ID"],
+        client_secret=st.secrets["DRIVE_CLIENT_SECRET"],
+        token_uri="https://oauth2.googleapis.com/token",
+        scopes=[st.secrets.get("DRIVE_SCOPE", "https://www.googleapis.com/auth/drive.file")]
+    )
+
+    service = build("drive", "v3", credentials=creds)
+
+    file_metadata = {
+        "name": "test_backup.txt",
+        "parents": [st.secrets["DRIVE_FOLDER_ID"]]
+    }
+    media = MediaInMemoryUpload(b"Backup de prueba OK", mimetype="text/plain")
+
+    file = service.files().create(
+        body=file_metadata,
+        media_body=media,
+        fields="id, name"
+    ).execute()
+
+    return file
+
+if st.button("📤 Subir backup de prueba"):
+    try:
+        result = subir_archivo_prueba()
+        st.success(f"Archivo subido correctamente: {result['name']} (ID: {result['id']})")
+    except Exception as e:
+        st.error(f"Error al subir archivo: {e}")
 
 # Validación temprana
 missing = [k for k, v in {
