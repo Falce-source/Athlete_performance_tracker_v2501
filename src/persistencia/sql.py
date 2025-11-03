@@ -96,6 +96,25 @@ def obtener_usuarios():
     with SessionLocal() as session:
         return session.query(Usuario).all()
 
+def actualizar_usuario(id_usuario, **kwargs):
+    with SessionLocal() as session:
+        usuario = session.query(Usuario).filter_by(id_usuario=id_usuario).first()
+        if not usuario:
+            return None
+        for campo, valor in kwargs.items():
+            if hasattr(usuario, campo):
+                setattr(usuario, campo, valor)
+        session.commit()
+        session.refresh(usuario)
+        return usuario
+
+def borrar_usuario(id_usuario):
+    with SessionLocal() as session:
+        usuario = session.query(Usuario).filter_by(id_usuario=id_usuario).first()
+        if usuario:
+            session.delete(usuario)
+            session.commit()
+
 # ─────────────────────────────────────────────
 # FUNCIONES CRUD: ATLETAS
 # ─────────────────────────────────────────────
@@ -168,9 +187,22 @@ def obtener_eventos():
     with SessionLocal() as session:
         return session.query(Evento).all()
 
-def obtener_eventos_por_atleta(id_atleta):
+def obtener_eventos_basicos_por_atleta(id_atleta):
+    """Obtiene eventos de la tabla 'eventos' asociados a un atleta"""
     with SessionLocal() as session:
         return session.query(Evento).filter_by(id_atleta=id_atleta).all()
+
+def actualizar_evento(id_evento, **kwargs):
+    with SessionLocal() as session:
+        evento = session.query(Evento).filter_by(id_evento=id_evento).first()
+        if not evento:
+            return None
+        for campo, valor in kwargs.items():
+            if hasattr(evento, campo):
+                setattr(evento, campo, valor)
+        session.commit()
+        session.refresh(evento)
+        return evento
 
 def borrar_evento(id_evento):
     with SessionLocal() as session:
@@ -263,7 +295,8 @@ def actualizar_evento_calendario(id_atleta, fecha, valores_actualizados, notas=N
         session.refresh(evento)
         return evento
 
-def obtener_eventos_por_atleta(id_atleta):
+def obtener_eventos_calendario_por_atleta(id_atleta):
+    """Obtiene eventos de la tabla 'calendario_eventos' asociados a un atleta"""
     with SessionLocal() as session:
         return session.query(CalendarioEvento).filter_by(id_atleta=id_atleta).all()
 
@@ -287,9 +320,42 @@ def borrar_evento_calendario(id_atleta, fecha):
 # ─────────────────────────────────────────────
 # CRUD: SESIONES
 # ─────────────────────────────────────────────
+def crear_sesion(id_atleta, fecha, tipo_sesion, planificado_json=None, realizado_json=None):
+    with SessionLocal() as session:
+        sesion = Sesion(
+            id_atleta=id_atleta,
+            fecha=fecha,
+            tipo_sesion=tipo_sesion,
+            planificado_json=planificado_json,
+            realizado_json=realizado_json
+        )
+        session.add(sesion)
+        session.commit()
+        session.refresh(sesion)
+        return sesion
+
 def obtener_sesiones_por_atleta(id_atleta):
     with SessionLocal() as session:
         return session.query(Sesion).filter_by(id_atleta=id_atleta).order_by(Sesion.fecha.desc()).all()
+
+def actualizar_sesion(id_sesion, **kwargs):
+    with SessionLocal() as session:
+        sesion = session.query(Sesion).filter_by(id_sesion=id_sesion).first()
+        if not sesion:
+            return None
+        for campo, valor in kwargs.items():
+            if hasattr(sesion, campo):
+                setattr(sesion, campo, valor)
+        session.commit()
+        session.refresh(sesion)
+        return sesion
+
+def borrar_sesion(id_sesion):
+    with SessionLocal() as session:
+        sesion = session.query(Sesion).filter_by(id_sesion=id_sesion).first()
+        if sesion:
+            session.delete(sesion)
+            session.commit()
 
 # ─────────────────────────────────────────────
 # CRUD: MÉTRICAS
@@ -312,6 +378,25 @@ def obtener_metricas_por_tipo(id_atleta, tipo_metrica):
     with SessionLocal() as session:
         return session.query(Metrica).filter_by(id_atleta=id_atleta, tipo_metrica=tipo_metrica).order_by(Metrica.fecha).all()
 
+def actualizar_metrica(id_metrica, **kwargs):
+    with SessionLocal() as session:
+        metrica = session.query(Metrica).filter_by(id_metrica=id_metrica).first()
+        if not metrica:
+            return None
+        for campo, valor in kwargs.items():
+            if hasattr(metrica, campo):
+                setattr(metrica, campo, valor)
+        session.commit()
+        session.refresh(metrica)
+        return metrica
+
+def borrar_metrica(id_metrica):
+    with SessionLocal() as session:
+        metrica = session.query(Metrica).filter_by(id_metrica=id_metrica).first()
+        if metrica:
+            session.delete(metrica)
+            session.commit()
+
 # ─────────────────────────────────────────────
 # CRUD: COMENTARIOS
 # ─────────────────────────────────────────────
@@ -331,3 +416,23 @@ def crear_comentario(id_atleta, texto, visible_para="staff", id_autor=None):
 def obtener_comentarios_por_atleta(id_atleta):
     with SessionLocal() as session:
         return session.query(Comentario).filter_by(id_atleta=id_atleta).order_by(Comentario.fecha.desc()).all()
+
+def actualizar_comentario(id_comentario, **kwargs):
+    with SessionLocal() as session:
+        comentario = session.query(Comentario).filter_by(id_comentario=id_comentario).first()
+        if not comentario:
+            return None
+        for campo, valor in kwargs.items():
+            if hasattr(comentario, campo):
+                setattr(comentario, campo, valor)
+        session.commit()
+        session.refresh(comentario)
+        return comentario
+
+def borrar_comentario(id_comentario):
+    with SessionLocal() as session:
+        comentario = session.query(Comentario).filter_by(id_comentario=id_comentario).first()
+        if comentario:
+            session.delete(comentario)
+            session.commit()
+
