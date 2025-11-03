@@ -31,7 +31,7 @@ def mostrar_calendario():
     # ───────────────────────────────
     st.subheader("🗓️ Calendario")
 
-    eventos = sql.obtener_eventos_por_atleta(id_atleta)
+    eventos = sql.obtener_eventos_calendario_por_atleta(id_atleta)
     if not eventos:
         st.info("No hay eventos registrados todavía")
     else:
