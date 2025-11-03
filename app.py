@@ -149,19 +149,19 @@ try:
 
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("📥 Restaurar seleccionado"):
+            if st.button("📥 Restaurar seleccionado", key="restore_btn"):
                 if os.path.exists("base.db"):
                     os.rename("base.db", "base.db.bak")
                 backup_storage.descargar_backup(file_id, "base.db")
                 st.success(f"Backup restaurado en base.db (copia previa en base.db.bak)")
 
         with col2:
-            confirmar = st.checkbox("Confirmar eliminación")
-            if st.button("🗑️ Eliminar seleccionado") and confirmar:
+            confirmar = st.checkbox("Confirmar eliminación", key="confirm_delete")
+            if st.button("🗑️ Eliminar seleccionado", key="delete_btn") and confirmar:
                 service = backup_storage._get_service()
                 service.files().delete(fileId=file_id).execute()
                 st.warning(f"Backup eliminado: {seleccion}")
-            elif st.button("🗑️ Eliminar seleccionado") and not confirmar:
+            elif st.button("🗑️ Eliminar seleccionado", key="delete_btn_disabled") and not confirmar:
                 st.info("Marca la casilla de confirmación antes de eliminar.")
     else:
         st.info("No hay backups en la carpeta.")
