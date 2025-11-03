@@ -18,8 +18,11 @@ st.subheader("💾 Gestión de Backups")
 
 if st.button("📤 Crear backup de base.db"):
     try:
-        file_id = backup_storage.subir_backup("base.db")
-        st.success(f"Backup de base.db subido correctamente con ID: {file_id}")
+        if not os.path.exists("base.db"):
+            st.error("No se encontró base.db en el directorio principal")
+        else:
+            file_id = backup_storage.subir_backup("base.db")
+            st.success(f"Backup de base.db subido correctamente con ID: {file_id}")
     except Exception as e:
         st.error(f"Error al subir backup: {e}")
 
@@ -57,8 +60,13 @@ try:
             if os.path.exists("base.db"):
                 os.rename("base.db", "base.db.bak")
             destino = "base.db"
-            backup_storage.descargar_backup(file_id, destino)
-            st.success(f"Backup restaurado y sobrescrito en {destino} (copia previa en base.db.bak)")
+            try:
+                backup_storage.descargar_backup(file_id, destino)
+                st.success(f"Backup restaurado y sobrescrito en {destino} (copia previa en base.db.bak)")
+            except Exception as e:
+                if os.path.exists("base.db.bak"):
+                    os.rename("base.db.bak", "base.db")
+                st.error(f"Error en restauración, se recuperó la copia local: {e}")
     else:
         st.info("No hay backups disponibles para restaurar.")
 except Exception as e:
@@ -114,15 +122,25 @@ try:
     if backups:
         import pandas as pd
 
-        # Convertimos a DataFrame para mostrar tabla
+        # Convertimos a DataFrame para mostrar tabla con tamaños legibles
+        def format_size(size):
+            if not size:
+                return "-"
+            size = int(size)
+            for unit in ["B","KB","MB","GB"]:
+                if size < 1024:
+                    return f"{size:.1f} {unit}"
+                size /= 1024
+
         df = pd.DataFrame(backups)
         df = df.rename(columns={
             "name": "Nombre",
             "createdTime": "Fecha creación",
-            "size": "Tamaño (bytes)",
+            "size": "Tamaño",
             "id": "ID"
         })
-        st.dataframe(df[["Nombre", "Fecha creación", "Tamaño (bytes)"]])
+        df["Tamaño"] = df["Tamaño"].apply(format_size)
+        st.dataframe(df[["Nombre", "Fecha creación", "Tamaño"]])
 
         # Selección de backup
         opciones = {f"{b['name']} ({b['createdTime']})": b['id'] for b in backups}
@@ -138,10 +156,13 @@ try:
                 st.success(f"Backup restaurado en base.db (copia previa en base.db.bak)")
 
         with col2:
-            if st.button("🗑️ Eliminar seleccionado"):
+            confirmar = st.checkbox("Confirmar eliminación")
+            if st.button("🗑️ Eliminar seleccionado") and confirmar:
                 service = backup_storage._get_service()
                 service.files().delete(fileId=file_id).execute()
                 st.warning(f"Backup eliminado: {seleccion}")
+            elif st.button("🗑️ Eliminar seleccionado") and not confirmar:
+                st.info("Marca la casilla de confirmación antes de eliminar.")
     else:
         st.info("No hay backups en la carpeta.")
 except Exception as e:
