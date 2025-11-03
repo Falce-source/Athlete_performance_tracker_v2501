@@ -5,15 +5,43 @@ from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 from datetime import datetime, timezone, UTC
 from sqlalchemy import JSON  # si usas SQLAlchemy 1.4+ puedes definir JSON
 import json
+import os
+import shutil
+import backup_storage
 
-# ─────────────────────────────────────────────
-# CONFIGURACIÓN BÁSICA
-# ─────────────────────────────────────────────
+ # ─────────────────────────────────────────────
+ # CONFIGURACIÓN BÁSICA
+ # ─────────────────────────────────────────────
 
-DATABASE_URL = "sqlite:///base.db"
+DB_PATH = os.path.join("/tmp", "base.db")
+
+# Si no existe en /tmp, intentamos restaurar desde Drive o copiar semilla
+if not os.path.exists(DB_PATH):
+    try:
+        backups = backup_storage.listar_backups()
+        if backups:
+            ultimo = sorted(backups, key=lambda b: b["createdTime"], reverse=True)[0]
+            backup_storage.descargar_backup(ultimo["id"], DB_PATH)
+            print(f"Restaurado backup inicial desde Drive: {ultimo['name']}")
+        else:
+            shutil.copy("base.db", DB_PATH)
+            print("Copiado base.db inicial al /tmp")
+    except Exception as e:
+        print(f"⚠️ No se pudo restaurar backup inicial: {e}")
+
+DATABASE_URL = f"sqlite:///{DB_PATH}"
 engine = create_engine(DATABASE_URL, echo=False)
-SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)  # <- clave
+SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 Base = declarative_base()
+
+# Helper para sincronizar backup tras cada commit
+def _sync_backup():
+    try:
+        file_id = backup_storage.subir_backup(DB_PATH)
+        backup_storage.rotar_backups(max_backups=5)
+        print(f"Backup actualizado en Drive: {file_id}")
+    except Exception as e:
+        print(f"⚠️ Error al subir backup: {e}")
 
 # ─────────────────────────────────────────────
 # MODELOS
@@ -90,6 +118,7 @@ def crear_usuario(nombre, email, rol):
         session.flush()
         session.refresh(usuario)
         session.commit()
+        _sync_backup()
         return usuario
 
 def obtener_usuarios():
@@ -106,6 +135,7 @@ def actualizar_usuario(id_usuario, **kwargs):
                 setattr(usuario, campo, valor)
         session.commit()
         session.refresh(usuario)
+        _sync_backup()
         return usuario
 
 def borrar_usuario(id_usuario):
@@ -114,6 +144,7 @@ def borrar_usuario(id_usuario):
         if usuario:
             session.delete(usuario)
             session.commit()
+            _sync_backup()
 
 # ─────────────────────────────────────────────
 # FUNCIONES CRUD: ATLETAS
@@ -126,6 +157,7 @@ def crear_atleta(**kwargs):
         session.flush()
         session.refresh(atleta)
         session.commit()
+        _sync_backup()
         return atleta
 
 def obtener_atletas():
@@ -154,6 +186,7 @@ def actualizar_atleta(id_atleta, **kwargs):
 
         session.commit()
         session.refresh(atleta)
+        _sync_backup()
         return atleta
 
 def borrar_atleta(id_atleta):
@@ -162,6 +195,7 @@ def borrar_atleta(id_atleta):
         if atleta:
             session.delete(atleta)
             session.commit()
+            _sync_backup()
 
 # ─────────────────────────────────────────────
 # FUNCIONES CRUD: EVENTOS
@@ -181,6 +215,7 @@ def crear_evento(id_atleta, titulo, fecha, descripcion=None, lugar=None, tipo=No
         session.flush()
         session.refresh(evento)
         session.commit()
+        _sync_backup()
         return evento
 
 def obtener_eventos():
@@ -202,6 +237,7 @@ def actualizar_evento(id_evento, **kwargs):
                 setattr(evento, campo, valor)
         session.commit()
         session.refresh(evento)
+        _sync_backup()
         return evento
 
 def borrar_evento(id_evento):
@@ -210,6 +246,7 @@ def borrar_evento(id_evento):
         if evento:
             session.delete(evento)
             session.commit()
+            _sync_backup()
 
 # ─────────────────────────────────────────────
 # MODELOS EXTRA: CALENDARIO, SESIONES, MÉTRICAS, COMENTARIOS
@@ -271,6 +308,7 @@ def crear_evento_calendario(id_atleta, fecha, tipo_evento, valor, notas=None):
         session.add(evento)
         session.commit()
         session.refresh(evento)
+        _sync_backup()
         return evento
 
 def actualizar_evento_calendario(id_atleta, fecha, valores_actualizados, notas=None):
@@ -293,6 +331,7 @@ def actualizar_evento_calendario(id_atleta, fecha, valores_actualizados, notas=N
 
         session.commit()
         session.refresh(evento)
+        _sync_backup()
         return evento
 
 def obtener_eventos_calendario_por_atleta(id_atleta):
@@ -315,6 +354,7 @@ def borrar_evento_calendario(id_atleta, fecha):
 
         session.delete(evento)
         session.commit()
+        _sync_backup()
         return True
 
 # ─────────────────────────────────────────────
@@ -332,6 +372,7 @@ def crear_sesion(id_atleta, fecha, tipo_sesion, planificado_json=None, realizado
         session.add(sesion)
         session.commit()
         session.refresh(sesion)
+        _sync_backup()
         return sesion
 
 def obtener_sesiones_por_atleta(id_atleta):
@@ -348,6 +389,7 @@ def actualizar_sesion(id_sesion, **kwargs):
                 setattr(sesion, campo, valor)
         session.commit()
         session.refresh(sesion)
+        _sync_backup()
         return sesion
 
 def borrar_sesion(id_sesion):
@@ -356,6 +398,7 @@ def borrar_sesion(id_sesion):
         if sesion:
             session.delete(sesion)
             session.commit()
+            _sync_backup()
 
 # ─────────────────────────────────────────────
 # CRUD: MÉTRICAS
@@ -372,6 +415,7 @@ def crear_metrica(id_atleta, tipo_metrica, valor, unidad):
         session.add(metrica)
         session.commit()
         session.refresh(metrica)
+        _sync_backup()
         return metrica
 
 def obtener_metricas_por_tipo(id_atleta, tipo_metrica):
@@ -388,6 +432,7 @@ def actualizar_metrica(id_metrica, **kwargs):
                 setattr(metrica, campo, valor)
         session.commit()
         session.refresh(metrica)
+        _sync_backup()
         return metrica
 
 def borrar_metrica(id_metrica):
@@ -396,6 +441,7 @@ def borrar_metrica(id_metrica):
         if metrica:
             session.delete(metrica)
             session.commit()
+            _sync_backup()
 
 # ─────────────────────────────────────────────
 # CRUD: COMENTARIOS
@@ -411,6 +457,7 @@ def crear_comentario(id_atleta, texto, visible_para="staff", id_autor=None):
         session.add(comentario)
         session.commit()
         session.refresh(comentario)
+        _sync_backup()
         return comentario
 
 def obtener_comentarios_por_atleta(id_atleta):
@@ -427,6 +474,7 @@ def actualizar_comentario(id_comentario, **kwargs):
                 setattr(comentario, campo, valor)
         session.commit()
         session.refresh(comentario)
+        _sync_backup()
         return comentario
 
 def borrar_comentario(id_comentario):
@@ -435,4 +483,5 @@ def borrar_comentario(id_comentario):
         if comentario:
             session.delete(comentario)
             session.commit()
+            _sync_backup()
 
