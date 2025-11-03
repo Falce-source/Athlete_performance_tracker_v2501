@@ -10,14 +10,20 @@ from dotenv import load_dotenv
 import os
 import backup_storage
 
-# Cargar variables desde .env
+# Cargar variables desde .env (local) o st.secrets (Cloud)
 load_dotenv()
 
-DRIVE_CLIENT_ID = os.getenv("DRIVE_CLIENT_ID")
-DRIVE_CLIENT_SECRET = os.getenv("DRIVE_CLIENT_SECRET")
-DRIVE_REFRESH_TOKEN = os.getenv("DRIVE_REFRESH_TOKEN")
-DRIVE_FOLDER_ID = os.getenv("DRIVE_FOLDER_ID")
-DRIVE_SCOPE = os.getenv("DRIVE_SCOPE", "https://www.googleapis.com/auth/drive.file")
+def get_secret(key, default=None):
+    # Prioriza st.secrets en Cloud, si no existe usa os.getenv (local)
+    if key in st.secrets:
+        return st.secrets[key]
+    return os.getenv(key, default)
+
+DRIVE_CLIENT_ID = get_secret("DRIVE_CLIENT_ID")
+DRIVE_CLIENT_SECRET = get_secret("DRIVE_CLIENT_SECRET")
+DRIVE_REFRESH_TOKEN = get_secret("DRIVE_REFRESH_TOKEN")
+DRIVE_FOLDER_ID = get_secret("DRIVE_FOLDER_ID")
+DRIVE_SCOPE = get_secret("DRIVE_SCOPE", "https://www.googleapis.com/auth/drive.file")
 
 st.subheader("💾 Gestión de Backups")
 
