@@ -1,4 +1,9 @@
 import streamlit as st
+st.set_page_config(
+    page_title="Athlete Performance Tracker v2501",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 from src.interfaz import perfil
 from src.interfaz import calendario   # ← nuevo
 from dotenv import load_dotenv
@@ -81,6 +86,10 @@ if st.button("🚀 Ejecutar validación CRUD"):
     try:
         report = []
 
+        if not os.path.exists("base.db"):
+            st.error("No se encontró base.db en el directorio principal")
+            st.stop()
+
         # 1. Subida
         file_id = backup_storage.subir_backup("base.db")
         report.append(f"📤 Subida OK → ID: {file_id}")
@@ -150,19 +159,25 @@ try:
         col1, col2 = st.columns(2)
         with col1:
             if st.button("📥 Restaurar seleccionado", key="restore_btn"):
-                if os.path.exists("base.db"):
-                    os.rename("base.db", "base.db.bak")
-                backup_storage.descargar_backup(file_id, "base.db")
-                st.success(f"Backup restaurado en base.db (copia previa en base.db.bak)")
+                try:
+                    if os.path.exists("base.db"):
+                        os.rename("base.db", "base.db.bak")
+                    backup_storage.descargar_backup(file_id, "base.db")
+                    st.success("Backup restaurado en base.db (copia previa en base.db.bak)")
+                except Exception as e:
+                    if os.path.exists("base.db.bak"):
+                        os.rename("base.db.bak", "base.db")
+                    st.error(f"Error en restauración, se recuperó la copia local: {e}")
 
         with col2:
             confirmar = st.checkbox("Confirmar eliminación", key="confirm_delete")
-            if st.button("🗑️ Eliminar seleccionado", key="delete_btn") and confirmar:
-                service = backup_storage._get_service()
-                service.files().delete(fileId=file_id).execute()
-                st.warning(f"Backup eliminado: {seleccion}")
-            elif st.button("🗑️ Eliminar seleccionado", key="delete_btn_disabled") and not confirmar:
-                st.info("Marca la casilla de confirmación antes de eliminar.")
+            if st.button("🗑️ Eliminar seleccionado", key="delete_btn"):
+                if confirmar:
+                    service = backup_storage._get_service()
+                    service.files().delete(fileId=file_id).execute()
+                    st.warning(f"Backup eliminado: {seleccion}")
+                else:
+                    st.info("Marca la casilla de confirmación antes de eliminar.")
     else:
         st.info("No hay backups en la carpeta.")
 except Exception as e:
@@ -177,15 +192,6 @@ missing = [k for k, v in {
 }.items() if not v]
 if missing:
     raise RuntimeError(f"Faltan variables de entorno: {', '.join(missing)}")
-
-# ─────────────────────────────────────────────
-# CONFIGURACIÓN GENERAL
-# ─────────────────────────────────────────────
-st.set_page_config(
-    page_title="Athlete Performance Tracker v2501",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
 
 # ─────────────────────────────────────────────
 # NAVEGACIÓN LATERAL
