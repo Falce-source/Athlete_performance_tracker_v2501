@@ -3,9 +3,7 @@ from src.interfaz import perfil
 from src.interfaz import calendario   # ← nuevo
 from dotenv import load_dotenv
 import os
-from google.oauth2.credentials import Credentials
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaInMemoryUpload
+import backup_storage
 
 # Cargar variables desde .env
 load_dotenv()
@@ -16,54 +14,36 @@ DRIVE_REFRESH_TOKEN = os.getenv("DRIVE_REFRESH_TOKEN")
 DRIVE_FOLDER_ID = os.getenv("DRIVE_FOLDER_ID")
 DRIVE_SCOPE = os.getenv("DRIVE_SCOPE", "https://www.googleapis.com/auth/drive.file")
 
-# Verificacion de secrets
-
-st.subheader("🔐 Verificación de secrets")
-
-try:
-    st.write("Client ID cargado:", bool(st.secrets["DRIVE_CLIENT_ID"]))
-    st.write("Client Secret cargado:", bool(st.secrets["DRIVE_CLIENT_SECRET"]))
-    st.write("Refresh Token cargado:", bool(st.secrets["DRIVE_REFRESH_TOKEN"]))
-    st.write("Folder ID cargado:", bool(st.secrets["DRIVE_FOLDER_ID"]))
-    st.write("Scope:", st.secrets.get("DRIVE_SCOPE"))
-    st.success("✅ Todos los secrets están accesibles")
-except Exception as e:
-    st.error(f"Error al leer secrets: {e}")
-
-st.subheader("📤 Prueba de conexión con Google Drive")
-
-def subir_archivo_prueba():
-    creds = Credentials(
-        None,
-        refresh_token=st.secrets["DRIVE_REFRESH_TOKEN"],
-        client_id=st.secrets["DRIVE_CLIENT_ID"],
-        client_secret=st.secrets["DRIVE_CLIENT_SECRET"],
-        token_uri="https://oauth2.googleapis.com/token",
-        scopes=[st.secrets.get("DRIVE_SCOPE", "https://www.googleapis.com/auth/drive.file")]
-    )
-
-    service = build("drive", "v3", credentials=creds)
-
-    file_metadata = {
-        "name": "test_backup.txt",
-        "parents": [st.secrets["DRIVE_FOLDER_ID"]]
-    }
-    media = MediaInMemoryUpload(b"Backup de prueba OK", mimetype="text/plain")
-
-    file = service.files().create(
-        body=file_metadata,
-        media_body=media,
-        fields="id, name"
-    ).execute()
-
-    return file
+st.subheader("💾 Gestión de Backups")
 
 if st.button("📤 Subir backup de prueba"):
     try:
-        result = subir_archivo_prueba()
-        st.success(f"Archivo subido correctamente: {result['name']} (ID: {result['id']})")
+        # Creamos un archivo temporal de prueba
+        test_file = "test_backup.txt"
+        with open(test_file, "w", encoding="utf-8") as f:
+            f.write("Backup de prueba OK")
+
+        file_id = backup_storage.subir_backup(test_file)
+        st.success(f"Archivo subido correctamente con ID: {file_id}")
     except Exception as e:
         st.error(f"Error al subir archivo: {e}")
+
+if st.button("📋 Listar backups"):
+    try:
+        backups = backup_storage.listar_backups()
+        if not backups:
+            st.info("No hay backups en la carpeta.")
+        for b in backups:
+            st.write(f"{b['name']} ({b['createdTime']}) - {b.get('size','?')} bytes")
+    except Exception as e:
+        st.error(f"Error al listar backups: {e}")
+
+if st.button("♻️ Rotar backups"):
+    try:
+        backup_storage.rotar_backups(max_backups=5)
+        st.success("Rotación completada")
+    except Exception as e:
+        st.error(f"Error al rotar backups: {e}")
 
 # Validación temprana
 missing = [k for k, v in {
