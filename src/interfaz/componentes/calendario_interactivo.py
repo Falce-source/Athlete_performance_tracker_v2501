@@ -201,7 +201,7 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
                         st.rerun()  # recarga para cerrar modal y refrescar calendario
 
                     if eliminar:
-                        sql.eliminar_evento_calendario(id_atleta=id_atleta, fecha=ev["start"])
+                        sql.borrar_evento_calendario(id_atleta=id_atleta, fecha=ev["start"])
                         st.success("🗑️ Estado diario eliminado")
                         st.rerun()  # recarga para cerrar modal y refrescar calendario
 

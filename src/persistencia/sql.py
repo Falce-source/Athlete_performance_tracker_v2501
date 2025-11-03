@@ -241,9 +241,48 @@ def crear_evento_calendario(id_atleta, fecha, tipo_evento, valor, notas=None):
         session.refresh(evento)
         return evento
 
+def actualizar_evento_calendario(id_atleta, fecha, valores_actualizados, notas=None):
+    """
+    Actualiza un evento de calendario existente para un atleta en una fecha concreta.
+    Si no existe, devuelve None.
+    """
+    with SessionLocal() as session:
+        evento = session.query(CalendarioEvento).filter_by(
+            id_atleta=id_atleta,
+            fecha=fecha
+        ).first()
+        if not evento:
+            return None
+
+        # Guardamos el dict como JSON serializado
+        evento.valor = json.dumps(valores_actualizados) if isinstance(valores_actualizados, dict) else valores_actualizados
+        if notas is not None:
+            evento.notas = notas
+
+        session.commit()
+        session.refresh(evento)
+        return evento
+
 def obtener_eventos_por_atleta(id_atleta):
     with SessionLocal() as session:
         return session.query(CalendarioEvento).filter_by(id_atleta=id_atleta).all()
+
+def borrar_evento_calendario(id_atleta, fecha):
+    """
+    Elimina un evento de calendario existente para un atleta en una fecha concreta.
+    Si no existe, devuelve False.
+    """
+    with SessionLocal() as session:
+        evento = session.query(CalendarioEvento).filter_by(
+            id_atleta=id_atleta,
+            fecha=fecha
+        ).first()
+        if not evento:
+            return False
+
+        session.delete(evento)
+        session.commit()
+        return True
 
 # ─────────────────────────────────────────────
 # CRUD: SESIONES
