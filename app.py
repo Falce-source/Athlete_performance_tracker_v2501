@@ -64,6 +64,46 @@ try:
 except Exception as e:
     st.error(f"Error al cargar lista de backups: {e}")
 
+# ─────────────────────────────────────────────
+# VALIDACIÓN AUTOMÁTICA DEL FLUJO CRUD DE BACKUPS
+# ─────────────────────────────────────────────
+st.subheader("✅ Validación completa de backups")
+
+if st.button("🚀 Ejecutar validación CRUD"):
+    try:
+        report = []
+
+        # 1. Subida
+        file_id = backup_storage.subir_backup("base.db")
+        report.append(f"📤 Subida OK → ID: {file_id}")
+
+        # 2. Listado
+        backups = backup_storage.listar_backups()
+        if backups:
+            report.append(f"📋 Listado OK → {len(backups)} backups encontrados")
+        else:
+            report.append("❌ Listado vacío")
+
+        # 3. Rotación
+        backup_storage.rotar_backups(max_backups=5)
+        report.append("♻️ Rotación OK (máx. 5 backups)")
+
+        # 4. Restauración
+        if backups:
+            file_id = backups[0]["id"]
+            if os.path.exists("base.db"):
+                os.rename("base.db", "base.db.bak")
+            backup_storage.descargar_backup(file_id, "base.db")
+            report.append(f"📥 Restauración OK → {backups[0]['name']} descargado")
+
+        # Mostrar informe
+        st.success("Validación completada")
+        for line in report:
+            st.write(line)
+
+    except Exception as e:
+        st.error(f"Error en validación CRUD: {e}")
+
 # Validación temprana
 missing = [k for k, v in {
     "DRIVE_CLIENT_ID": DRIVE_CLIENT_ID,
