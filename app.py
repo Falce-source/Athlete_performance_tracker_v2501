@@ -63,6 +63,8 @@ try:
             file_id = opciones[seleccion]
             # Antes de sobrescribir base.db, hacemos copia de seguridad local
             if os.path.exists("base.db"):
+                if os.path.exists("base.db.bak"):
+                    os.remove("base.db.bak")
                 os.rename("base.db", "base.db.bak")
             destino = "base.db"
             try:
@@ -109,6 +111,8 @@ if st.button("🚀 Ejecutar validación CRUD"):
         if backups:
             file_id = backups[0]["id"]
             if os.path.exists("base.db"):
+                if os.path.exists("base.db.bak"):
+                    os.remove("base.db.bak")
                 os.rename("base.db", "base.db.bak")
             backup_storage.descargar_backup(file_id, "base.db")
             report.append(f"📥 Restauración OK → {backups[0]['name']} descargado")
@@ -161,6 +165,8 @@ try:
             if st.button("📥 Restaurar seleccionado", key="restore_btn"):
                 try:
                     if os.path.exists("base.db"):
+                        if os.path.exists("base.db.bak"):
+                            os.remove("base.db.bak")
                         os.rename("base.db", "base.db.bak")
                     backup_storage.descargar_backup(file_id, "base.db")
                     st.success("Backup restaurado en base.db (copia previa en base.db.bak)")
