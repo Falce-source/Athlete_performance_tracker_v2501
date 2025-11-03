@@ -6,6 +6,18 @@ def mostrar_perfil():
     st.header("👤 Perfil de Atleta")
 
     # ───────────────────────────────
+    # Información de depuración
+    # ───────────────────────────────
+    import os
+    try:
+        ruta_db = os.path.abspath(sql.engine.url.database)
+        num_usuarios = len(sql.obtener_usuarios())
+        st.info(f"🛠️ Base de datos activa: {ruta_db}")
+        st.info(f"👥 Número de usuarios actuales: {num_usuarios}")
+    except Exception as e:
+        st.warning(f"No se pudo obtener información de depuración: {e}")
+
+    # ───────────────────────────────
     # Formulario para crear atleta
     # ───────────────────────────────
     with st.form("form_crear_atleta", clear_on_submit=True):

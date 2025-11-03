@@ -13,6 +13,18 @@ def mostrar_calendario():
     st.header("📅 Calendario del atleta")
 
     # ───────────────────────────────
+    # Información de depuración
+    # ───────────────────────────────
+    import os
+    try:
+        ruta_db = os.path.abspath(sql.engine.url.database)
+        num_usuarios = len(sql.obtener_usuarios())
+        st.info(f"🛠️ Base de datos activa: {ruta_db}")
+        st.info(f"👥 Número de usuarios actuales: {num_usuarios}")
+    except Exception as e:
+        st.warning(f"No se pudo obtener información de depuración: {e}")
+
+    # ───────────────────────────────
     # Selector de atleta
     # ───────────────────────────────
     atletas = sql.obtener_atletas()
