@@ -181,9 +181,10 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
                         eliminar = st.form_submit_button("🗑️ Eliminar")
 
                     if submitted:
+                        fecha_dt = datetime.datetime.fromisoformat(ev["start"].replace("Z", "+00:00"))
                         sql.actualizar_evento_calendario(
                             id_atleta=id_atleta,
-                            fecha=ev["start"],
+                            fecha=fecha_dt,
                             valores_actualizados={
                                 "sintomas": sintomas,
                                 "menstruacion": menstruacion,
@@ -201,7 +202,8 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
                         st.rerun()  # recarga para cerrar modal y refrescar calendario
 
                     if eliminar:
-                        sql.borrar_evento_calendario(id_atleta=id_atleta, fecha=ev["start"])
+                        fecha_dt = datetime.datetime.fromisoformat(ev["start"].replace("Z", "+00:00"))
+                        sql.borrar_evento_calendario(id_atleta=id_atleta, fecha=fecha_dt)
                         st.success("🗑️ Estado diario eliminado")
                         st.rerun()  # recarga para cerrar modal y refrescar calendario
 
