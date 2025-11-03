@@ -104,6 +104,49 @@ if st.button("🚀 Ejecutar validación CRUD"):
     except Exception as e:
         st.error(f"Error en validación CRUD: {e}")
 
+# ─────────────────────────────────────────────
+# DASHBOARD VISUAL DE BACKUPS
+# ─────────────────────────────────────────────
+st.subheader("📊 Dashboard de Backups en Drive")
+
+try:
+    backups = backup_storage.listar_backups(max_results=20)
+    if backups:
+        import pandas as pd
+
+        # Convertimos a DataFrame para mostrar tabla
+        df = pd.DataFrame(backups)
+        df = df.rename(columns={
+            "name": "Nombre",
+            "createdTime": "Fecha creación",
+            "size": "Tamaño (bytes)",
+            "id": "ID"
+        })
+        st.dataframe(df[["Nombre", "Fecha creación", "Tamaño (bytes)"]])
+
+        # Selección de backup
+        opciones = {f"{b['name']} ({b['createdTime']})": b['id'] for b in backups}
+        seleccion = st.selectbox("Selecciona un backup para acción:", list(opciones.keys()))
+        file_id = opciones[seleccion]
+
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("📥 Restaurar seleccionado"):
+                if os.path.exists("base.db"):
+                    os.rename("base.db", "base.db.bak")
+                backup_storage.descargar_backup(file_id, "base.db")
+                st.success(f"Backup restaurado en base.db (copia previa en base.db.bak)")
+
+        with col2:
+            if st.button("🗑️ Eliminar seleccionado"):
+                service = backup_storage._get_service()
+                service.files().delete(fileId=file_id).execute()
+                st.warning(f"Backup eliminado: {seleccion}")
+    else:
+        st.info("No hay backups en la carpeta.")
+except Exception as e:
+    st.error(f"Error al cargar dashboard de backups: {e}")
+
 # Validación temprana
 missing = [k for k, v in {
     "DRIVE_CLIENT_ID": DRIVE_CLIENT_ID,
