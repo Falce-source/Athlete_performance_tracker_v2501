@@ -25,6 +25,16 @@ DRIVE_REFRESH_TOKEN = get_secret("DRIVE_REFRESH_TOKEN")
 DRIVE_FOLDER_ID = get_secret("DRIVE_FOLDER_ID")
 DRIVE_SCOPE = get_secret("DRIVE_SCOPE", "https://www.googleapis.com/auth/drive.file")
 
+# Validación temprana de variables de entorno
+missing = [k for k, v in {
+    "DRIVE_CLIENT_ID": DRIVE_CLIENT_ID,
+    "DRIVE_CLIENT_SECRET": DRIVE_CLIENT_SECRET,
+    "DRIVE_REFRESH_TOKEN": DRIVE_REFRESH_TOKEN,
+    "DRIVE_FOLDER_ID": DRIVE_FOLDER_ID
+}.items() if not v]
+if missing:
+    raise RuntimeError(f"Faltan variables de entorno: {', '.join(missing)}")
+
 # ─────────────────────────────────────────────
 # NAVEGACIÓN LATERAL
 # ─────────────────────────────────────────────
@@ -36,12 +46,6 @@ opcion = st.sidebar.radio(
         "👤 Perfil atleta",
         "📅 Calendario",   # ← nuevo
         "💾 Backups",      # ← nueva pestaña
-        # "📊 Métricas",
-        # "🧪 Tests",
-        # "🏋️ Fuerza",
-        # "🍽️ Nutrición",
-        # "💬 Comentarios",
-        # "⚙️ Configuración"
     ]
 )
 
@@ -61,9 +65,8 @@ elif opcion == "📅 Calendario":
 elif opcion == "💾 Backups":
     st.title("Gestión de Backups")
 
-    # Aquí se mueve TODO el bloque de backups que estaba en Inicio:
-    st.subheader("💾 Gestión de Backups")
-
+    # Crear / Listar / Rotar
+    st.subheader("📤 Crear / Listar / Rotar")
     if st.button("📤 Crear backup de base.db"):
         try:
             if not os.path.exists("base.db"):
@@ -91,20 +94,15 @@ elif opcion == "💾 Backups":
         except Exception as e:
             st.error(f"Error al rotar backups: {e}")
 
-    # ─────────────────────────────────────────────
-    # DESCARGA Y RESTAURACIÓN DE BACKUPS
-    # ─────────────────────────────────────────────
+    # Restauración manual
     st.subheader("📥 Restaurar backup")
-
     try:
         backups = backup_storage.listar_backups()
         if backups:
             opciones = {f"{b['name']} ({b['createdTime']})": b['id'] for b in backups}
             seleccion = st.selectbox("Selecciona un backup para restaurar:", list(opciones.keys()))
-
             if st.button("📥 Descargar y restaurar"):
                 file_id = opciones[seleccion]
-                # Antes de sobrescribir base.db, hacemos copia de seguridad local
                 if os.path.exists("base.db"):
                     if os.path.exists("base.db.bak"):
                         os.remove("base.db.bak")
@@ -112,7 +110,7 @@ elif opcion == "💾 Backups":
                 destino = "base.db"
                 try:
                     backup_storage.descargar_backup(file_id, destino)
-                    st.success(f"Backup restaurado y sobrescrito en {destino} (copia previa en base.db.bak)")
+                    st.success(f"Backup restaurado en {destino} (copia previa en base.db.bak)")
                 except Exception as e:
                     if os.path.exists("base.db.bak"):
                         os.rename("base.db.bak", "base.db")
@@ -122,35 +120,23 @@ elif opcion == "💾 Backups":
     except Exception as e:
         st.error(f"Error al cargar lista de backups: {e}")
 
-    # ─────────────────────────────────────────────
-    # VALIDACIÓN AUTOMÁTICA DEL FLUJO CRUD DE BACKUPS
-    # ─────────────────────────────────────────────
+    # Validación CRUD
     st.subheader("✅ Validación completa de backups")
-
     if st.button("🚀 Ejecutar validación CRUD"):
         try:
             report = []
-
             if not os.path.exists("base.db"):
                 st.error("No se encontró base.db en el directorio principal")
                 st.stop()
-
-            # 1. Subida
             file_id = backup_storage.subir_backup("base.db")
             report.append(f"📤 Subida OK → ID: {file_id}")
-
-            # 2. Listado
             backups = backup_storage.listar_backups()
             if backups:
                 report.append(f"📋 Listado OK → {len(backups)} backups encontrados")
             else:
                 report.append("❌ Listado vacío")
-
-            # 3. Rotación
             backup_storage.rotar_backups(max_backups=5)
             report.append("♻️ Rotación OK (máx. 5 backups)")
-
-            # 4. Restauración
             if backups:
                 file_id = backups[0]["id"]
                 if os.path.exists("base.db"):
@@ -159,26 +145,18 @@ elif opcion == "💾 Backups":
                     os.rename("base.db", "base.db.bak")
                 backup_storage.descargar_backup(file_id, "base.db")
                 report.append(f"📥 Restauración OK → {backups[0]['name']} descargado")
-
-            # Mostrar informe
             st.success("Validación completada")
             for line in report:
                 st.write(line)
-
         except Exception as e:
             st.error(f"Error en validación CRUD: {e}")
 
-    # ─────────────────────────────────────────────
-    # DASHBOARD VISUAL DE BACKUPS
-    # ─────────────────────────────────────────────
+    # Dashboard visual
     st.subheader("📊 Dashboard de Backups en Drive")
-
     try:
         backups = backup_storage.listar_backups(max_results=20)
         if backups:
             import pandas as pd
-
-            # Convertimos a DataFrame para mostrar tabla con tamaños legibles
             def format_size(size):
                 if not size:
                     return "-"
@@ -187,7 +165,6 @@ elif opcion == "💾 Backups":
                     if size < 1024:
                         return f"{size:.1f} {unit}"
                     size /= 1024
-
             df = pd.DataFrame(backups)
             df = df.rename(columns={
                 "name": "Nombre",
@@ -197,12 +174,9 @@ elif opcion == "💾 Backups":
             })
             df["Tamaño"] = df["Tamaño"].apply(format_size)
             st.dataframe(df[["Nombre", "Fecha creación", "Tamaño"]])
-
-            # Selección de backup
             opciones = {f"{b['name']} ({b['createdTime']})": b['id'] for b in backups}
             seleccion = st.selectbox("Selecciona un backup para acción:", list(opciones.keys()))
             file_id = opciones[seleccion]
-
             col1, col2 = st.columns(2)
             with col1:
                 if st.button("📥 Restaurar seleccionado", key="restore_btn"):
@@ -217,7 +191,6 @@ elif opcion == "💾 Backups":
                         if os.path.exists("base.db.bak"):
                             os.rename("base.db.bak", "base.db")
                         st.error(f"Error en restauración, se recuperó la copia local: {e}")
-
             with col2:
                 confirmar = st.checkbox("Confirmar eliminación", key="confirm_delete")
                 if st.button("🗑️ Eliminar seleccionado", key="delete_btn"):
@@ -231,15 +204,3 @@ elif opcion == "💾 Backups":
             st.info("No hay backups en la carpeta.")
     except Exception as e:
         st.error(f"Error al cargar dashboard de backups: {e}")
-
-    # Validación temprana
-    missing = [k for k, v in {
-        "DRIVE_CLIENT_ID": DRIVE_CLIENT_ID,
-        "DRIVE_CLIENT_SECRET": DRIVE_CLIENT_SECRET,
-        "DRIVE_REFRESH_TOKEN": DRIVE_REFRESH_TOKEN,
-        "DRIVE_FOLDER_ID": DRIVE_FOLDER_ID
-    }.items() if not v]
-    if missing:
-        raise RuntimeError(f"Faltan variables de entorno: {', '.join(missing)}")
-
-    # (El código se mantiene igual, solo cambia de ubicación)
