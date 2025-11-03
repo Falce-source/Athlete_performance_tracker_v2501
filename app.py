@@ -16,17 +16,12 @@ DRIVE_SCOPE = os.getenv("DRIVE_SCOPE", "https://www.googleapis.com/auth/drive.fi
 
 st.subheader("💾 Gestión de Backups")
 
-if st.button("📤 Subir backup de prueba"):
+if st.button("📤 Crear backup de base.db"):
     try:
-        # Creamos un archivo temporal de prueba
-        test_file = "test_backup.txt"
-        with open(test_file, "w", encoding="utf-8") as f:
-            f.write("Backup de prueba OK")
-
-        file_id = backup_storage.subir_backup(test_file)
-        st.success(f"Archivo subido correctamente con ID: {file_id}")
+        file_id = backup_storage.subir_backup("base.db")
+        st.success(f"Backup de base.db subido correctamente con ID: {file_id}")
     except Exception as e:
-        st.error(f"Error al subir archivo: {e}")
+        st.error(f"Error al subir backup: {e}")
 
 if st.button("📋 Listar backups"):
     try:
@@ -58,9 +53,12 @@ try:
 
         if st.button("📥 Descargar y restaurar"):
             file_id = opciones[seleccion]
-            destino = "restaurado.db"  # aquí defines la ruta de restauración
+            # Antes de sobrescribir base.db, hacemos copia de seguridad local
+            if os.path.exists("base.db"):
+                os.rename("base.db", "base.db.bak")
+            destino = "base.db"
             backup_storage.descargar_backup(file_id, destino)
-            st.success(f"Backup restaurado en {destino}")
+            st.success(f"Backup restaurado y sobrescrito en {destino} (copia previa en base.db.bak)")
     else:
         st.info("No hay backups disponibles para restaurar.")
 except Exception as e:

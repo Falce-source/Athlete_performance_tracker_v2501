@@ -3,11 +3,13 @@ Módulo de gestión de backups en Google Drive.
 Encapsula toda la lógica de autenticación y operaciones CRUD sobre backups.
 """
 
+from datetime import datetime
 import os
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 import io
+
 
 # --- Inicialización de credenciales ---
 def _get_service():
@@ -33,7 +35,10 @@ def subir_backup(local_path: str, remote_name: str = None) -> str:
     folder_id = os.getenv("DRIVE_FOLDER_ID")
 
     if remote_name is None:
-        remote_name = os.path.basename(local_path)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        base = os.path.basename(local_path)
+        name, ext = os.path.splitext(base)
+        remote_name = f"{name}_{timestamp}{ext}"
 
     file_metadata = {"name": remote_name, "parents": [folder_id]}
     media = MediaFileUpload(local_path, resumable=True)
@@ -41,11 +46,10 @@ def subir_backup(local_path: str, remote_name: str = None) -> str:
     file = service.files().create(
         body=file_metadata,
         media_body=media,
-        fields="id"
+        fields="id, name"
     ).execute()
 
     return file.get("id")
-
 
 def listar_backups(max_results: int = 10) -> list[dict]:
     """
