@@ -45,6 +45,27 @@ if st.button("♻️ Rotar backups"):
     except Exception as e:
         st.error(f"Error al rotar backups: {e}")
 
+# ─────────────────────────────────────────────
+# DESCARGA Y RESTAURACIÓN DE BACKUPS
+# ─────────────────────────────────────────────
+st.subheader("📥 Restaurar backup")
+
+try:
+    backups = backup_storage.listar_backups()
+    if backups:
+        opciones = {f"{b['name']} ({b['createdTime']})": b['id'] for b in backups}
+        seleccion = st.selectbox("Selecciona un backup para restaurar:", list(opciones.keys()))
+
+        if st.button("📥 Descargar y restaurar"):
+            file_id = opciones[seleccion]
+            destino = "restaurado.db"  # aquí defines la ruta de restauración
+            backup_storage.descargar_backup(file_id, destino)
+            st.success(f"Backup restaurado en {destino}")
+    else:
+        st.info("No hay backups disponibles para restaurar.")
+except Exception as e:
+    st.error(f"Error al cargar lista de backups: {e}")
+
 # Validación temprana
 missing = [k for k, v in {
     "DRIVE_CLIENT_ID": DRIVE_CLIENT_ID,
