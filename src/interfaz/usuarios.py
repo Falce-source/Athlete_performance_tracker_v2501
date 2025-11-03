@@ -98,3 +98,12 @@ def mostrar_usuarios():
         if st.button(f"🗑️ Eliminar usuario '{usuario.nombre}'", type="primary"):
             sql.borrar_usuario(usuario.id_usuario)
             st.warning(f"Usuario '{usuario.nombre}' eliminado correctamente. 🔄 Recarga la página para actualizar la lista.")
+
+
+# Prueba usuarios
+import os
+from src.persistencia.sql import engine
+
+st.info(f"Base de datos activa: {os.path.abspath(engine.url.database)}")
+st.info(f"Usuarios actuales: {len(sql.obtener_usuarios())}")
+# -----------------
