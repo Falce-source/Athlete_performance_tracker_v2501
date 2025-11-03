@@ -2,9 +2,21 @@ import streamlit as st
 import pandas as pd
 from src.persistencia import sql
 from datetime import datetime
+import os
 
 def mostrar_usuarios():
     st.header("👥 Gestión de Usuarios")
+
+    # ───────────────────────────────
+    # Información de depuración
+    # ───────────────────────────────
+    try:
+        ruta_db = os.path.abspath(sql.engine.url.database)
+        num_usuarios = len(sql.obtener_usuarios())
+        st.info(f"🛠️ Base de datos activa: {ruta_db}")
+        st.info(f"👥 Número de usuarios actuales: {num_usuarios}")
+    except Exception as e:
+        st.warning(f"No se pudo obtener información de depuración: {e}")
 
     # ───────────────────────────────
     # Formulario para crear usuario
@@ -98,12 +110,4 @@ def mostrar_usuarios():
         if st.button(f"🗑️ Eliminar usuario '{usuario.nombre}'", type="primary"):
             sql.borrar_usuario(usuario.id_usuario)
             st.warning(f"Usuario '{usuario.nombre}' eliminado correctamente. 🔄 Recarga la página para actualizar la lista.")
-
-
-# Prueba usuarios
-import os
-from src.persistencia.sql import engine
-
-st.info(f"Base de datos activa: {os.path.abspath(engine.url.database)}")
-st.info(f"Usuarios actuales: {len(sql.obtener_usuarios())}")
-# -----------------
+        
