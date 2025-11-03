@@ -6,6 +6,7 @@ st.set_page_config(
 )
 from src.interfaz import perfil
 from src.interfaz import calendario   # ← nuevo
+from src.interfaz import usuarios     # ← NUEVO
 from dotenv import load_dotenv
 import os
 import backup_storage
@@ -45,6 +46,7 @@ opcion = st.sidebar.radio(
         "🏠 Inicio",
         "👤 Perfil atleta",
         "📅 Calendario",   # ← nuevo
+        "👥 Usuarios",     # ← NUEVA PESTAÑA
         "💾 Backups",      # ← nueva pestaña
     ]
 )
@@ -61,6 +63,9 @@ elif opcion == "👤 Perfil atleta":
 
 elif opcion == "📅 Calendario":
     calendario.mostrar_calendario()
+
+elif opcion == "👥 Usuarios":
+    usuarios.mostrar_usuarios()
 
 elif opcion == "💾 Backups":
     st.title("Gestión de Backups")
