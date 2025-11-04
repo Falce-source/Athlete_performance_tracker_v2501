@@ -278,7 +278,7 @@ class CalendarioEvento(Base):
 
     id_evento = Column(Integer, primary_key=True, autoincrement=True)
     id_atleta = Column(Integer, ForeignKey("atletas.id_atleta"), nullable=False)
-    fecha = Column(DateTime(timezone=True), nullable=False)
+    fecha = Column(Date, nullable=False)   # solo fecha, sin hora ni zona horaria
     tipo_evento = Column(String, nullable=False)
     valor = Column(Text)  # guardamos JSON serializado
     notas = Column(Text)
@@ -321,9 +321,9 @@ def crear_evento_calendario(id_atleta, fecha, tipo_evento, valor, notas=None):
     with SessionLocal() as session:
         # Normalizamos fecha a medianoche sin zona horaria (naive)
         if isinstance(fecha, datetime):
-            fecha = datetime(fecha.year, fecha.month, fecha.day)
+            fecha = fecha.date()
         elif isinstance(fecha, date):
-            fecha = datetime(fecha.year, fecha.month, fecha.day)
+            fecha = fecha
         elif isinstance(fecha, str):
             try:
                 base = datetime.fromisoformat(fecha.replace("Z", "+00:00"))
@@ -354,9 +354,9 @@ def actualizar_evento_calendario(id_atleta, fecha, valores_actualizados, notas=N
     with SessionLocal() as session:
         # Normalizamos fecha a medianoche sin zona horaria (naive)
         if isinstance(fecha, datetime):
-            fecha = datetime(fecha.year, fecha.month, fecha.day)
+            fecha = fecha.date()
         elif isinstance(fecha, date):
-            fecha = datetime(fecha.year, fecha.month, fecha.day)
+            fecha = fecha
         elif isinstance(fecha, str):
             try:
                 base = datetime.fromisoformat(fecha.replace("Z", "+00:00"))
@@ -440,9 +440,9 @@ def borrar_evento_calendario_por_fecha(id_atleta, fecha) -> bool:
     with SessionLocal() as session:
         # Normalizamos fecha a medianoche sin zona horaria (naive)
         if isinstance(fecha, datetime):
-            fecha = datetime(fecha.year, fecha.month, fecha.day)
+            fecha = fecha.date()
         elif isinstance(fecha, date):
-            fecha = datetime(fecha.year, fecha.month, fecha.day)
+            fecha = fecha
         elif isinstance(fecha, str):
             try:
                 base = datetime.fromisoformat(fecha.replace("Z", "+00:00"))
