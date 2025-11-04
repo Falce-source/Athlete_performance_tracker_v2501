@@ -182,7 +182,7 @@ def mostrar_calendario(rol_actual="admin"):
     # Vista calendario interactivo (FullCalendar)
     if vista == "Calendario":
         from src.interfaz.componentes.calendario_interactivo import mostrar_calendario_interactivo
-        mostrar_calendario_interactivo(eventos_fc, id_atleta)
+        mostrar_calendario_interactivo(eventos_fc, id_atleta, vista=vista)
 
     # ───────────────────────────────
     # Sesiones del día (planificado vs completado)

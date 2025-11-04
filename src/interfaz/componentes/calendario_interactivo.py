@@ -18,7 +18,7 @@ EVENT_STYLES = {
     "nota": {"icon": "📝", "bg": "#F9FAFB", "border": "#6B7280", "text": "#374151", "priority": 5},
 }
 
-def mostrar_calendario_interactivo(fc_events, id_atleta):
+def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
     """
     Renderiza un calendario interactivo tipo TrainingPeaks usando streamlit-calendar.
     - eventos: lista de diccionarios con al menos 'start' (YYYY-MM-DD) y 'allDay'.
@@ -142,7 +142,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta):
     cal = calendar(
         events=fc_events,
         options=calendar_options,
-        key=f"calendar_{id_atleta}_main"
+        key=f"calendar_{id_atleta}_{vista}"
     )
 
     # Modal de registro al hacer clic en un día vacío
@@ -232,9 +232,8 @@ def mostrar_calendario_interactivo(fc_events, id_atleta):
     cal = calendar(
         events=fc_events,
         options=calendar_options,
-        key=f"calendar_{id_atleta}_main"
+        key=f"calendar_{id_atleta}_{vista}"
     )
-
 
     # Modal editable al hacer clic en la cabecera
     if cal and "eventClick" in cal:
