@@ -1,5 +1,5 @@
 from sqlalchemy import (
-    create_engine, Column, Integer, String, Text, Boolean, DateTime, ForeignKey
+    create_engine, Column, Integer, String, Text, Boolean, DateTime, Date, ForeignKey
 )
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 from datetime import datetime, timezone, UTC
@@ -278,7 +278,7 @@ class CalendarioEvento(Base):
 
     id_evento = Column(Integer, primary_key=True, autoincrement=True)
     id_atleta = Column(Integer, ForeignKey("atletas.id_atleta"), nullable=False)
-    fecha = Column(DateTime(timezone=True), nullable=False)
+    fecha = Column(Date, nullable=False)
     tipo_evento = Column(String, nullable=False)
     valor = Column(Text)  # guardamos JSON serializado
     notas = Column(Text)
@@ -319,6 +319,20 @@ class Comentario(Base):
 # ─────────────────────────────────────────────
 def crear_evento_calendario(id_atleta, fecha, tipo_evento, valor, notas=None):
     with SessionLocal() as session:
+        # Normalizamos a date para evitar desfases por zona horaria
+        if isinstance(fecha, datetime):
+            fecha = fecha.date()
+        # Si viene como string ISO, lo convertimos de forma segura
+        if isinstance(fecha, str):
+            # Aceptamos 'YYYY-MM-DD' directamente; si trae 'Z' o tiempo, truncamos a fecha
+            try:
+                if "T" in fecha:
+                    fecha = datetime.fromisoformat(fecha.replace("Z", "+00:00")).date()
+                else:
+                    fecha = datetime.fromisoformat(fecha).date()
+            except Exception:
+                # Fallback: no rompemos; usamos hoy en UTC como date
+                fecha = datetime.now(UTC).date()
         evento = CalendarioEvento(
             id_atleta=id_atleta,
             fecha=fecha,
@@ -338,6 +352,18 @@ def actualizar_evento_calendario(id_atleta, fecha, valores_actualizados, notas=N
     Si no existe, devuelve None.
     """
     with SessionLocal() as session:
+        # Normalizamos fecha a date para la búsqueda
+        if isinstance(fecha, datetime):
+            fecha = fecha.date()
+        if isinstance(fecha, str):
+            try:
+                if "T" in fecha:
+                    fecha = datetime.fromisoformat(fecha.replace("Z", "+00:00")).date()
+                else:
+                    fecha = datetime.fromisoformat(fecha).date()
+            except Exception:
+                fecha = None
+
         evento = session.query(CalendarioEvento).filter_by(
             id_atleta=id_atleta,
             fecha=fecha
