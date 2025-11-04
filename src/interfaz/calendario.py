@@ -62,14 +62,11 @@ def mostrar_calendario(rol_actual="admin"):
     st.subheader("🗓️ Calendario")
 
     eventos = sql.obtener_eventos_calendario_por_atleta(id_atleta, rol_actual=rol_actual)
-    if not eventos:
-        st.info("No hay eventos registrados todavía")
-    else:
-        vista = st.radio("", ["Calendario", "Tabla"], horizontal=True, index=0)
+    vista = st.radio("", ["Calendario", "Tabla"], horizontal=True, index=0)
 
-        # Construcción de data
-        data = []
-        for e in eventos:
+    # Construcción de data (puede estar vacío)
+    data = []
+    for e in eventos:
             try:
                 valor = json.loads(e.valor) if e.valor else {}
             except Exception:
