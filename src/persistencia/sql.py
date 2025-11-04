@@ -337,9 +337,18 @@ def actualizar_evento_calendario(id_atleta, fecha, valores_actualizados, notas=N
 def obtener_eventos_calendario_por_atleta(id_atleta, rol_actual="admin"):
     with SessionLocal() as session:
         query = session.query(CalendarioEvento).filter_by(id_atleta=id_atleta)
-        if rol_actual != "admin":
-            query = query.filter(CalendarioEvento.tipo_evento != "Comentario")  # Oculta comentarios si no eres admin
-        return query.order_by(CalendarioEvento.fecha.desc()).all()
+        if rol_actual == "admin":
+            # Admin ve todo
+            return query.order_by(CalendarioEvento.fecha.desc()).all()
+        elif rol_actual == "entrenadora":
+            # Entrenadora ve todo excepto eventos privados de atleta
+            return query.filter(CalendarioEvento.tipo_evento.notin_(["PrivadoAtleta"])).order_by(CalendarioEvento.fecha.desc()).all()
+        elif rol_actual == "atleta":
+            # Atleta ve todo excepto eventos privados de staff
+            return query.filter(CalendarioEvento.tipo_evento.notin_(["PrivadoStaff"])).order_by(CalendarioEvento.fecha.desc()).all()
+        else:
+            # Rol desconocido → no mostrar nada
+            return []
 
 def borrar_evento_calendario(id_atleta, fecha):
     """
@@ -465,9 +474,14 @@ def crear_comentario(id_atleta, texto, visible_para="staff", id_autor=None):
 def obtener_comentarios_por_atleta(id_atleta, rol_actual="admin"):
     with SessionLocal() as session:
         query = session.query(Comentario).filter_by(id_atleta=id_atleta)
-        if rol_actual != "admin":
-            query = query.filter(Comentario.visible_para == rol_actual)
-        return query.order_by(Comentario.fecha.desc()).all()
+        if rol_actual == "admin":
+            return query.order_by(Comentario.fecha.desc()).all()
+        elif rol_actual == "entrenadora":
+            return query.filter(Comentario.visible_para.in_(["entrenadora", "staff", "todos"])).order_by(Comentario.fecha.desc()).all()
+        elif rol_actual == "atleta":
+            return query.filter(Comentario.visible_para.in_(["atleta", "todos"])).order_by(Comentario.fecha.desc()).all()
+        else:
+            return []
 
 def actualizar_comentario(id_comentario, **kwargs):
     with SessionLocal() as session:
