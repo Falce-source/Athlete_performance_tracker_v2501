@@ -43,42 +43,45 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
         details = ev.get("extendedProps", {})
 
         if tipo == "estado_diario":
-            ciclo_icons, entreno_icons, resto_icons = [], [], []
-            if details.get("sintomas"): ciclo_icons.append(EVENT_STYLES["sintomas"]["icon"])
-            if details.get("menstruacion"): ciclo_icons.append(EVENT_STYLES["menstruacion"]["icon"])
-            if details.get("ovulacion"): ciclo_icons.append(EVENT_STYLES["ovulacion"]["icon"])
-            if details.get("altitud"): entreno_icons.append(EVENT_STYLES["altitud"]["icon"])
-            if details.get("respiratorio"): entreno_icons.append(EVENT_STYLES["respiratorio"]["icon"])
-            if details.get("calor"): entreno_icons.append(EVENT_STYLES["calor"]["icon"])
-            if details.get("lesion"): entreno_icons.append(EVENT_STYLES["lesion"]["icon"])
-            if details.get("comentario_extra"): resto_icons.append(EVENT_STYLES["nota"]["icon"])
+            # Filas de iconos
+            fila_ciclo, fila_entreno_lesion, fila_notas, fila_meta = [], [], [], []
 
-            # Construimos filas
-            lineas = []
-            if ciclo_icons:
-                lineas.append(" ".join(ciclo_icons))
-            if entreno_icons:
-                lineas.append(" ".join(entreno_icons))
-            if resto_icons:
-                lineas.append(" ".join(resto_icons))
-            # Si quieres mostrar competiciones/citas en la cuarta fila:
-            if details.get("tipo_evento") in ["competicion", "cita_test"]:
-                lineas.append(EVENT_STYLES[details["tipo_evento"]]["icon"])
+            if details.get("sintomas"): fila_ciclo.append(EVENT_STYLES["sintomas"]["icon"])
+            if details.get("menstruacion"): fila_ciclo.append(EVENT_STYLES["menstruacion"]["icon"])
+            if details.get("ovulacion"): fila_ciclo.append(EVENT_STYLES["ovulacion"]["icon"])
 
-            title = "🧍 Evento diario"
-            if lineas:
-                title += "\n" + "\n".join(lineas)
+            if details.get("altitud"): fila_entreno_lesion.append(EVENT_STYLES["altitud"]["icon"])
+            if details.get("respiratorio"): fila_entreno_lesion.append(EVENT_STYLES["respiratorio"]["icon"])
+            if details.get("calor"): fila_entreno_lesion.append(EVENT_STYLES["calor"]["icon"])
+            if details.get("lesion"): fila_entreno_lesion.append(EVENT_STYLES["lesion"]["icon"])
+
+            if details.get("comentario_extra"): fila_notas.append(EVENT_STYLES["nota"]["icon"])
+
+            # Si ese día también tiene meta (competición o cita) y quieres indicarlo como cuarta fila:
+            # Nota: esto solo aplica si ese mismo evento representa la meta; si las metas son eventos separados, omite esta fila
+            if details.get("meta") in ["competicion", "cita_test"]:
+                fila_meta.append(EVENT_STYLES[details["meta"]]["icon"])
 
             out_events.append({
                 "id": str(ev.get("id")),
-                "title": title,
+                "title": "🧍 Evento diario",   # fijo
                 "start": fecha,
                 "allDay": True,
                 "backgroundColor": EVENT_STYLES["estado"]["bg"],
                 "borderColor": EVENT_STYLES["estado"]["border"],
                 "textColor": EVENT_STYLES["estado"]["text"],
                 "tipo_evento": tipo,
-                "extendedProps": {**details, "displayOrder": 0, "tipo_evento": tipo}
+                "extendedProps": {
+                    **details,
+                    "displayOrder": 0,
+                    "tipo_evento": tipo,
+                    "rows": [
+                        " ".join(fila_ciclo) if fila_ciclo else "",
+                        " ".join(fila_entreno_lesion) if fila_entreno_lesion else "",
+                        " ".join(fila_notas) if fila_notas else "",
+                        " ".join(fila_meta) if fila_meta else ""
+                    ]
+                }
             })
 
         elif tipo == "competicion":
@@ -90,8 +93,8 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                 "backgroundColor": "#FFF4E5",
                 "borderColor": "#F97316",
                 "textColor": "#7C2D12",
-                "tipo_evento": tipo,   # 🔑 añadido
-                "extendedProps": {**details, "displayOrder": 0}
+                "tipo_evento": tipo,
+                "extendedProps": { **details, "displayOrder": 0, "tipo_evento": tipo }
             })
 
         elif tipo == "cita_test":
@@ -103,18 +106,14 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                 "backgroundColor": EVENT_STYLES["cita_test"]["bg"],
                 "borderColor": EVENT_STYLES["cita_test"]["border"],
                 "textColor": EVENT_STYLES["cita_test"]["text"],
-                "tipo_evento": tipo,   # 🔑 añadido
-                "extendedProps": {**details, "displayOrder": 0}
+                "tipo_evento": tipo,
+                "extendedProps": { **details, "displayOrder": 0, "tipo_evento": tipo }
             })
 
     # Configuración del calendario
     calendar_options = {
         "initialView": "dayGridMonth",
-        "headerToolbar": {
-            "left": "prev,next today",
-            "center": "title",
-            "right": "dayGridMonth,timeGridWeek,listWeek"
-        },
+        "headerToolbar": {"left": "prev,next today", "center": "title", "right": "dayGridMonth,timeGridWeek,listWeek"},
         "editable": False,
         "selectable": True,
         "navLinks": True,
@@ -122,21 +121,44 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
         "eventDisplay": "block",
         "dayMaxEventRows": True,
         "eventOrder": "displayOrder",
-        "timeZone": "UTC",            # interpreta YYYY-MM-DD sin desfase
+        "timeZone": "UTC",
         "forceEventDuration": True,
-        "displayEventEnd": False
-    }
+        "displayEventEnd": False,
+        # Renderizado personalizado: título fijo + filas desde extendedProps.rows
+        "eventContent": """
+        function(arg) {
+        const props = arg.event.extendedProps || {};
+        const rows = props.rows || [];
+        const container = document.createElement('div');
 
+        const titleEl = document.createElement('div');
+        titleEl.textContent = arg.event.title || '';
+        titleEl.style.fontWeight = '600';
+        container.appendChild(titleEl);
+
+        rows.forEach(function(line) {
+            if (line && line.trim().length > 0) {
+            const rowEl = document.createElement('div');
+            rowEl.textContent = line;
+            rowEl.style.marginTop = '2px';
+            container.appendChild(rowEl);
+            }
+        });
+
+        return { domNodes: [container] };
+        }
+        """
+    }
     # CSS para compactar las filas de eventos
     st.markdown("""
     <style>
     .fc-daygrid-event {
         margin: 0 !important;
-        padding: 0 !important;
+        padding: 2px 4px !important;
     }
     .fc-daygrid-event .fc-event-title {
+        /* deja que el renderer maneje filas; no fuerces nowrap */
         line-height: 1.2em !important;
-        white-space: pre-line !important;  /* 🔑 permite que \n se muestre como salto */
     }
     </style>
     """, unsafe_allow_html=True)
@@ -236,26 +258,35 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
     if cal and "eventClick" in cal:
         ev = cal["eventClick"]["event"]
         props = ev.get("extendedProps", {})
+        tipo_ev = props.get("tipo_evento") or ev.get("tipo_evento")
+
+        if tipo_ev == "estado_diario":
+            editar_estado()
+        elif tipo_ev == "competicion":
+            editar_competicion()
+        elif tipo_ev == "cita_test":
+            editar_cita_test()
+            
         if ev.get("tipo_evento") == "estado_diario":
             @st.dialog("📋 Editar estado diario")
             def editar_estado():
                 with st.form("form_editar_estado", clear_on_submit=True):
                     sintomas = st.selectbox("Síntomas menstruales",
                         ["Ninguno","Dolor leve","Dolor moderado","Dolor intenso"],
-                        index=["Ninguno","Dolor leve","Dolor moderado","Dolor intenso"].index(props.get("Síntomas","Ninguno")))
+                        index=["Ninguno","Dolor leve","Dolor moderado","Dolor intenso"].index(props.get("sintomas","Ninguno")))
                     menstruacion = st.selectbox("Menstruación",
                         ["No","Día 1","Día 2","Día 3","Día 4+"],
-                        index=["No","Día 1","Día 2","Día 3","Día 4+"].index(props.get("Menstruacion","No")))
+                        index=["No","Día 1","Día 2","Día 3","Día 4+"].index(props.get("menstruacion","No")))
                     ovulacion = st.selectbox("Ovulación",
                         ["No","Estimada","Confirmada"],
-                        index=["No","Estimada","Confirmada"].index(props.get("Ovulacion","No")))
+                        index=["No","Estimada","Confirmada"].index(props.get("ovulacion","No")))
 
-                    altitud = st.checkbox("⛰️ Entrenamiento en altitud", value=bool(props.get("Altitud")))
-                    respiratorio = st.checkbox("🌬️ Entrenamiento respiratorio", value=bool(props.get("Respiratorio")))
-                    calor = st.checkbox("🔥 Entrenamiento en calor", value=bool(props.get("Calor")))
+                    altitud = st.checkbox("⛰️ Entrenamiento en altitud", value=bool(props.get("altitud")))
+                    respiratorio = st.checkbox("🌬️ Entrenamiento respiratorio", value=bool(props.get("respiratorio")))
+                    calor = st.checkbox("🔥 Entrenamiento en calor", value=bool(props.get("calor")))
 
-                    lesion = st.text_input("🤕 Lesión", value=props.get("Lesión",""))
-                    comentario_extra = st.text_area("📝 Notas adicionales", value=props.get("Comentario",""))
+                    lesion = st.text_input("🤕 Lesión", value=props.get("lesion",""))
+                    comentario_extra = st.text_area("📝 Notas adicionales", value=props.get("comentario_extra",""))
 
                     col1, col2 = st.columns(2)
                     with col1:
