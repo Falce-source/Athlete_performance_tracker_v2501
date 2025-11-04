@@ -102,6 +102,16 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                 "extendedProps": {**details, "displayOrder": 0}
             })
 
+    # 🔎 Prueba Depuración: ver qué se está mandando al calendario
+    st.write("Eventos construidos:", out_events)
+
+    cal = calendar(
+        events=out_events,
+        options=calendar_options,
+        key=f"calendar_{id_atleta}_{vista}"
+    )
+    #-------
+
     # Configuración del calendario
     calendar_options = {
         "initialView": "dayGridMonth",
