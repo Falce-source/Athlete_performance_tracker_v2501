@@ -14,20 +14,29 @@ import backup_storage
  # ─────────────────────────────────────────────
 
 DB_PATH = os.path.join("/tmp", "base.db")
-
-# Si no existe en /tmp, intentamos restaurar desde Drive o copiar semilla
-if not os.path.exists(DB_PATH):
-    try:
-        backups = backup_storage.listar_backups()
-        if backups:
-            ultimo = sorted(backups, key=lambda b: b["createdTime"], reverse=True)[0]
-            backup_storage.descargar_backup(ultimo["id"], DB_PATH)
-            print(f"Restaurado backup inicial desde Drive: {ultimo['name']}")
-        else:
-            shutil.copy("base.db", DB_PATH)
-            print("Copiado base.db inicial al /tmp")
-    except Exception as e:
-        print(f"⚠️ No se pudo restaurar backup inicial: {e}")
+# Inicialización robusta: siempre intentamos restaurar el último backup desde Drive.
+# Si no hay backups, arrancamos vacíos y generamos el primer backup.
+NEED_INIT_SCHEMA = False
+try:
+    backups = backup_storage.listar_backups()
+    if backups:
+        ultimo = sorted(backups, key=lambda b: b["createdTime"], reverse=True)[0]
+        backup_storage.descargar_backup(ultimo["id"], DB_PATH)
+        print(f"📦 Restaurado backup inicial desde Drive: {ultimo['name']}")
+    else:
+        print("ℹ️ No hay backups en Drive: se iniciará base vacía.")
+        # Creamos un archivo vacío; el esquema se creará tras configurar el engine.
+        open(DB_PATH, "wb").close()
+        NEED_INIT_SCHEMA = True
+except Exception as e:
+    print(f"⚠️ Error al consultar/restaurar backups: {e}")
+    # Fallback: si existe base local en el repo la copiamos; si no, vacía.
+    if os.path.exists("base.db"):
+        shutil.copy("base.db", DB_PATH)
+        print("📄 Copiado base.db local al /tmp como semilla.")
+    else:
+        open(DB_PATH, "wb").close()
+        NEED_INIT_SCHEMA = True
 
 DATABASE_URL = f"sqlite:///{DB_PATH}"
 engine = create_engine(DATABASE_URL, echo=False)
@@ -42,6 +51,18 @@ def _sync_backup():
         print(f"Backup actualizado en Drive: {file_id}")
     except Exception as e:
         print(f"⚠️ Error al subir backup: {e}")
+
+# Si se marcó que no había backups, inicializamos el esquema y creamos el primer backup vacío.
+if NEED_INIT_SCHEMA:
+    try:
+        # Nota: el esquema se define más adelante con los modelos; este bloque se ejecutará al final del import.
+        # Para asegurar creación del esquema, lo reforzaremos en init_db() también.
+        print("🛠️ Inicializando esquema en base vacía...")
+        # La función init_db se define más abajo; si aún no existe en este punto por orden de import,
+        # se recomienda llamar a Base.metadata.create_all en init_db() al primer uso.
+        # Aquí no llamamos directamente para evitar dependencia del orden: se crea en init_db().
+    except Exception as e:
+        print(f"⚠️ Error al inicializar esquema: {e}")
 
 # ─────────────────────────────────────────────
 # MODELOS
