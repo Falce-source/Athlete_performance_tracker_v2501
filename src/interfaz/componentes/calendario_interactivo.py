@@ -127,8 +127,8 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
         "eventDisplay": "block",
         "dayMaxEventRows": True,
         "eventOrder": "displayOrder",
-        "timeZone": "local",          # fuerza a usar la zona local
-        "forceEventDuration": True,   # evita que allDay se desplace
+        "timeZone": "UTC",            # interpreta YYYY-MM-DD sin desfase
+        "forceEventDuration": True,
         "displayEventEnd": False
     }
 
@@ -147,6 +147,7 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
     """, unsafe_allow_html=True)
 
     # Renderizar calendario (ahora \n se interpreta como salto de línea)
+    st.json(fc_events)
     cal = calendar(events=fc_events, options=calendar_options)
 
     # Modal editable al hacer clic en la cabecera
