@@ -5,9 +5,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 from src.interfaz import perfil
-from src.interfaz import calendario   # ← nuevo
-from src.interfaz import usuarios     # ← NUEVO
-from src.interfaz import auditoria  # ← NUEVO
+from src.interfaz import calendario
+from src.interfaz import usuarios
+from src.interfaz import auditoria
+from src.interfaz import historial_validaciones
 from dotenv import load_dotenv
 import os
 import backup_storage
@@ -46,10 +47,11 @@ opcion = st.sidebar.radio(
     [
         "🏠 Inicio",
         "👤 Perfil atleta",
-        "📅 Calendario",   # ← nuevo
-        "👥 Usuarios",     # ← NUEVA PESTAÑA
-        "💾 Backups",      # ← nueva pestaña
-        "🔍 Auditoría"    # ← NUEVA PESTAÑA
+        "📅 Calendario",
+        "👥 Usuarios",
+        "💾 Backups",
+        "🔍 Auditoría",
+        "📈 Historial de Validaciones"
     ]
 )
 
@@ -214,3 +216,7 @@ elif opcion == "💾 Backups":
     
 elif opcion == "🔍 Auditoría":
     auditoria.mostrar_auditoria()
+
+elif opcion == "📈 Historial de Validaciones":
+    historial_validaciones.mostrar_historial()
+

@@ -62,6 +62,9 @@ def probar_flujo(modulo):
     except Exception as e:
         resultado["mensaje"] = f"❌ Error durante la prueba: {e}"
 
+    from src.interfaz import historial_validaciones
+    historial_validaciones.registrar_validacion(modulo, resultado["mensaje"], resultado["backup_creado"])
+
     return resultado
 
 def mostrar_auditoria():
