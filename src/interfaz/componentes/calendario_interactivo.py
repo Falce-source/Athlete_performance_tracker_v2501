@@ -53,19 +53,6 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
             if details.get("lesion"): resto_icons.append(EVENT_STYLES["lesion"]["icon"])
             if details.get("comentario_extra"): resto_icons.append(EVENT_STYLES["nota"]["icon"])
 
-            # Prueba
-            icons = " ".join(ciclo_icons + entreno_icons + resto_icons)
-            title = f"🧍 {icons}" if icons else "🧍 Estado diario"
-
-            # 🔎 Depuración: mostramos lo que se está generando
-            st.write("Evento procesado:", {
-                "fecha": fecha,
-                "details": details,
-                "icons": icons,
-                "title": title
-            })
-            #--------
-
             out_events.append({
                 "id": str(ev.get("id")),
                 # Concatenamos iconos en el título
@@ -101,16 +88,6 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                 "textColor": EVENT_STYLES["cita_test"]["text"],
                 "extendedProps": {**details, "displayOrder": 0}
             })
-
-    # 🔎 Prueba Depuración: ver qué se está mandando al calendario
-    st.write("Eventos construidos:", out_events)
-
-    cal = calendar(
-        events=out_events,
-        options=calendar_options,
-        key=f"calendar_{id_atleta}_{vista}"
-    )
-    #-------
 
     # Configuración del calendario
     calendar_options = {
