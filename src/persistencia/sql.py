@@ -2,7 +2,7 @@ from sqlalchemy import (
     create_engine, Column, Integer, String, Text, Boolean, DateTime, Date, ForeignKey
 )
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
-from datetime import datetime, timezone, UTC
+from datetime import datetime, date, timezone, UTC
 from sqlalchemy import JSON  # si usas SQLAlchemy 1.4+ puedes definir JSON
 import json
 import os
@@ -322,15 +322,15 @@ def crear_evento_calendario(id_atleta, fecha, tipo_evento, valor, notas=None):
         # Normalizamos fecha a medianoche sin zona horaria (naive)
         if isinstance(fecha, datetime):
             fecha = datetime(fecha.year, fecha.month, fecha.day)
+        elif isinstance(fecha, date):
+            fecha = datetime(fecha.year, fecha.month, fecha.day)
         elif isinstance(fecha, str):
             try:
                 base = datetime.fromisoformat(fecha.replace("Z", "+00:00"))
                 fecha = datetime(base.year, base.month, base.day)
             except Exception:
-                # Fallback: hoy a medianoche
                 fecha = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         else:
-            # Si llega un tipo inesperado, usamos hoy a medianoche
             fecha = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
         evento = CalendarioEvento(
@@ -354,6 +354,8 @@ def actualizar_evento_calendario(id_atleta, fecha, valores_actualizados, notas=N
     with SessionLocal() as session:
         # Normalizamos fecha a medianoche sin zona horaria (naive)
         if isinstance(fecha, datetime):
+            fecha = datetime(fecha.year, fecha.month, fecha.day)
+        elif isinstance(fecha, date):
             fecha = datetime(fecha.year, fecha.month, fecha.day)
         elif isinstance(fecha, str):
             try:
@@ -438,6 +440,8 @@ def borrar_evento_calendario_por_fecha(id_atleta, fecha) -> bool:
     with SessionLocal() as session:
         # Normalizamos fecha a medianoche sin zona horaria (naive)
         if isinstance(fecha, datetime):
+            fecha = datetime(fecha.year, fecha.month, fecha.day)
+        elif isinstance(fecha, date):
             fecha = datetime(fecha.year, fecha.month, fecha.day)
         elif isinstance(fecha, str):
             try:
