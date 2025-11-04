@@ -55,7 +55,15 @@ opcion = st.sidebar.radio(
     ]
 )
 
-ROL_ACTUAL = st.sidebar.selectbox("Rol actual", ["admin", "entrenadora", "atleta"])
+if "ROL_ACTUAL" not in st.session_state:
+    st.session_state["ROL_ACTUAL"] = "admin"
+
+st.sidebar.selectbox(
+    "Rol actual",
+    ["admin", "entrenadora", "atleta"],
+    index=["admin", "entrenadora", "atleta"].index(st.session_state["ROL_ACTUAL"]),
+    key="ROL_ACTUAL"
+)
 
 # ─────────────────────────────────────────────
 # CONTENIDO PRINCIPAL
@@ -68,7 +76,7 @@ elif opcion == "👤 Perfil atleta":
     perfil.mostrar_perfil()
 
 elif opcion == "📅 Calendario":
-    calendario.mostrar_calendario(rol_actual=ROL_ACTUAL)
+    calendario.mostrar_calendario(rol_actual=st.session_state["ROL_ACTUAL"])
 
 elif opcion == "👥 Usuarios":
     usuarios.mostrar_usuarios()

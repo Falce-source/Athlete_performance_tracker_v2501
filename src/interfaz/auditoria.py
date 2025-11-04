@@ -63,7 +63,9 @@ def probar_flujo(modulo):
         resultado["mensaje"] = f"❌ Error durante la prueba: {e}"
 
     from src.interfaz import historial_validaciones
-    historial_validaciones.registrar_validacion(modulo, resultado["mensaje"], resultado["backup_creado"])
+    from streamlit import session_state
+    rol_actual = session_state.get("ROL_ACTUAL", "admin")
+    historial_validaciones.registrar_validacion(..., rol_actual=rol_actual)
 
     return resultado
 
@@ -87,13 +89,17 @@ def probar_visibilidad_por_rol():
             sql.crear_comentario(
                 id_atleta=atleta.id_atleta,
                 texto=f"Comentario visible solo para {rol}",
-                visible_para=rol
+                visible_para=rol,
+                id_autor=None  # ← no filtra por autor, solo por visibilidad
             )
 
             eventos = sql.obtener_eventos_calendario_por_atleta(atleta.id_atleta, rol_actual=rol)
             comentarios = sql.obtener_comentarios_por_atleta(atleta.id_atleta, rol_actual=rol)
 
-            if not eventos or not comentarios:
+            eventos_ok = any(e.tipo_evento != "Comentario" or rol == "admin" for e in eventos)
+            comentarios_ok = any(c.visible_para == rol for c in comentarios)
+
+            if not eventos_ok or not comentarios_ok:
                 resultado["ok"] = False
                 resultado["mensaje"] += f"❌ Rol `{rol}` no accede correctamente a sus datos\n"
 
@@ -160,50 +166,3 @@ def mostrar_auditoria():
                     st.caption(f"📦 Último backup: {ultimo['name']} ({ultimo['createdTime']})")
                 else:
                     st.caption("⚠️ No hay backups disponibles")
-
-    st.subheader("🔐 Validación de visibilidad por rol")
-
-roles = ["admin", "entrenadora", "atleta"]
-for rol in roles:
-    st.markdown(f"#### 👤 Rol: `{rol}`")
-
-    # Crear atleta temporal
-    atleta = sql.crear_atleta(nombre=f"Test {rol}", edad=25, deporte="Test", consentimiento=True)
-
-    # Crear evento privado (tipo Comentario)
-    sql.crear_evento_calendario(
-        id_atleta=atleta.id_atleta,
-        fecha=datetime.now(),
-        tipo_evento="Comentario",
-        valor={"detalle": f"Evento privado para {rol}"},
-        notas=f"Nota privada {rol}"
-    )
-
-    # Crear comentario visible solo para ese rol
-    sql.crear_comentario(
-        id_atleta=atleta.id_atleta,
-        texto=f"Comentario visible solo para {rol}",
-        visible_para=rol
-    )
-
-    # Obtener eventos y comentarios con filtro
-    eventos = sql.obtener_eventos_calendario_por_atleta(atleta.id_atleta, rol_actual=rol)
-    comentarios = sql.obtener_comentarios_por_atleta(atleta.id_atleta, rol_actual=rol)
-
-    st.write("📅 Eventos visibles:")
-    for e in eventos:
-        st.markdown(f"- {e.tipo_evento}: {e.notas or e.valor}")
-
-    st.write("💬 Comentarios visibles:")
-    for c in comentarios:
-        st.markdown(f"- {c.texto} (visible para: {c.visible_para})")
-
-    # Limpieza
-    for c in comentarios:
-        sql.borrar_comentario(c.id_comentario)
-    for e in eventos:
-        sql.borrar_evento_calendario(e.id_atleta, e.fecha)
-    sql.borrar_atleta(atleta.id_atleta)
-
-    st.markdown("---")
-    st.caption("✅ = validado | ⚠️ = parcial | ❌ = pendiente")

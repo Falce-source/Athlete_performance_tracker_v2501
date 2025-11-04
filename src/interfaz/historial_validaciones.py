@@ -6,13 +6,14 @@ import os
 
 RUTA_LOG = "/tmp/validaciones_log.json"  # ← compatible con Cloud
 
-def registrar_validacion(modulo, estado, backup=None):
-    entrada = {
-        "fecha": datetime.now().isoformat(timespec="seconds"),
-        "modulo": modulo,
-        "estado": estado,
-        "backup": backup or "-"
-    }
+def registrar_validacion(modulo, resultado, backup_generado=None, rol_actual=None):
+    from src.persistencia import sql
+    texto = f"{resultado}"
+    if backup_generado:
+        texto += f" | Backup: {backup_generado}"
+    if rol_actual:
+        texto += f" | Rol: {rol_actual}"
+    sql.crear_comentario(id_atleta=0, texto=texto, visible_para="staff", id_autor=None)
 
     try:
         if os.path.exists(RUTA_LOG):
@@ -21,6 +22,13 @@ def registrar_validacion(modulo, estado, backup=None):
         else:
             data = []
 
+        entrada = {
+            "fecha": datetime.now().isoformat(),
+            "modulo": modulo,
+            "resultado": resultado,
+            "backup": backup_generado or "-",
+            "rol": rol_actual or "-"
+        }
         data.append(entrada)
 
         with open(RUTA_LOG, "w", encoding="utf-8") as f:
@@ -46,14 +54,17 @@ def mostrar_historial():
         df = pd.DataFrame(data)
         df["fecha"] = pd.to_datetime(df["fecha"])
         df = df.sort_values("fecha", ascending=False)
-        st.dataframe(df, use_container_width=True)
+        st.dataframe(df[["fecha", "modulo", "resultado", "backup", "rol"]], use_container_width=True)
 
         # ───────────────────────────────
         # Filtros interactivos
         # ───────────────────────────────
         st.subheader("🔎 Filtros")
         modulos = sorted(df["modulo"].unique())
+        roles = sorted(df["rol"].dropna().unique())
+
         modulo_sel = st.selectbox("Filtrar por módulo:", ["Todos"] + modulos)
+        rol_sel = st.selectbox("Filtrar por rol:", ["Todos"] + roles)
         fecha_min = st.date_input("Desde:", value=df["fecha"].min().date())
         fecha_max = st.date_input("Hasta:", value=df["fecha"].max().date())
 
@@ -63,8 +74,10 @@ def mostrar_historial():
         ]
         if modulo_sel != "Todos":
             df_filtrado = df_filtrado[df_filtrado["modulo"] == modulo_sel]
+        if rol_sel != "Todos":
+            df_filtrado = df_filtrado[df_filtrado["rol"] == rol_sel]
 
-        st.dataframe(df_filtrado, use_container_width=True)
+        st.dataframe(df_filtrado[["fecha", "modulo", "resultado", "backup", "rol"]], use_container_width=True)
 
     except Exception as e:
         st.error(f"❌ Error al cargar historial: {e}")
