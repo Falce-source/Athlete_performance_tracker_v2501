@@ -540,3 +540,15 @@ def borrar_comentario(id_comentario):
             session.commit()
             _sync_backup()
 
+# ─────────────────────────────────────────────
+# Inicialización del esquema si no había backups
+# ─────────────────────────────────────────────
+try:
+    if 'NEED_INIT_SCHEMA' in globals() and NEED_INIT_SCHEMA:
+        print("🛠️ Creando esquema inicial en base vacía...")
+        Base.metadata.create_all(bind=engine)
+        _sync_backup()  # subimos primer backup vacío
+        print("✅ Esquema creado y primer backup generado")
+except Exception as e:
+    print(f"⚠️ Error al crear esquema inicial: {e}")
+
