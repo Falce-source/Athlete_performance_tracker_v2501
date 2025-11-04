@@ -150,7 +150,7 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
                 ["Estado diario", "Competición", "Cita/Test"]
             )
 
-            if tipo_evento == "estado_diario":
+            if tipo_evento == "Estado diario":
                 with st.form("form_estado_diario", clear_on_submit=True):
                     with st.expander("🩸 Datos de ciclo"):
                         sintomas = st.selectbox("Síntomas", ["Ninguno","Dolor leve","Dolor moderado","Dolor intenso"])

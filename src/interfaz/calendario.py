@@ -73,8 +73,11 @@ def mostrar_calendario(rol_actual="admin"):
             "Notas": e.get("notas", "")
         }
 
+        # Normalizamos el tipo de evento para evitar inconsistencias
+        tipo = str(e.get("tipo_evento", "")).lower().replace(" ", "_")
+
         # Estado diario
-        if e["tipo_evento"] == "estado_diario":
+        if tipo == "estado_diario":
             if valor.get("sintomas") not in ["No", "-", None, "Ninguno"]:
                 fila["Síntomas"] = valor.get("sintomas")
             if valor.get("menstruacion") not in ["No", "-", None]:
