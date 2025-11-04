@@ -55,6 +55,8 @@ opcion = st.sidebar.radio(
     ]
 )
 
+ROL_ACTUAL = st.sidebar.selectbox("Rol actual", ["admin", "entrenadora", "atleta"])
+
 # ─────────────────────────────────────────────
 # CONTENIDO PRINCIPAL
 # ─────────────────────────────────────────────
@@ -66,7 +68,7 @@ elif opcion == "👤 Perfil atleta":
     perfil.mostrar_perfil()
 
 elif opcion == "📅 Calendario":
-    calendario.mostrar_calendario()
+    calendario.mostrar_calendario(rol_actual=ROL_ACTUAL)
 
 elif opcion == "👥 Usuarios":
     usuarios.mostrar_usuarios()

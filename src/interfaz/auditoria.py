@@ -67,6 +67,53 @@ def probar_flujo(modulo):
 
     return resultado
 
+def probar_visibilidad_por_rol():
+    from src.persistencia import sql
+    from datetime import datetime
+    resultado = {"ok": True, "mensaje": "", "backup_creado": None}
+    try:
+        roles = ["admin", "entrenadora", "atleta"]
+        for rol in roles:
+            atleta = sql.crear_atleta(nombre=f"Test {rol}", edad=25, deporte="Test", consentimiento=True)
+
+            sql.crear_evento_calendario(
+                id_atleta=atleta.id_atleta,
+                fecha=datetime.now(),
+                tipo_evento="Comentario",
+                valor={"detalle": f"Evento privado para {rol}"},
+                notas=f"Nota privada {rol}"
+            )
+
+            sql.crear_comentario(
+                id_atleta=atleta.id_atleta,
+                texto=f"Comentario visible solo para {rol}",
+                visible_para=rol
+            )
+
+            eventos = sql.obtener_eventos_calendario_por_atleta(atleta.id_atleta, rol_actual=rol)
+            comentarios = sql.obtener_comentarios_por_atleta(atleta.id_atleta, rol_actual=rol)
+
+            if not eventos or not comentarios:
+                resultado["ok"] = False
+                resultado["mensaje"] += f"❌ Rol `{rol}` no accede correctamente a sus datos\n"
+
+            for c in comentarios:
+                sql.borrar_comentario(c.id_comentario)
+            for e in eventos:
+                sql.borrar_evento_calendario(e.id_atleta, e.fecha)
+            sql.borrar_atleta(atleta.id_atleta)
+
+        if resultado["ok"]:
+            resultado["mensaje"] = "✅ Filtro por visibilidad funciona correctamente para todos los roles"
+
+    except Exception as e:
+        resultado["ok"] = False
+        resultado["mensaje"] = f"❌ Error en prueba de visibilidad: {e}"
+
+    from src.interfaz import historial_validaciones
+    historial_validaciones.registrar_validacion("Comentarios", resultado["mensaje"], resultado["backup_creado"])
+    return resultado
+
 def mostrar_auditoria():
     st.header("🔍 Auditoría Técnica")
 
@@ -81,10 +128,10 @@ def mostrar_auditoria():
     modulos = [
         {"Módulo": "Usuarios", "Archivo": "usuarios.py", "Crear": "✅", "Leer": "✅", "Actualizar": "✅", "Eliminar": "✅", "Backup": "✅", "Visual": "✅"},
         {"Módulo": "Atletas", "Archivo": "atletas.py", "Crear": "✅", "Leer": "✅", "Actualizar": "✅", "Eliminar": "✅", "Backup": "✅", "Visual": "✅"},
-        {"Módulo": "Eventos", "Archivo": "calendario.py", "Crear": "✅", "Leer": "✅", "Actualizar": "✅", "Eliminar": "✅", "Backup": "✅", "Visual": "⚠️ Agrupación pendiente"},
+        {"Módulo": "Eventos", "Archivo": "calendario.py", "Crear": "✅", "Leer": "✅", "Actualizar": "✅", "Eliminar": "✅", "Backup": "✅", "Visual": "✅ Agrupación por fecha y tipo + filtro por visibilidad"},
         {"Módulo": "Sesiones", "Archivo": "sesiones.py", "Crear": "✅", "Leer": "✅", "Actualizar": "✅", "Eliminar": "✅", "Backup": "✅", "Visual": "⚠️ Sin vista detallada"},
         {"Módulo": "Métricas", "Archivo": "metricas.py", "Crear": "✅", "Leer": "✅", "Actualizar": "✅", "Eliminar": "✅", "Backup": "✅", "Visual": "⚠️ Sin gráfico aún"},
-        {"Módulo": "Comentarios", "Archivo": "comentarios.py", "Crear": "✅", "Leer": "✅", "Actualizar": "✅", "Eliminar": "✅", "Backup": "✅", "Visual": "⚠️ Sin filtro por visibilidad"},
+        {"Módulo": "Comentarios", "Archivo": "comentarios.py", "Crear": "✅", "Leer": "✅", "Actualizar": "✅", "Eliminar": "✅", "Backup": "✅", "Visual": "✅ Filtro por visibilidad activo"},
     ]
 
     for m in modulos:
@@ -99,7 +146,10 @@ def mostrar_auditoria():
                 st.button("📂 Ver código fuente", key=f"codigo_{m['Módulo']}")
             with cols[1]:
                 if st.button("🧪 Probar flujo", key=f"probar_{m['Módulo']}"):
-                    resultado = probar_flujo(m["Módulo"])
+                    if m["Módulo"] == "Comentarios":
+                        resultado = probar_visibilidad_por_rol()
+                    else:
+                        resultado = probar_flujo(m["Módulo"])
                     st.success(resultado["mensaje"]) if resultado["ok"] else st.error(resultado["mensaje"])
                     if resultado["backup_creado"]:
                         st.info(f"📦 Backup generado: {resultado['backup_creado']}")
@@ -110,6 +160,50 @@ def mostrar_auditoria():
                     st.caption(f"📦 Último backup: {ultimo['name']} ({ultimo['createdTime']})")
                 else:
                     st.caption("⚠️ No hay backups disponibles")
+
+    st.subheader("🔐 Validación de visibilidad por rol")
+
+roles = ["admin", "entrenadora", "atleta"]
+for rol in roles:
+    st.markdown(f"#### 👤 Rol: `{rol}`")
+
+    # Crear atleta temporal
+    atleta = sql.crear_atleta(nombre=f"Test {rol}", edad=25, deporte="Test", consentimiento=True)
+
+    # Crear evento privado (tipo Comentario)
+    sql.crear_evento_calendario(
+        id_atleta=atleta.id_atleta,
+        fecha=datetime.now(),
+        tipo_evento="Comentario",
+        valor={"detalle": f"Evento privado para {rol}"},
+        notas=f"Nota privada {rol}"
+    )
+
+    # Crear comentario visible solo para ese rol
+    sql.crear_comentario(
+        id_atleta=atleta.id_atleta,
+        texto=f"Comentario visible solo para {rol}",
+        visible_para=rol
+    )
+
+    # Obtener eventos y comentarios con filtro
+    eventos = sql.obtener_eventos_calendario_por_atleta(atleta.id_atleta, rol_actual=rol)
+    comentarios = sql.obtener_comentarios_por_atleta(atleta.id_atleta, rol_actual=rol)
+
+    st.write("📅 Eventos visibles:")
+    for e in eventos:
+        st.markdown(f"- {e.tipo_evento}: {e.notas or e.valor}")
+
+    st.write("💬 Comentarios visibles:")
+    for c in comentarios:
+        st.markdown(f"- {c.texto} (visible para: {c.visible_para})")
+
+    # Limpieza
+    for c in comentarios:
+        sql.borrar_comentario(c.id_comentario)
+    for e in eventos:
+        sql.borrar_evento_calendario(e.id_atleta, e.fecha)
+    sql.borrar_atleta(atleta.id_atleta)
 
     st.markdown("---")
     st.caption("✅ = validado | ⚠️ = parcial | ❌ = pendiente")

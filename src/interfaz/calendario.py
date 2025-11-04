@@ -9,7 +9,7 @@ def badge(text, color="#eee", text_color="#000"):
     """Devuelve un span HTML con estilo tipo chip/badge."""
     return f"<span style='background-color:{color}; color:{text_color}; padding:2px 6px; border-radius:8px; font-size:90%'>{text}</span>"
 
-def mostrar_calendario():
+def mostrar_calendario(rol_actual="admin"):
     st.header("📅 Calendario del atleta")
 
     # ───────────────────────────────
@@ -61,7 +61,7 @@ def mostrar_calendario():
     # ───────────────────────────────
     st.subheader("🗓️ Calendario")
 
-    eventos = sql.obtener_eventos_calendario_por_atleta(id_atleta)
+    eventos = sql.obtener_eventos_calendario_por_atleta(id_atleta, rol_actual=rol_actual)
     if not eventos:
         st.info("No hay eventos registrados todavía")
     else:
@@ -210,7 +210,7 @@ def mostrar_calendario():
             sql.crear_comentario(id_atleta=id_atleta, texto=texto, visible_para="staff")
             st.success("✅ Comentario guardado")
 
-    comentarios = sql.obtener_comentarios_por_atleta(id_atleta)
+    comentarios = sql.obtener_comentarios_por_atleta(id_atleta, rol_actual=rol_actual)
     if comentarios:
         st.write("### Comentarios existentes")
         for c in comentarios:

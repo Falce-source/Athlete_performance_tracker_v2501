@@ -334,10 +334,12 @@ def actualizar_evento_calendario(id_atleta, fecha, valores_actualizados, notas=N
         _sync_backup()
         return evento
 
-def obtener_eventos_calendario_por_atleta(id_atleta):
-    """Obtiene eventos de la tabla 'calendario_eventos' asociados a un atleta"""
+def obtener_eventos_calendario_por_atleta(id_atleta, rol_actual="admin"):
     with SessionLocal() as session:
-        return session.query(CalendarioEvento).filter_by(id_atleta=id_atleta).all()
+        query = session.query(CalendarioEvento).filter_by(id_atleta=id_atleta)
+        if rol_actual != "admin":
+            query = query.filter(CalendarioEvento.tipo_evento != "Comentario")  # Oculta comentarios si no eres admin
+        return query.order_by(CalendarioEvento.fecha.desc()).all()
 
 def borrar_evento_calendario(id_atleta, fecha):
     """
@@ -460,9 +462,12 @@ def crear_comentario(id_atleta, texto, visible_para="staff", id_autor=None):
         _sync_backup()
         return comentario
 
-def obtener_comentarios_por_atleta(id_atleta):
+def obtener_comentarios_por_atleta(id_atleta, rol_actual="admin"):
     with SessionLocal() as session:
-        return session.query(Comentario).filter_by(id_atleta=id_atleta).order_by(Comentario.fecha.desc()).all()
+        query = session.query(Comentario).filter_by(id_atleta=id_atleta)
+        if rol_actual != "admin":
+            query = query.filter(Comentario.visible_para == rol_actual)
+        return query.order_by(Comentario.fecha.desc()).all()
 
 def actualizar_comentario(id_comentario, **kwargs):
     with SessionLocal() as session:
