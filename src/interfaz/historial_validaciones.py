@@ -57,8 +57,15 @@ def mostrar_historial():
             return
 
         df = pd.DataFrame(data)
-        df["fecha"] = pd.to_datetime(df["fecha"])
+
+        # Asegurar que todas las columnas existen
+        for col in ["fecha", "modulo", "resultado", "backup", "rol"]:
+            if col not in df.columns:
+                df[col] = "-"
+
+        df["fecha"] = pd.to_datetime(df["fecha"], errors="coerce")
         df = df.sort_values("fecha", ascending=False)
+
         st.dataframe(df[["fecha", "modulo", "resultado", "backup", "rol"]], use_container_width=True)
 
         # ───────────────────────────────
