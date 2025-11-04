@@ -161,7 +161,7 @@ def mostrar_auditoria():
                     if m["Módulo"] == "Comentarios":
                         resultado = probar_visibilidad_por_rol()
                     else:
-                        resultado = probar_flujo(m["Módulo"], rol_actual=st.session_state.get("ROL_ACTUAL", "admin"))
+                        resultado = probar_flujo(m["Módulo"])
                     st.success(resultado["mensaje"]) if resultado["ok"] else st.error(resultado["mensaje"])
                     if resultado["backup_creado"]:
                         st.info(f"📦 Backup generado: {resultado['backup_creado']}")
