@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 import time
-from datetime import date
+from datetime import datetime
 from src.persistencia import sql
 import backup_storage
 
