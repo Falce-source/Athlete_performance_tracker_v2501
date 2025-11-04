@@ -73,7 +73,7 @@ def mostrar_calendario(rol_actual="admin"):
             valor = {}
 
         fila = {
-            "id_evento": e.id_evento,
+            "id_evento": e["id"],
             "Fecha": e.fecha.strftime("%Y-%m-%d"),
             "Tipo": e.tipo_evento,
             "Notas": e.notas or ""
@@ -99,7 +99,7 @@ def mostrar_calendario(rol_actual="admin"):
                 fila["Comentario"] = valor.get("comentario_extra")
 
             evento_fc = {
-                "id": e.id_evento,
+                "id": e["id"],
                 "title": "🧍 Estado diario",
                 "start": e.fecha.strftime("%Y-%m-%d"),
                 "allDay": True,
@@ -117,7 +117,7 @@ def mostrar_calendario(rol_actual="admin"):
                 fila["Competición"] = "-"
 
             evento_fc = {
-                "id": e.id_evento,
+                "id": e["id"],
                 "title": "🏆 Competición",
                 "start": e.fecha.strftime("%Y-%m-%d"),
                 "allDay": True,
@@ -130,7 +130,7 @@ def mostrar_calendario(rol_actual="admin"):
             fila["Cita/Test"] = valor.get("tipo") or "Cita/Test"
 
             evento_fc = {
-                "id": e.id_evento,
+                "id": e["id"],
                 "title": "📅 Cita/Test",
                 "start": e.fecha.strftime("%Y-%m-%d"),
                 "allDay": True,
