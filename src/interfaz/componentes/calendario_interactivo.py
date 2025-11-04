@@ -28,13 +28,13 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, rol_actual="admin"):
     # Inicialización robusta
     # ───────────────────────────────
     # Normalizamos la entrada a lista en una variable local
-    eventos = eventos if isinstance(eventos, list) else []
+    fc_events = fc_events if isinstance(fc_events, list) else []
 
     st.markdown("### 🗓️ Calendario interactivo")
 
     # Construcción de eventos agrupados por día
     fc_events = []
-    for ev in eventos:
+    for ev in fc_events:
         fecha = ev.get("start")
         if not fecha:
             continue
