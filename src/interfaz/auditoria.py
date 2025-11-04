@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 import time
-from datetime import datetime
+from datetime import date
 from src.persistencia import sql
 import backup_storage
 
@@ -68,7 +68,7 @@ def probar_flujo(modulo, rol_actual="admin"):
     historial_validaciones.registrar_validacion(
         modulo=modulo,
         resultado=resultado,
-        fecha=datetime.date.today()
+        fecha=date.today()
     )
 
     return resultado
