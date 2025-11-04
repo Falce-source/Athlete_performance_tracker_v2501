@@ -44,14 +44,14 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
 
         if tipo == "estado_diario":
             ciclo_icons, entreno_icons, resto_icons = [], [], []
-            if details.get("Síntomas"): ciclo_icons.append(EVENT_STYLES["sintomas"]["icon"])
-            if details.get("Menstruacion"): ciclo_icons.append(EVENT_STYLES["menstruacion"]["icon"])
-            if details.get("Ovulacion"): ciclo_icons.append(EVENT_STYLES["ovulacion"]["icon"])
-            if details.get("Altitud"): entreno_icons.append(EVENT_STYLES["altitud"]["icon"])
-            if details.get("Respiratorio"): entreno_icons.append(EVENT_STYLES["respiratorio"]["icon"])
-            if details.get("Calor"): entreno_icons.append(EVENT_STYLES["calor"]["icon"])
-            if details.get("Lesión"): resto_icons.append(EVENT_STYLES["lesion"]["icon"])
-            if details.get("Comentario"): resto_icons.append(EVENT_STYLES["nota"]["icon"])
+            if details.get("sintomas"): ciclo_icons.append(EVENT_STYLES["sintomas"]["icon"])
+            if details.get("menstruacion"): ciclo_icons.append(EVENT_STYLES["menstruacion"]["icon"])
+            if details.get("ovulacion"): ciclo_icons.append(EVENT_STYLES["ovulacion"]["icon"])
+            if details.get("altitud"): entreno_icons.append(EVENT_STYLES["altitud"]["icon"])
+            if details.get("respiratorio"): entreno_icons.append(EVENT_STYLES["respiratorio"]["icon"])
+            if details.get("calor"): entreno_icons.append(EVENT_STYLES["calor"]["icon"])
+            if details.get("lesión"): resto_icons.append(EVENT_STYLES["lesion"]["icon"])
+            if details.get("comentario_extra"): resto_icons.append(EVENT_STYLES["nota"]["icon"])
 
             fc_events.append({
                 "id": str(ev.get("id")),
@@ -182,14 +182,14 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                             fecha=str(fecha_local),  # normalizamos a string
                             tipo_evento="estado_diario",
                             valor={
-                                "Síntomas": sintomas,
-                                "Menstruacion": menstruacion,
-                                "Ovulacion": ovulacion,
-                                "Altitud": altitud,
-                                "Respiratorio": respiratorio,
-                                "Calor": calor,
-                                "Lesión": lesion,
-                                "Comentario": comentario_extra
+                                "sintomas": sintomas,
+                                "menstruacion": menstruacion,
+                                "ovulacion": ovulacion,
+                                "altitud": altitud,
+                                "respiratorio": respiratorio,
+                                "calor": calor,
+                                "lesión": lesion,
+                                "comentario_extra": comentario_extra
                             },
                             notas=None
                         )
@@ -265,14 +265,14 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                             sql.actualizar_evento_calendario_por_id(
                                 id_evento=int(event_id),
                                 valores_actualizados={
-                                    "Sintomas": sintomas,
-                                    "Menstruacion": menstruacion,
-                                    "Ovulacion": ovulacion,
-                                    "Altitud": altitud,
-                                    "Respiratorio": respiratorio,
-                                    "Calor": calor,
-                                    "Lesion": lesion,
-                                    "Comentario_extra": comentario_extra
+                                    "sintomas": sintomas,
+                                    "menstruacion": menstruacion,
+                                    "ovulacion": ovulacion,
+                                    "altitud": altitud,
+                                    "respiratorio": respiratorio,
+                                    "calor": calor,
+                                    "lesion": lesion,
+                                    "comentario_extra": comentario_extra
                                 }
                             )
                             st.success("✅ Estado diario actualizado")
