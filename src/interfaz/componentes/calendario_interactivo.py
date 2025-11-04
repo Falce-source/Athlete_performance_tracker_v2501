@@ -100,7 +100,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                 "extendedProps": { **details, "displayOrder": 0, "tipo_evento": tipo }
             })
 
-    # Configuración del calendario
+    # Configuración del calendario (sin eventContent, usamos saltos de línea en title)
     calendar_options = {
         "initialView": "dayGridMonth",
         "headerToolbar": {
@@ -117,33 +117,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
         "eventOrder": "displayOrder",
         "timeZone": "UTC",
         "forceEventDuration": True,
-        "displayEventEnd": False,
-        # 🔑 Aquí va la función JS como string plano
-        "eventContent": """
-        function(arg) {
-          const props = arg.event.extendedProps || {};
-          const rows = props.rows || [];
-          const container = document.createElement('div');
-
-          // Título fijo
-          const titleEl = document.createElement('div');
-          titleEl.textContent = arg.event.title || '';
-          titleEl.style.fontWeight = '600';
-          container.appendChild(titleEl);
-
-          // Filas de iconos
-          rows.forEach(function(line) {
-            if (line && line.trim().length > 0) {
-              const rowEl = document.createElement('div');
-              rowEl.textContent = line;
-              rowEl.style.marginTop = '2px';
-              container.appendChild(rowEl);
-            }
-          });
-
-          return { domNodes: [container] };
-        }
-        """
+        "displayEventEnd": False
     }
     
     # CSS para compactar las filas de eventos
@@ -154,7 +128,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
         padding: 2px 4px !important;
     }
     .fc-daygrid-event .fc-event-title {
-        white-space: normal !important;  /* permite múltiples líneas */
+        white-space: pre-line !important;  /* respeta \n como salto de línea */
         line-height: 1.2em !important;
     }
     </style>
