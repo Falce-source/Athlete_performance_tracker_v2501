@@ -68,7 +68,7 @@ def probar_flujo(modulo, rol_actual="admin"):
     historial_validaciones.registrar_validacion(
         modulo=modulo,
         resultado=resultado,
-        fecha=date.today()
+        rol_actual=st.session_state.get("ROL_ACTUAL", "admin")
     )
 
     return resultado
