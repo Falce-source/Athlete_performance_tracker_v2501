@@ -138,11 +138,11 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, idx=0):
     """, unsafe_allow_html=True)
 
     # Renderizar calendario (ahora \n se interpreta como salto de línea)
-    # 🔑 Usamos un key único combinando id_atleta e índice
+    # 🔑 Usamos un key único combinando id_atleta
     cal = calendar(
         events=fc_events,
         options=calendar_options,
-        key=f"calendar_{id_atleta}_{idx}"
+        key=f"calendar_{id_atleta}_main"
     )
 
     # Modal de registro al hacer clic en un día vacío
@@ -232,7 +232,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, idx=0):
     cal = calendar(
         events=fc_events,
         options=calendar_options,
-        key=f"calendar_{id_atleta}_{idx}"
+        key=f"calendar_{id_atleta}_main"
     )
 
 
