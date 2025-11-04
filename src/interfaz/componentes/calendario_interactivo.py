@@ -228,12 +228,13 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, idx=0):
         registrar_evento()
 
     # Renderizar calendario (ahora \n se interpreta como salto de línea)
-    # 🔑 Usamos un key único basado únicamente en el id_atleta
+    # 🔑 Usamos un key único combinando id_atleta e índice
     cal = calendar(
         events=fc_events,
         options=calendar_options,
-        key=f"calendar_{id_atleta}"
+        key=f"calendar_{id_atleta}_{idx}"
     )
+
 
     # Modal editable al hacer clic en la cabecera
     if cal and "eventClick" in cal:
