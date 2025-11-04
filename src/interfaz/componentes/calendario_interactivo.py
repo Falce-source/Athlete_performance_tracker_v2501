@@ -50,20 +50,35 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
             if details.get("altitud"): entreno_icons.append(EVENT_STYLES["altitud"]["icon"])
             if details.get("respiratorio"): entreno_icons.append(EVENT_STYLES["respiratorio"]["icon"])
             if details.get("calor"): entreno_icons.append(EVENT_STYLES["calor"]["icon"])
-            if details.get("lesion"): resto_icons.append(EVENT_STYLES["lesion"]["icon"])
+            if details.get("lesion"): entreno_icons.append(EVENT_STYLES["lesion"]["icon"])
             if details.get("comentario_extra"): resto_icons.append(EVENT_STYLES["nota"]["icon"])
+
+            # Construimos filas
+            lineas = []
+            if ciclo_icons:
+                lineas.append(" ".join(ciclo_icons))
+            if entreno_icons:
+                lineas.append(" ".join(entreno_icons))
+            if resto_icons:
+                lineas.append(" ".join(resto_icons))
+            # Si quieres mostrar competiciones/citas en la cuarta fila:
+            if details.get("tipo_evento") in ["competicion", "cita_test"]:
+                lineas.append(EVENT_STYLES[details["tipo_evento"]]["icon"])
+
+            title = "🧍 Evento diario"
+            if lineas:
+                title += "\n" + "\n".join(lineas)
 
             out_events.append({
                 "id": str(ev.get("id")),
-                # Concatenamos iconos en el título
-                "title": "🧍 " + " ".join(ciclo_icons + entreno_icons + resto_icons) if (ciclo_icons or entreno_icons or resto_icons) else "🧍 Estado diario",
+                "title": title,
                 "start": fecha,
                 "allDay": True,
                 "backgroundColor": EVENT_STYLES["estado"]["bg"],
                 "borderColor": EVENT_STYLES["estado"]["border"],
                 "textColor": EVENT_STYLES["estado"]["text"],
-                "tipo_evento": tipo,   # 🔑 añadido
-                "extendedProps": {**details, "displayOrder": 0}
+                "tipo_evento": tipo,
+                "extendedProps": {**details, "displayOrder": 0, "tipo_evento": tipo}
             })
 
         elif tipo == "competicion":
@@ -121,7 +136,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
     }
     .fc-daygrid-event .fc-event-title {
         line-height: 1.2em !important;
-        white-space: nowrap !important;
+        white-space: pre-line !important;  /* 🔑 permite que \n se muestre como salto */
     }
     </style>
     """, unsafe_allow_html=True)
