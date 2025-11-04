@@ -216,10 +216,8 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
 
     # Modal de registro al hacer clic en un día vacío
     if cal and "dateClick" in cal:
-        fecha_iso = cal["dateClick"].get("dateStr") or cal["dateClick"].get("date")
-        # Parseamos el string ISO completo y lo convertimos a zona horaria local
-        fecha_dt = datetime.datetime.fromisoformat(fecha_iso.replace("Z", "+00:00"))
-        fecha_local = fecha_dt.astimezone().date()
+        fecha_iso = cal["dateClick"].get("dateStr")  # siempre viene como YYYY-MM-DD
+        fecha_local = datetime.date.fromisoformat(fecha_iso)
 
         @st.dialog(f"➕ Registrar estado diario para {fecha_local.strftime('%Y-%m-%d')}")
         def registrar_estado():
@@ -254,7 +252,7 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
                 submitted = st.form_submit_button("Guardar estado")
                 if submitted:
                     # Guardamos la fecha como naive (YYYY-MM-DD) para evitar desfases
-                    fecha_guardar = datetime.datetime.fromisoformat(fecha_iso.replace("Z", "+00:00")).date()
+                    fecha_guardar = datetime.date.fromisoformat(fecha_iso)
                     sql.crear_evento_calendario(
                         id_atleta=id_atleta,
                         fecha=fecha_guardar,
