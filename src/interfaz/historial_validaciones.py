@@ -48,5 +48,41 @@ def mostrar_historial():
         df = df.sort_values("fecha", ascending=False)
         st.dataframe(df, use_container_width=True)
 
+        # ───────────────────────────────
+        # Filtros interactivos
+        # ───────────────────────────────
+        st.subheader("🔎 Filtros")
+        modulos = sorted(df["modulo"].unique())
+        modulo_sel = st.selectbox("Filtrar por módulo:", ["Todos"] + modulos)
+        fecha_min = st.date_input("Desde:", value=df["fecha"].min().date())
+        fecha_max = st.date_input("Hasta:", value=df["fecha"].max().date())
+
+        df_filtrado = df[
+            (df["fecha"].dt.date >= fecha_min) &
+            (df["fecha"].dt.date <= fecha_max)
+        ]
+        if modulo_sel != "Todos":
+            df_filtrado = df_filtrado[df_filtrado["modulo"] == modulo_sel]
+
+        st.dataframe(df_filtrado, use_container_width=True)
+
     except Exception as e:
         st.error(f"❌ Error al cargar historial: {e}")
+
+    st.markdown("---")
+    col1, col2 = st.columns([1, 4])
+    with col1:
+        confirmar = st.checkbox("Confirmar limpieza")
+    with col2:
+        if st.button("🗑️ Limpiar historial"):
+            if confirmar:
+                limpiar_historial()
+            else:
+                st.info("Marca la casilla para confirmar antes de eliminar.")
+
+def limpiar_historial():
+    if os.path.exists(RUTA_LOG):
+        os.remove(RUTA_LOG)
+        st.warning("🧹 Historial de validaciones eliminado.")
+    else:
+        st.info("No hay historial que eliminar.")
