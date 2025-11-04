@@ -76,6 +76,7 @@ def mostrar_calendario(rol_actual="admin"):
                 valor = {}
 
             fila = {
+                "id_evento": e.id_evento,  # ← incluir id_evento único
                 "Fecha": e.fecha.strftime("%Y-%m-%d"),
                 "Tipo": e.tipo_evento,
                 "Notas": e.notas or ""
