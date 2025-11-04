@@ -64,8 +64,9 @@ def mostrar_calendario(rol_actual="admin"):
     eventos = sql.obtener_eventos_calendario_por_atleta(id_atleta, rol_actual=rol_actual)
     vista = st.radio("", ["Calendario", "Tabla"], horizontal=True, index=0)
 
-    # Construcción de data (puede estar vacío)
+    # Construcción de data (tabla) y eventos_fc (calendario)
     data = []
+    eventos_fc = []
     for e in eventos:
             try:
                 valor = json.loads(e.valor) if e.valor else {}
@@ -107,6 +108,15 @@ def mostrar_calendario(rol_actual="admin"):
                 fila["Cita_test"] = valor["cita_test"]
 
             data.append(fila)
+
+            # Para FullCalendar → solo fecha y allDay
+            evento_fc = {
+                "id": e.id_evento,
+                "title": e.tipo_evento,
+                "start": e.fecha.strftime("%Y-%m-%d"),
+                "allDay": True,
+            }
+            eventos_fc.append(evento_fc)
 
     # Vista tabla
     if vista == "Tabla":
@@ -154,7 +164,7 @@ def mostrar_calendario(rol_actual="admin"):
     # Vista calendario interactivo (FullCalendar)
     if vista == "Calendario":
         from src.interfaz.componentes.calendario_interactivo import mostrar_calendario_interactivo
-        mostrar_calendario_interactivo(data, id_atleta)
+        mostrar_calendario_interactivo(eventos_fc, id_atleta)
 
     # ───────────────────────────────
     # Sesiones del día (planificado vs completado)

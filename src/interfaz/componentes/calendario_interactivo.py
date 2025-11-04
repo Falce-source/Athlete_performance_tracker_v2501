@@ -20,7 +20,7 @@ EVENT_STYLES = {
 def mostrar_calendario_interactivo(eventos, id_atleta):
     """
     Renderiza un calendario interactivo tipo TrainingPeaks usando streamlit-calendar.
-    - eventos: lista de diccionarios con al menos 'Fecha' y otros campos.
+    - eventos: lista de diccionarios con al menos 'start' (YYYY-MM-DD) y 'allDay'.
     - id_atleta: necesario para registrar nuevos estados diarios.
     """
 
@@ -29,7 +29,7 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
     # Construcción de eventos agrupados por día
     fc_events = []
     for ev in eventos:
-        fecha = ev.get("Fecha")
+        fecha = ev.get("start")
         if not fecha:
             continue
 
@@ -66,7 +66,7 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
 
         # Evento principal: cabecera "Estado diario"
         fc_events.append({
-            "id": str(ev.get("id_evento")),  # ← incluir id_evento real
+            "id": str(ev.get("id")),  # usamos el id que ya viene en eventos_fc
             "title": "🧍 Estado diario",
             "start": fecha,
             "allDay": True,
@@ -253,8 +253,8 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
 
                 submitted = st.form_submit_button("Guardar estado")
                 if submitted:
-                    # Guardamos directamente la fecha en UTC para evitar desfases
-                    fecha_guardar = datetime.datetime.fromisoformat(fecha_iso.replace("Z", "+00:00"))
+                    # Guardamos la fecha como naive (YYYY-MM-DD) para evitar desfases
+                    fecha_guardar = datetime.datetime.fromisoformat(fecha_iso.replace("Z", "+00:00")).date()
                     sql.crear_evento_calendario(
                         id_atleta=id_atleta,
                         fecha=fecha_guardar,
