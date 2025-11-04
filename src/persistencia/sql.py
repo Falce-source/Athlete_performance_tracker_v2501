@@ -359,7 +359,7 @@ def evento_to_dict(evento):
         valor_dict = {}
     return {
         "id": evento.id_evento,
-        "start": evento.fecha.isoformat(),
+        "start": datetime.combine(evento.fecha, datetime.min.time()).isoformat(),
         "allDay": True,
         "tipo_evento": evento.tipo_evento,
         "extendedProps": valor_dict,

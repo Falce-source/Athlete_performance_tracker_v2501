@@ -131,6 +131,88 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
     </style>
     """, unsafe_allow_html=True)
 
+    # Modal de registro al hacer clic en un día vacío
+    if cal and "dateClick" in cal:
+        fecha_iso = cal["dateClick"].get("dateStr") or cal["dateClick"].get("date")
+        if isinstance(fecha_iso, str):
+            if "T" in fecha_iso:
+                fecha_iso = fecha_iso.split("T")[0]
+            fecha_local = datetime.date.fromisoformat(fecha_iso)
+        elif isinstance(fecha_iso, datetime.date):
+            fecha_local = fecha_iso
+        else:
+            fecha_local = datetime.date.today()
+
+        @st.dialog(f"➕ Registrar evento para {fecha_local.strftime('%Y-%m-%d')}")
+        def registrar_evento():
+            tipo_evento = st.radio(
+                "Selecciona el tipo de evento",
+                ["Estado diario", "Competición", "Cita/Test"]
+            )
+
+            if tipo_evento == "Estado diario":
+                with st.form("form_estado_diario", clear_on_submit=True):
+                    with st.expander("🩸 Datos de ciclo"):
+                        sintomas = st.selectbox("Síntomas", ["Ninguno","Dolor leve","Dolor moderado","Dolor intenso"])
+                        menstruacion = st.selectbox("Menstruación", ["No","Día 1","Día 2","Día 3","Día 4+"])
+                        ovulacion = st.selectbox("Ovulación", ["No","Estimada","Confirmada"])
+                    altitud = st.checkbox("⛰️ Entrenamiento en altitud")
+                    respiratorio = st.checkbox("🌬️ Entrenamiento respiratorio")
+                    calor = st.checkbox("🔥 Entrenamiento en calor")
+                    lesion = st.text_input("🤕 Lesión")
+                    comentario_extra = st.text_area("📝 Notas adicionales")
+                    if st.form_submit_button("Guardar estado"):
+                        sql.crear_evento_calendario(
+                            id_atleta=id_atleta,
+                            fecha=str(fecha_local),  # normalizamos a string
+                            tipo_evento="estado_diario",
+                            valor={
+                                "Síntomas": sintomas,
+                                "Menstruacion": menstruacion,
+                                "Ovulacion": ovulacion,
+                                "Altitud": altitud,
+                                "Respiratorio": respiratorio,
+                                "Calor": calor,
+                                "Lesión": lesion,
+                                "Comentario": comentario_extra
+                            },
+                            notas=None
+                        )
+                        st.success("✅ Estado diario registrado")
+                        st.rerun()
+
+            elif tipo_evento == "Competición":
+                with st.form("form_competicion", clear_on_submit=True):
+                    nombre = st.text_input("Nombre de la competición")
+                    lugar = st.text_input("Lugar")
+                    notas = st.text_area("Notas")
+                    if st.form_submit_button("Guardar competición"):
+                        sql.crear_competicion(
+                            id_atleta=id_atleta,
+                            fecha=str(fecha_local),
+                            detalles={"nombre": nombre, "lugar": lugar},
+                            notas=notas
+                        )
+                        st.success("✅ Competición registrada")
+                        st.rerun()
+
+            elif tipo_evento == "Cita/Test":
+                with st.form("form_cita_test", clear_on_submit=True):
+                    tipo = st.text_input("Tipo de cita/test")
+                    lugar = st.text_input("Lugar")
+                    notas = st.text_area("Notas")
+                    if st.form_submit_button("Guardar cita/test"):
+                        sql.crear_cita_test(
+                            id_atleta=id_atleta,
+                            fecha=str(fecha_local),
+                            detalles={"tipo": tipo, "lugar": lugar},
+                            notas=notas
+                        )
+                        st.success("✅ Cita/Test registrada")
+                        st.rerun()
+
+        registrar_evento()
+
     # Renderizar calendario (ahora \n se interpreta como salto de línea)
     cal = calendar(events=fc_events, options=calendar_options)
 
@@ -255,85 +337,3 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
                         st.success("🗑️ Cita/Test eliminada")
                         st.rerun()
             editar_cita_test()
-
-    # Modal de registro al hacer clic en un día vacío
-    if cal and "dateClick" in cal:
-        fecha_iso = cal["dateClick"].get("dateStr") or cal["dateClick"].get("date")
-        if isinstance(fecha_iso, str):
-            if "T" in fecha_iso:
-                fecha_iso = fecha_iso.split("T")[0]
-            fecha_local = datetime.date.fromisoformat(fecha_iso)
-        elif isinstance(fecha_iso, datetime.date):
-            fecha_local = fecha_iso
-        else:
-            fecha_local = datetime.date.today()
-
-        @st.dialog(f"➕ Registrar evento para {fecha_local.strftime('%Y-%m-%d')}")
-        def registrar_evento():
-            tipo_evento = st.radio(
-                "Selecciona el tipo de evento",
-                ["Estado diario", "Competición", "Cita/Test"]
-            )
-
-            if tipo_evento == "Estado diario":
-                with st.form("form_estado_diario", clear_on_submit=True):
-                    with st.expander("🩸 Datos de ciclo"):
-                        sintomas = st.selectbox("Síntomas", ["Ninguno","Dolor leve","Dolor moderado","Dolor intenso"])
-                        menstruacion = st.selectbox("Menstruación", ["No","Día 1","Día 2","Día 3","Día 4+"])
-                        ovulacion = st.selectbox("Ovulación", ["No","Estimada","Confirmada"])
-                    altitud = st.checkbox("⛰️ Entrenamiento en altitud")
-                    respiratorio = st.checkbox("🌬️ Entrenamiento respiratorio")
-                    calor = st.checkbox("🔥 Entrenamiento en calor")
-                    lesion = st.text_input("🤕 Lesión")
-                    comentario_extra = st.text_area("📝 Notas adicionales")
-                    if st.form_submit_button("Guardar estado"):
-                        sql.crear_evento_calendario(
-                            id_atleta=id_atleta,
-                            fecha=str(fecha_local),  # normalizamos a string
-                            tipo_evento="estado_diario",
-                            valor={
-                                "Síntomas": sintomas,
-                                "Menstruacion": menstruacion,
-                                "Ovulacion": ovulacion,
-                                "Altitud": altitud,
-                                "Respiratorio": respiratorio,
-                                "Calor": calor,
-                                "Lesión": lesion,
-                                "Comentario": comentario_extra
-                            },
-                            notas=None
-                        )
-                        st.success("✅ Estado diario registrado")
-                        st.rerun()
-
-            elif tipo_evento == "Competición":
-                with st.form("form_competicion", clear_on_submit=True):
-                    nombre = st.text_input("Nombre de la competición")
-                    lugar = st.text_input("Lugar")
-                    notas = st.text_area("Notas")
-                    if st.form_submit_button("Guardar competición"):
-                        sql.crear_competicion(
-                            id_atleta=id_atleta,
-                            fecha=str(fecha_local),
-                            detalles={"nombre": nombre, "lugar": lugar},
-                            notas=notas
-                        )
-                        st.success("✅ Competición registrada")
-                        st.rerun()
-
-            elif tipo_evento == "Cita/Test":
-                with st.form("form_cita_test", clear_on_submit=True):
-                    tipo = st.text_input("Tipo de cita/test")
-                    lugar = st.text_input("Lugar")
-                    notas = st.text_area("Notas")
-                    if st.form_submit_button("Guardar cita/test"):
-                        sql.crear_cita_test(
-                            id_atleta=id_atleta,
-                            fecha=str(fecha_local),
-                            detalles={"tipo": tipo, "lugar": lugar},
-                            notas=notas
-                        )
-                        st.success("✅ Cita/Test registrada")
-                        st.rerun()
-
-        registrar_evento()
