@@ -242,23 +242,23 @@ def mostrar_calendario(rol_actual="admin"):
         for c in comentarios:
             st.markdown(f"- {c.texto} (autor {c.id_autor}, visible para {c.visible_para})")
 
-# Prueba
+    # Prueba
 
-with st.expander("🔍 Depuración de eventos (solo pruebas)"):
-    if st.button("Crear evento de prueba"):
-        try:
-            ev = sql.crear_estado_diario(
-                id_atleta=id_atleta,
-                fecha=date.today(),
-                valores={"sintomas": "Dolor leve", "altitud": True},
-                notas="prueba desde Streamlit"
-            )
-            st.success(f"✅ Evento creado con id {ev.id_evento}")
-        except Exception as e:
-            st.error(f"❌ Error al crear evento: {e}")
+    with st.expander("🔍 Depuración de eventos (solo pruebas)"):
+        if st.button("Crear evento de prueba"):
+            try:
+                ev = sql.crear_estado_diario(
+                    id_atleta=id_atleta,
+                    fecha=date.today(),
+                    valores={"sintomas": "Dolor leve", "altitud": True},
+                    notas="prueba desde Streamlit"
+                )
+                st.success(f"✅ Evento creado con id {ev.id_evento}")
+            except Exception as e:
+                st.error(f"❌ Error al crear evento: {e}")
 
-    if st.button("Listar eventos actuales"):
-        eventos = sql.obtener_eventos_calendario_por_atleta(id_atleta, rol_actual="admin")
-        st.json(eventos)
+        if st.button("Listar eventos actuales"):
+            eventos = sql.obtener_eventos_calendario_por_atleta(id_atleta, rol_actual="admin")
+            st.json(eventos)
 
 # --------
