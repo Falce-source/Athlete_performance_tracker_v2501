@@ -201,12 +201,10 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     calor = st.checkbox("🔥 Entrenamiento en calor")
                     lesion = st.text_input("🤕 Lesión")
                     comentario_extra = st.text_area("📝 Notas adicionales")
+
                     if st.form_submit_button("Guardar estado"):
-                        sql.crear_evento_calendario(
-                            id_atleta=id_atleta,
-                            fecha=str(fecha_local),
-                            tipo_evento="estado_diario",
-                        valor={
+                        # Guardamos en snake_case para que edición y renderizado coincidan
+                        valores = {
                             "sintomas": sintomas,
                             "menstruacion": menstruacion,
                             "ovulacion": ovulacion,
@@ -215,12 +213,18 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                             "calor": calor,
                             "lesion": lesion,
                             "comentario_extra": comentario_extra
-                        },
-                        notas=None
+                        }
+
+                        sql.crear_evento_calendario(
+                            id_atleta=id_atleta,
+                            fecha=str(fecha_local),
+                            tipo_evento="estado_diario",
+                            valor=valores,
+                            notas=None
                         )
                         st.success("✅ Estado diario registrado")
                         st.rerun()
-
+         
             elif tipo == "competicion":
                 rows = []
                 if details.get("nombre"):
