@@ -278,7 +278,7 @@ class CalendarioEvento(Base):
 
     id_evento = Column(Integer, primary_key=True, autoincrement=True)
     id_atleta = Column(Integer, ForeignKey("atletas.id_atleta"), nullable=False)
-    fecha = Column(Date, nullable=False)
+    fecha = Column(DateTime(timezone=True), nullable=False)
     tipo_evento = Column(String, nullable=False)
     valor = Column(Text)  # guardamos JSON serializado
     notas = Column(Text)
@@ -319,20 +319,21 @@ class Comentario(Base):
 # ─────────────────────────────────────────────
 def crear_evento_calendario(id_atleta, fecha, tipo_evento, valor, notas=None):
     with SessionLocal() as session:
-        # Normalizamos a date para evitar desfases por zona horaria
+        # Normalizamos fecha para evitar desfases por zona horaria
         if isinstance(fecha, datetime):
-            fecha = fecha.date()
-        # Si viene como string ISO, lo convertimos de forma segura
-        if isinstance(fecha, str):
-            # Aceptamos 'YYYY-MM-DD' directamente; si trae 'Z' o tiempo, truncamos a fecha
+            # truncamos a medianoche UTC
+            fecha = datetime(fecha.year, fecha.month, fecha.day, tzinfo=timezone.utc)
+        elif isinstance(fecha, str):
             try:
-                if "T" in fecha:
-                    fecha = datetime.fromisoformat(fecha.replace("Z", "+00:00")).date()
-                else:
-                    fecha = datetime.fromisoformat(fecha).date()
+                base = datetime.fromisoformat(fecha.replace("Z", "+00:00"))
+                fecha = datetime(base.year, base.month, base.day, tzinfo=timezone.utc)
             except Exception:
-                # Fallback: no rompemos; usamos hoy en UTC como date
-                fecha = datetime.now(UTC).date()
+                # Fallback: hoy a medianoche UTC
+                fecha = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        else:
+            # Si llega un tipo inesperado, usamos hoy a medianoche UTC
+            fecha = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+
         evento = CalendarioEvento(
             id_atleta=id_atleta,
             fecha=fecha,
@@ -352,17 +353,17 @@ def actualizar_evento_calendario(id_atleta, fecha, valores_actualizados, notas=N
     Si no existe, devuelve None.
     """
     with SessionLocal() as session:
-        # Normalizamos fecha a date para la búsqueda
+        # Normalizamos fecha a medianoche UTC para la búsqueda
         if isinstance(fecha, datetime):
-            fecha = fecha.date()
-        if isinstance(fecha, str):
+            fecha = datetime(fecha.year, fecha.month, fecha.day, tzinfo=timezone.utc)
+        elif isinstance(fecha, str):
             try:
-                if "T" in fecha:
-                    fecha = datetime.fromisoformat(fecha.replace("Z", "+00:00")).date()
-                else:
-                    fecha = datetime.fromisoformat(fecha).date()
+                base = datetime.fromisoformat(fecha.replace("Z", "+00:00"))
+                fecha = datetime(base.year, base.month, base.day, tzinfo=timezone.utc)
             except Exception:
-                fecha = None
+                fecha = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        else:
+            fecha = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
 
         evento = session.query(CalendarioEvento).filter_by(
             id_atleta=id_atleta,
@@ -425,6 +426,36 @@ def borrar_evento_calendario(id_evento: int) -> bool:
         evento = session.query(CalendarioEvento).filter_by(id_evento=id_evento).first()
         if not evento:
             return False
+        session.delete(evento)
+        session.commit()
+        _sync_backup()
+        return True
+
+def borrar_evento_calendario_por_fecha(id_atleta, fecha) -> bool:
+    """
+    Elimina un evento de calendario por atleta y fecha (normalizada a medianoche UTC).
+    Devuelve True si se eliminó, False si no existía.
+    """
+    with SessionLocal() as session:
+        # Normalizamos fecha a medianoche UTC
+        if isinstance(fecha, datetime):
+            fecha = datetime(fecha.year, fecha.month, fecha.day, tzinfo=timezone.utc)
+        elif isinstance(fecha, str):
+            try:
+                base = datetime.fromisoformat(fecha.replace("Z", "+00:00"))
+                fecha = datetime(base.year, base.month, base.day, tzinfo=timezone.utc)
+            except Exception:
+                fecha = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        else:
+            fecha = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+
+        evento = session.query(CalendarioEvento).filter_by(
+            id_atleta=id_atleta,
+            fecha=fecha
+        ).first()
+        if not evento:
+            return False
+
         session.delete(evento)
         session.commit()
         _sync_backup()
