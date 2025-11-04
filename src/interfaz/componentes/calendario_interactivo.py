@@ -103,7 +103,11 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
     # Configuración del calendario
     calendar_options = {
         "initialView": "dayGridMonth",
-        "headerToolbar": {"left": "prev,next today", "center": "title", "right": "dayGridMonth,timeGridWeek,listWeek"},
+        "headerToolbar": {
+            "left": "prev,next today",
+            "center": "title",
+            "right": "dayGridMonth,timeGridWeek,listWeek"
+        },
         "editable": False,
         "selectable": True,
         "navLinks": True,
@@ -114,8 +118,36 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
         "timeZone": "UTC",
         "forceEventDuration": True,
         "displayEventEnd": False,
-        # Usamos HTML en el title directamente, no eventContent
+        # 🔑 Aquí va la función JS como objeto
+        "eventContent": {
+            "function": """
+            function(arg) {
+            const props = arg.event.extendedProps || {};
+            const rows = props.rows || [];
+            const container = document.createElement('div');
+
+            // Título fijo
+            const titleEl = document.createElement('div');
+            titleEl.textContent = arg.event.title || '';
+            titleEl.style.fontWeight = '600';
+            container.appendChild(titleEl);
+
+            // Filas de iconos
+            rows.forEach(function(line) {
+                if (line && line.trim().length > 0) {
+                    const rowEl = document.createElement('div');
+                    rowEl.textContent = line;
+                    rowEl.style.marginTop = '2px';
+                    container.appendChild(rowEl);
+                }
+            });
+
+            return { domNodes: [container] };
+            }
+            """
+        }
     }
+    
     # CSS para compactar las filas de eventos
     st.markdown("""
     <style>
@@ -174,63 +206,61 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                             id_atleta=id_atleta,
                             fecha=str(fecha_local),
                             tipo_evento="estado_diario",
-                            valor={
-                                "sintomas": sintomas,
-                                "menstruacion": menstruacion,
-                                "ovulacion": ovulacion,
-                                "altitud": altitud,
-                                "respiratorio": respiratorio,
-                                "calor": calor,
-                                "lesion": lesion,
-                                "comentario_extra": comentario_extra
-                            },
-                            notas=None
+                        valor={
+                            "sintomas": sintomas,
+                            "menstruacion": menstruacion,
+                            "ovulacion": ovulacion,
+                            "altitud": altitud,
+                            "respiratorio": respiratorio,
+                            "calor": calor,
+                            "lesion": lesion,
+                            "comentario_extra": comentario_extra
+                        },
+                        notas=None
                         )
                         st.success("✅ Estado diario registrado")
                         st.rerun()
 
             elif tipo == "competicion":
-                # Construimos HTML con título y detalles
-                title_html = "<div><strong>🏆 Competición</strong></div>"
+                rows = []
                 if details.get("nombre"):
-                    title_html += f"<div>{details.get('nombre')}</div>"
+                    rows.append(details.get("nombre"))
                 if details.get("lugar"):
-                    title_html += f"<div>📍 {details.get('lugar')}</div>"
+                    rows.append("📍 " + details.get("lugar"))
                 if details.get("notas"):
-                    title_html += f"<div>📝 {details.get('notas')}</div>"
+                    rows.append("📝 " + details.get("notas"))
 
                 out_events.append({
                     "id": str(ev.get("id")),
-                    "title": title_html,
+                    "title": "🏆 Competición",
                     "start": fecha,
-                "allDay": True,
-                "backgroundColor": "#FFF4E5",
-                "borderColor": "#F97316",
-                "textColor": "#7C2D12",
-                "tipo_evento": tipo,
-                "extendedProps": {**details, "displayOrder": 0, "tipo_evento": tipo}
+                    "allDay": True,
+                    "backgroundColor": "#FFF4E5",
+                    "borderColor": "#F97316",
+                    "textColor": "#7C2D12",
+                    "tipo_evento": tipo,
+                    "extendedProps": {**details, "displayOrder": 0, "tipo_evento": tipo, "rows": rows}
                 })
 
             elif tipo == "cita_test":
-                # Construimos HTML con título y detalles
-                title_html = "<div><strong>📅 Cita/Test</strong></div>"
+                rows = []
                 if details.get("tipo"):
-                    title_html += f"<div>{details.get('tipo')}</div>"
+                    rows.append(details.get("tipo"))
                 if details.get("lugar"):
-                    title_html += f"<div>📍 {details.get('lugar')}</div>"
+                    rows.append("📍 " + details.get("lugar"))
                 if details.get("notas"):
-                    title_html += f"<div>📝 {details.get('notas')}</div>"
+                    rows.append("📝 " + details.get("notas"))
 
                 out_events.append({
                     "id": str(ev.get("id")),
-                    "title": title_html,
+                    "title": "📅 Cita/Test",
                     "start": fecha,
                     "allDay": True,
                     "backgroundColor": EVENT_STYLES["cita_test"]["bg"],
                     "borderColor": EVENT_STYLES["cita_test"]["border"],
                     "textColor": EVENT_STYLES["cita_test"]["text"],
                     "tipo_evento": tipo,
-                    "extendedProps": {**details, "displayOrder": 0, "tipo_evento": tipo}
+                    "extendedProps": {**details, "displayOrder": 0, "tipo_evento": tipo, "rows": rows}
                 })
 
         registrar_evento()
