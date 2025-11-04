@@ -138,7 +138,8 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
     """, unsafe_allow_html=True)
 
     # Renderizar calendario (ahora \n se interpreta como salto de línea)
-    # 🔑 Usamos un key único combinando id_atleta
+    # Renderizar calendario (una sola vez)
+    # 🔑 Usamos un key único combinando id_atleta y vista
     cal = calendar(
         events=fc_events,
         options=calendar_options,
@@ -226,15 +227,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                         st.rerun()
 
         registrar_evento()
-
-    # Renderizar calendario (ahora \n se interpreta como salto de línea)
-    # 🔑 Usamos un key único combinando id_atleta e índice
-    cal = calendar(
-        events=fc_events,
-        options=calendar_options,
-        key=f"calendar_{id_atleta}_{vista}"
-    )
-
+    
     # Modal editable al hacer clic en la cabecera
     if cal and "eventClick" in cal:
         ev = cal["eventClick"]["event"]
