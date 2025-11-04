@@ -49,7 +49,7 @@ opcion = st.sidebar.radio(
         "📅 Calendario",   # ← nuevo
         "👥 Usuarios",     # ← NUEVA PESTAÑA
         "💾 Backups",      # ← nueva pestaña
-        "🔍 Auditoría",    # ← NUEVA PESTAÑA
+        "🔍 Auditoría"    # ← NUEVA PESTAÑA
     ]
 )
 
@@ -71,9 +71,6 @@ elif opcion == "👥 Usuarios":
 
 elif opcion == "💾 Backups":
     st.title("Gestión de Backups")
-
-elif opcion == "🔍 Auditoría":
-    auditoria.mostrar_auditoria()
 
     # Crear / Listar / Rotar
     st.subheader("📤 Crear / Listar / Rotar")
@@ -214,3 +211,6 @@ elif opcion == "🔍 Auditoría":
             st.info("No hay backups en la carpeta.")
     except Exception as e:
         st.error(f"Error al cargar dashboard de backups: {e}")
+    
+elif opcion == "🔍 Auditoría":
+    auditoria.mostrar_auditoria()
