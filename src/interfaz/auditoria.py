@@ -117,7 +117,9 @@ def probar_visibilidad_por_rol():
         resultado["mensaje"] = f"❌ Error en prueba de visibilidad: {e}"
 
     from src.interfaz import historial_validaciones
-    historial_validaciones.registrar_validacion("Comentarios", resultado["mensaje"], resultado["backup_creado"])
+    from streamlit import session_state
+    rol_actual = session_state.get("ROL_ACTUAL", "admin")
+    historial_validaciones.registrar_validacion("Comentarios", resultado["mensaje"], resultado["backup_creado"], rol_actual=rol_actual)
     return resultado
 
 def mostrar_auditoria():
