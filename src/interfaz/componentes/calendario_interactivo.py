@@ -118,34 +118,32 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
         "timeZone": "UTC",
         "forceEventDuration": True,
         "displayEventEnd": False,
-        # 🔑 Aquí va la función JS como objeto
-        "eventContent": {
-            "function": """
-            function(arg) {
-            const props = arg.event.extendedProps || {};
-            const rows = props.rows || [];
-            const container = document.createElement('div');
+        # 🔑 Aquí va la función JS como string plano
+        "eventContent": """
+        function(arg) {
+          const props = arg.event.extendedProps || {};
+          const rows = props.rows || [];
+          const container = document.createElement('div');
 
-            // Título fijo
-            const titleEl = document.createElement('div');
-            titleEl.textContent = arg.event.title || '';
-            titleEl.style.fontWeight = '600';
-            container.appendChild(titleEl);
+          // Título fijo
+          const titleEl = document.createElement('div');
+          titleEl.textContent = arg.event.title || '';
+          titleEl.style.fontWeight = '600';
+          container.appendChild(titleEl);
 
-            // Filas de iconos
-            rows.forEach(function(line) {
-                if (line && line.trim().length > 0) {
-                    const rowEl = document.createElement('div');
-                    rowEl.textContent = line;
-                    rowEl.style.marginTop = '2px';
-                    container.appendChild(rowEl);
-                }
-            });
-
-            return { domNodes: [container] };
+          // Filas de iconos
+          rows.forEach(function(line) {
+            if (line && line.trim().length > 0) {
+              const rowEl = document.createElement('div');
+              rowEl.textContent = line;
+              rowEl.style.marginTop = '2px';
+              container.appendChild(rowEl);
             }
-            """
+          });
+
+          return { domNodes: [container] };
         }
+        """
     }
     
     # CSS para compactar las filas de eventos
