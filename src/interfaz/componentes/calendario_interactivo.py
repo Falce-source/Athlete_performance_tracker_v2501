@@ -127,7 +127,9 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
         "eventDisplay": "block",
         "dayMaxEventRows": True,
         "eventOrder": "displayOrder",
-        "timeZone": "local"
+        "timeZone": "local",          # fuerza a usar la zona local
+        "forceEventDuration": True,   # evita que allDay se desplace
+        "displayEventEnd": False
     }
 
     # CSS para compactar las filas de eventos
