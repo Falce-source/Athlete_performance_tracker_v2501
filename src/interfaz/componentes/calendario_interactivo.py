@@ -23,6 +23,15 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
     - eventos: lista de diccionarios con al menos 'start' (YYYY-MM-DD) y 'allDay'.
     - id_atleta: necesario para registrar nuevos estados diarios.
     """
+    # ───────────────────────────────
+    # Inicialización robusta
+    # ───────────────────────────────
+    # Aseguramos que eventos_fc sea siempre lista
+    if not isinstance(eventos_fc, list):
+        eventos_fc = []
+
+    # Aseguramos que cal siempre exista como dict
+    cal = st.session_state.get("cal_config", {})
 
     st.markdown("### 🗓️ Calendario interactivo")
 
@@ -132,7 +141,7 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
     """, unsafe_allow_html=True)
 
     # Modal de registro al hacer clic en un día vacío
-    if cal and "dateClick" in cal:
+    if "dateClick" in cal:
         fecha_iso = cal["dateClick"].get("dateStr") or cal["dateClick"].get("date")
         if isinstance(fecha_iso, str):
             if "T" in fecha_iso:
