@@ -18,7 +18,7 @@ EVENT_STYLES = {
     "nota": {"icon": "📝", "bg": "#F9FAFB", "border": "#6B7280", "text": "#374151", "priority": 5},
 }
 
-def mostrar_calendario_interactivo(eventos, id_atleta):
+def mostrar_calendario_interactivo(fc_events, id_atleta, rol_actual="admin"):
     """
     Renderiza un calendario interactivo tipo TrainingPeaks usando streamlit-calendar.
     - eventos: lista de diccionarios con al menos 'start' (YYYY-MM-DD) y 'allDay'.
@@ -228,7 +228,12 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
         registrar_evento()
 
     # Renderizar calendario (ahora \n se interpreta como salto de línea)
-    cal = calendar(events=fc_events, options=calendar_options, key=f"calendar_{id_atleta}")
+    # 🔑 Usamos un key único por atleta y rol para evitar colisiones en Streamlit
+    cal = calendar(
+        events=fc_events,
+        options=calendar_options,
+        key=f"calendar_{id_atleta}_{rol_actual}"
+    )
 
     # Modal editable al hacer clic en la cabecera
     if cal and "eventClick" in cal:
