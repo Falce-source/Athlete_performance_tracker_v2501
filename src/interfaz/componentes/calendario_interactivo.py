@@ -43,45 +43,35 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
         details = ev.get("extendedProps", {})
 
         if tipo == "estado_diario":
-            # Filas de iconos
-            fila_ciclo, fila_entreno_lesion, fila_notas, fila_meta = [], [], [], []
+            ciclo_icons, entreno_icons, resto_icons = [], [], []
+            if details.get("sintomas"): ciclo_icons.append(EVENT_STYLES["sintomas"]["icon"])
+            if details.get("menstruacion"): ciclo_icons.append(EVENT_STYLES["menstruacion"]["icon"])
+            if details.get("ovulacion"): ciclo_icons.append(EVENT_STYLES["ovulacion"]["icon"])
+            if details.get("altitud"): entreno_icons.append(EVENT_STYLES["altitud"]["icon"])
+            if details.get("respiratorio"): entreno_icons.append(EVENT_STYLES["respiratorio"]["icon"])
+            if details.get("calor"): entreno_icons.append(EVENT_STYLES["calor"]["icon"])
+            if details.get("lesion"): entreno_icons.append(EVENT_STYLES["lesion"]["icon"])
+            if details.get("comentario_extra"): resto_icons.append(EVENT_STYLES["nota"]["icon"])
 
-            if details.get("sintomas"): fila_ciclo.append(EVENT_STYLES["sintomas"]["icon"])
-            if details.get("menstruacion"): fila_ciclo.append(EVENT_STYLES["menstruacion"]["icon"])
-            if details.get("ovulacion"): fila_ciclo.append(EVENT_STYLES["ovulacion"]["icon"])
-
-            if details.get("altitud"): fila_entreno_lesion.append(EVENT_STYLES["altitud"]["icon"])
-            if details.get("respiratorio"): fila_entreno_lesion.append(EVENT_STYLES["respiratorio"]["icon"])
-            if details.get("calor"): fila_entreno_lesion.append(EVENT_STYLES["calor"]["icon"])
-            if details.get("lesion"): fila_entreno_lesion.append(EVENT_STYLES["lesion"]["icon"])
-
-            if details.get("comentario_extra"): fila_notas.append(EVENT_STYLES["nota"]["icon"])
-
-            # Si ese día también tiene meta (competición o cita) y quieres indicarlo como cuarta fila:
-            # Nota: esto solo aplica si ese mismo evento representa la meta; si las metas son eventos separados, omite esta fila
-            if details.get("meta") in ["competicion", "cita_test"]:
-                fila_meta.append(EVENT_STYLES[details["meta"]]["icon"])
+            # Construimos HTML con filas
+            title_html = "<div><strong>🧍 Evento diario</strong></div>"
+            if ciclo_icons:
+                title_html += f"<div>{' '.join(ciclo_icons)}</div>"
+            if entreno_icons:
+                title_html += f"<div>{' '.join(entreno_icons)}</div>"
+            if resto_icons:
+                title_html += f"<div>{' '.join(resto_icons)}</div>"
 
             out_events.append({
                 "id": str(ev.get("id")),
-                "title": "🧍 Evento diario",   # fijo
+                "title": title_html,  # 🔑 HTML con varias filas
                 "start": fecha,
                 "allDay": True,
                 "backgroundColor": EVENT_STYLES["estado"]["bg"],
                 "borderColor": EVENT_STYLES["estado"]["border"],
                 "textColor": EVENT_STYLES["estado"]["text"],
                 "tipo_evento": tipo,
-                "extendedProps": {
-                    **details,
-                    "displayOrder": 0,
-                    "tipo_evento": tipo,
-                    "rows": [
-                        " ".join(fila_ciclo) if fila_ciclo else "",
-                        " ".join(fila_entreno_lesion) if fila_entreno_lesion else "",
-                        " ".join(fila_notas) if fila_notas else "",
-                        " ".join(fila_meta) if fila_meta else ""
-                    ]
-                }
+                "extendedProps": {**details, "displayOrder": 0, "tipo_evento": tipo}
             })
 
         elif tipo == "competicion":
@@ -157,7 +147,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
         padding: 2px 4px !important;
     }
     .fc-daygrid-event .fc-event-title {
-        /* deja que el renderer maneje filas; no fuerces nowrap */
+        white-space: normal !important;  /* permite múltiples líneas */
         line-height: 1.2em !important;
     }
     </style>
@@ -222,35 +212,49 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                         st.success("✅ Estado diario registrado")
                         st.rerun()
 
-            elif tipo_evento == "Competición":
-                with st.form("form_competicion", clear_on_submit=True):
-                    nombre = st.text_input("Nombre de la competición")
-                    lugar = st.text_input("Lugar")
-                    notas = st.text_area("Notas")
-                    if st.form_submit_button("Guardar competición"):
-                        sql.crear_competicion(
-                            id_atleta=id_atleta,
-                            fecha=str(fecha_local),
-                            detalles={"nombre": nombre, "lugar": lugar},
-                            notas=notas
-                        )
-                        st.success("✅ Competición registrada")
-                        st.rerun()
+            elif tipo == "competicion":
+                # Construimos HTML con título y detalles
+                title_html = "<div><strong>🏆 Competición</strong></div>"
+                if details.get("nombre"):
+                    title_html += f"<div>{details.get('nombre')}</div>"
+                if details.get("lugar"):
+                    title_html += f"<div>📍 {details.get('lugar')}</div>"
+                if details.get("notas"):
+                    title_html += f"<div>📝 {details.get('notas')}</div>"
 
-            elif tipo_evento == "Cita/Test":
-                with st.form("form_cita_test", clear_on_submit=True):
-                    tipo = st.text_input("Tipo de cita/test")
-                    lugar = st.text_input("Lugar")
-                    notas = st.text_area("Notas")
-                    if st.form_submit_button("Guardar cita/test"):
-                        sql.crear_cita_test(
-                            id_atleta=id_atleta,
-                            fecha=str(fecha_local),
-                            detalles={"tipo": tipo, "lugar": lugar},
-                            notas=notas
-                        )
-                        st.success("✅ Cita/Test registrada")
-                        st.rerun()
+                out_events.append({
+                    "id": str(ev.get("id")),
+                    "title": title_html,
+                    "start": fecha,
+                "allDay": True,
+                "backgroundColor": "#FFF4E5",
+                "borderColor": "#F97316",
+                "textColor": "#7C2D12",
+                "tipo_evento": tipo,
+                "extendedProps": {**details, "displayOrder": 0, "tipo_evento": tipo}
+                })
+
+            elif tipo == "cita_test":
+                # Construimos HTML con título y detalles
+                title_html = "<div><strong>📅 Cita/Test</strong></div>"
+                if details.get("tipo"):
+                    title_html += f"<div>{details.get('tipo')}</div>"
+                if details.get("lugar"):
+                    title_html += f"<div>📍 {details.get('lugar')}</div>"
+                if details.get("notas"):
+                    title_html += f"<div>📝 {details.get('notas')}</div>"
+
+                out_events.append({
+                    "id": str(ev.get("id")),
+                    "title": title_html,
+                    "start": fecha,
+                    "allDay": True,
+                    "backgroundColor": EVENT_STYLES["cita_test"]["bg"],
+                    "borderColor": EVENT_STYLES["cita_test"]["border"],
+                    "textColor": EVENT_STYLES["cita_test"]["text"],
+                    "tipo_evento": tipo,
+                    "extendedProps": {**details, "displayOrder": 0, "tipo_evento": tipo}
+                })
 
         registrar_evento()
     
