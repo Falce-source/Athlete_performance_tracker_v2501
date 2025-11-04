@@ -358,6 +358,24 @@ def evento_to_dict(evento):
     except Exception:
         valor_dict = {}
 
+        # Normalización de claves antiguas
+    mapping = {
+        "Síntomas": "sintomas",
+        "Sintomas": "sintomas",
+        "Menstruacion": "menstruacion",
+        "Ovulacion": "ovulacion",
+        "Altitud": "altitud",
+        "Respiratorio": "respiratorio",
+        "Calor": "calor",
+        "Lesión": "lesion",
+        "Lesion": "lesion",
+        "Comentario": "comentario_extra",
+        "Comentario_extra": "comentario_extra",
+    }
+    normalizado = {}
+    for k, v in valor_dict.items():
+        normalizado[mapping.get(k, k)] = v
+
     return {
         "id": evento.id_evento,
         # Normalizamos a ISO con hora 00:00 para que FullCalendar lo pinte en el día correcto
