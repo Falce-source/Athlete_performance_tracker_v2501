@@ -62,11 +62,12 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                 "backgroundColor": EVENT_STYLES["estado"]["bg"],
                 "borderColor": EVENT_STYLES["estado"]["border"],
                 "textColor": EVENT_STYLES["estado"]["text"],
+                "tipo_evento": tipo,   # 🔑 añadido
                 "extendedProps": {**details, "displayOrder": 0}
             })
 
         elif tipo == "competicion":
-            fc_events.append({
+            out_events.append({
                 "id": str(ev.get("id")),
                 "title": "🏆 Competición",
                 "start": fecha,
@@ -74,11 +75,12 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                 "backgroundColor": "#FFF4E5",
                 "borderColor": "#F97316",
                 "textColor": "#7C2D12",
+                "tipo_evento": tipo,   # 🔑 añadido
                 "extendedProps": {**details, "displayOrder": 0}
             })
 
         elif tipo == "cita_test":
-            fc_events.append({
+            out_events.append({
                 "id": str(ev.get("id")),
                 "title": "📅 Cita/Test",
                 "start": fecha,
@@ -86,6 +88,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                 "backgroundColor": EVENT_STYLES["cita_test"]["bg"],
                 "borderColor": EVENT_STYLES["cita_test"]["border"],
                 "textColor": EVENT_STYLES["cita_test"]["text"],
+                "tipo_evento": tipo,   # 🔑 añadido
                 "extendedProps": {**details, "displayOrder": 0}
             })
 
@@ -168,14 +171,14 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                             fecha=str(fecha_local),  # normalizamos a string
                             tipo_evento="estado_diario",
                             valor={
-                                "sintomas": sintomas,
-                                "menstruacion": menstruacion,
-                                "ovulacion": ovulacion,
-                                "altitud": altitud,
-                                "respiratorio": respiratorio,
-                                "calor": calor,
-                                "lesion": lesion,
-                                "comentario_extra": comentario_extra
+                                "Síntomas": sintomas,
+                                "Menstruacion": menstruacion,
+                                "Ovulacion": ovulacion,
+                                "Altitud": altitud,
+                                "Respiratorio": respiratorio,
+                                "Calor": calor,
+                                "Lesión": lesion,
+                                "Comentario": comentario_extra
                             },
                             notas=None
                         )
