@@ -347,6 +347,26 @@ def crear_evento_calendario(id_atleta, fecha, tipo_evento, valor, notas=None):
         return evento
 
 # ─────────────────────────────────────────────
+# HELPERS DE TRANSFORMACIÓN
+# ─────────────────────────────────────────────
+import json
+
+def evento_to_dict(evento):
+    """Convierte un objeto CalendarioEvento en un dict listo para el calendario."""
+    try:
+        valor_dict = json.loads(evento.valor) if evento.valor else {}
+    except Exception:
+        valor_dict = {}
+    return {
+        "id": evento.id_evento,
+        "start": evento.fecha.isoformat(),
+        "allDay": True,
+        "tipo_evento": evento.tipo_evento,
+        "extendedProps": valor_dict,
+        "notas": evento.notas
+    }
+
+# ─────────────────────────────────────────────
 # HELPERS ESPECÍFICOS POR TIPO DE EVENTO
 # ─────────────────────────────────────────────
 
@@ -357,14 +377,12 @@ def crear_estado_diario(id_atleta, fecha, valores, notas=None):
     """
     return crear_evento_calendario(id_atleta, fecha, "estado_diario", valores, notas)
 
-
 def crear_competicion(id_atleta, fecha, detalles, notas=None):
     """
     Crea un evento de tipo 'competicion'.
     detalles: dict con claves como {"nombre": "Campeonato regional", "lugar": "Madrid"}
     """
     return crear_evento_calendario(id_atleta, fecha, "competicion", detalles, notas)
-
 
 def crear_cita_test(id_atleta, fecha, detalles, notas=None):
     """
@@ -373,19 +391,19 @@ def crear_cita_test(id_atleta, fecha, detalles, notas=None):
     """
     return crear_evento_calendario(id_atleta, fecha, "cita_test", detalles, notas)
 
-
 def obtener_competiciones_por_atleta(id_atleta):
     with SessionLocal() as session:
-        return session.query(CalendarioEvento).filter_by(
+        eventos = session.query(CalendarioEvento).filter_by(
             id_atleta=id_atleta, tipo_evento="competicion"
         ).order_by(CalendarioEvento.fecha.desc()).all()
-
+        return [evento_to_dict(ev) for ev in eventos]
 
 def obtener_citas_test_por_atleta(id_atleta):
     with SessionLocal() as session:
-        return session.query(CalendarioEvento).filter_by(
+        eventos = session.query(CalendarioEvento).filter_by(
             id_atleta=id_atleta, tipo_evento="cita_test"
         ).order_by(CalendarioEvento.fecha.desc()).all()
+        return [evento_to_dict(ev) for ev in eventos]
 
 def actualizar_evento_calendario(id_atleta, fecha, valores_actualizados, notas=None):
     """
@@ -447,17 +465,21 @@ def obtener_eventos_calendario_por_atleta(id_atleta, rol_actual="admin"):
     with SessionLocal() as session:
         query = session.query(CalendarioEvento).filter_by(id_atleta=id_atleta)
         if rol_actual == "admin":
-            # Admin ve todo
-            return query.order_by(CalendarioEvento.fecha.desc()).all()
+            eventos = query.order_by(CalendarioEvento.fecha.desc()).all()
         elif rol_actual == "entrenadora":
-            # Entrenadora ve todo excepto eventos privados de atleta
-            return query.filter(CalendarioEvento.tipo_evento.notin_(["PrivadoAtleta"])).order_by(CalendarioEvento.fecha.desc()).all()
+            eventos = query.filter(
+                CalendarioEvento.tipo_evento.notin_(["PrivadoAtleta"])
+            ).order_by(CalendarioEvento.fecha.desc()).all()
         elif rol_actual == "atleta":
-            # Atleta ve todo excepto eventos privados de staff
-            return query.filter(CalendarioEvento.tipo_evento.notin_(["PrivadoStaff"])).order_by(CalendarioEvento.fecha.desc()).all()
+            eventos = query.filter(
+                CalendarioEvento.tipo_evento.notin_(["PrivadoStaff"])
+            ).order_by(CalendarioEvento.fecha.desc()).all()
         else:
-            # Rol desconocido → no mostrar nada
             return []
+
+        # 🔑 Transformamos cada evento a dict con valor deserializado
+        return [evento_to_dict(ev) for ev in eventos]
+
 
 def borrar_evento_calendario(id_evento: int) -> bool:
     """
