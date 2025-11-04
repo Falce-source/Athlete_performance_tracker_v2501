@@ -53,9 +53,13 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
             if details.get("lesion"): resto_icons.append(EVENT_STYLES["lesion"]["icon"])
             if details.get("comentario_extra"): resto_icons.append(EVENT_STYLES["nota"]["icon"])
 
+            # Concatenamos todos los iconos en el título principal
+            icons = " ".join(ciclo_icons + entreno_icons + resto_icons)
+            title = f"🧍 {icons}" if icons else "🧍 Estado diario"
+
             fc_events.append({
                 "id": str(ev.get("id")),
-                "title": "🧍 Estado diario",
+                "title": title,
                 "start": fecha,
                 "allDay": True,
                 "backgroundColor": EVENT_STYLES["estado"]["bg"],
@@ -63,21 +67,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                 "textColor": EVENT_STYLES["estado"]["text"],
                 "extendedProps": {**details, "displayOrder": 0}
             })
-            if ciclo_icons:
-                fc_events.append({"title": " ".join(ciclo_icons), "start": fecha, "allDay": True,
-                                  "backgroundColor": "transparent", "borderColor": "transparent",
-                                  "textColor": EVENT_STYLES["estado"]["text"],
-                                  "extendedProps": {**details, "displayOrder": 1}})
-            if entreno_icons:
-                fc_events.append({"title": " ".join(entreno_icons), "start": fecha, "allDay": True,
-                                  "backgroundColor": "transparent", "borderColor": "transparent",
-                                  "textColor": EVENT_STYLES["estado"]["text"],
-                                  "extendedProps": {**details, "displayOrder": 2}})
-            if resto_icons:
-                fc_events.append({"title": " ".join(resto_icons), "start": fecha, "allDay": True,
-                                  "backgroundColor": "transparent", "borderColor": "transparent",
-                                  "textColor": EVENT_STYLES["estado"]["text"],
-                                  "extendedProps": {**details, "displayOrder": 3}})
+
 
         elif tipo == "competicion":
             fc_events.append({
@@ -188,7 +178,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                                 "altitud": altitud,
                                 "respiratorio": respiratorio,
                                 "calor": calor,
-                                "lesión": lesion,
+                                "lesion": lesion,
                                 "comentario_extra": comentario_extra
                             },
                             notas=None
