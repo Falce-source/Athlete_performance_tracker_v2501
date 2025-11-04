@@ -384,7 +384,7 @@ def evento_to_dict(evento):
         "tipo_evento": evento.tipo_evento,
         # Aquí ya entregamos el dict deserializado para que mostrar_calendario_interactivo
         # pueda acceder a claves como "Síntomas", "Menstruacion", etc.
-        "extendedProps": valor_dict,
+        "extendedProps": normalizado,
         "notas": evento.notas or ""
     }
 
