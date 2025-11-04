@@ -53,18 +53,18 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
             if details.get("lesion"): entreno_icons.append(EVENT_STYLES["lesion"]["icon"])
             if details.get("comentario_extra"): resto_icons.append(EVENT_STYLES["nota"]["icon"])
 
-            # Construimos HTML con filas
-            title_html = "<div><strong>🧍 Evento diario</strong></div>"
+            # Construimos título con saltos de línea
+            title = "🧍 Evento diario"
             if ciclo_icons:
-                title_html += f"<div>{' '.join(ciclo_icons)}</div>"
+                title += "\n" + " ".join(ciclo_icons)
             if entreno_icons:
-                title_html += f"<div>{' '.join(entreno_icons)}</div>"
+                title += "\n" + " ".join(entreno_icons)
             if resto_icons:
-                title_html += f"<div>{' '.join(resto_icons)}</div>"
+                title += "\n" + " ".join(resto_icons)
 
             out_events.append({
                 "id": str(ev.get("id")),
-                "title": title_html,  # 🔑 HTML con varias filas
+                "title": title,  # 🔑 string con \n interpretado por CSS
                 "start": fecha,
                 "allDay": True,
                 "backgroundColor": EVENT_STYLES["estado"]["bg"],
