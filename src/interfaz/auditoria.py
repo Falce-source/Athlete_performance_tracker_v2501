@@ -6,7 +6,7 @@ from datetime import datetime
 from src.persistencia import sql
 import backup_storage
 
-def probar_flujo(modulo):
+def probar_flujo(modulo, rol_actual="admin"):
     resultado = {"ok": False, "mensaje": "", "backup_creado": None}
 
     try:
