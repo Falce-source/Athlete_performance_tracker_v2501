@@ -327,11 +327,11 @@ def crear_evento_calendario(id_atleta, fecha, tipo_evento, valor, notas=None):
         elif isinstance(fecha, str):
             try:
                 base = datetime.fromisoformat(fecha.replace("Z", "+00:00"))
-                fecha = datetime(base.year, base.month, base.day)
+                fecha = base.date()
             except Exception:
-                fecha = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+                fecha = date.today()
         else:
-            fecha = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            fecha = date.today()
 
         evento = CalendarioEvento(
             id_atleta=id_atleta,
@@ -419,11 +419,11 @@ def actualizar_evento_calendario(id_atleta, fecha, valores_actualizados, notas=N
         elif isinstance(fecha, str):
             try:
                 base = datetime.fromisoformat(fecha.replace("Z", "+00:00"))
-                fecha = datetime(base.year, base.month, base.day)
+                fecha = base.date()
             except Exception:
-                fecha = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+                fecha = date.today()
         else:
-            fecha = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            fecha = date.today()
 
         evento = session.query(CalendarioEvento).filter_by(
             id_atleta=id_atleta,
@@ -509,11 +509,11 @@ def borrar_evento_calendario_por_fecha(id_atleta, fecha) -> bool:
         elif isinstance(fecha, str):
             try:
                 base = datetime.fromisoformat(fecha.replace("Z", "+00:00"))
-                fecha = datetime(base.year, base.month, base.day)
+                fecha = base.date()
             except Exception:
-                fecha = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+                fecha = date.today()
         else:
-            fecha = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            fecha = date.today()
 
         evento = session.query(CalendarioEvento).filter_by(
             id_atleta=id_atleta,
