@@ -66,10 +66,13 @@ def probar_flujo(modulo, rol_actual="admin"):
     from streamlit import session_state
     rol_actual = session_state.get("ROL_ACTUAL", "admin")
     historial_validaciones.registrar_validacion(
-        modulo=modulo,
-        resultado=resultado,
-        rol_actual=st.session_state.get("ROL_ACTUAL", "admin")
+        modulo,
+        resultado["mensaje"],
+        resultado.get("backup_creado"),
+        rol_actual
     )
+
+    return resultado
 
     return resultado
 
