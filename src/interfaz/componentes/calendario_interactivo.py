@@ -18,7 +18,7 @@ EVENT_STYLES = {
     "nota": {"icon": "📝", "bg": "#F9FAFB", "border": "#6B7280", "text": "#374151", "priority": 5},
 }
 
-def mostrar_calendario_interactivo(fc_events, id_atleta, idx=0):
+def mostrar_calendario_interactivo(fc_events, id_atleta):
     """
     Renderiza un calendario interactivo tipo TrainingPeaks usando streamlit-calendar.
     - eventos: lista de diccionarios con al menos 'start' (YYYY-MM-DD) y 'allDay'.
