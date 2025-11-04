@@ -138,7 +138,12 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
     """, unsafe_allow_html=True)
 
     # Renderizar calendario (ahora \n se interpreta como salto de línea)
-    cal = calendar(events=fc_events, options=calendar_options, key=f"calendar_{id_atleta}")
+    # 🔑 Usamos un key único por atleta y rol para evitar colisiones en Streamlit
+    cal = calendar(
+        events=fc_events,
+        options=calendar_options,
+        key=f"calendar_{id_atleta}_{rol_actual}"
+    )
 
     # Modal de registro al hacer clic en un día vacío
     if cal and "dateClick" in cal:
