@@ -137,9 +137,12 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
     </style>
     """, unsafe_allow_html=True)
 
+    # Renderizar calendario (ahora \n se interpreta como salto de línea)
+    cal = calendar(events=fc_events, options=calendar_options)
+
     # Modal de registro al hacer clic en un día vacío
-    if "dateClick" in st.session_state:
-        fecha_iso = st.session_state["dateClick"].get("dateStr") or st.session_state["dateClick"].get("date")
+    if cal and "dateClick" in cal:
+        fecha_iso = cal["dateClick"].get("dateStr") or cal["dateClick"].get("date")
         if isinstance(fecha_iso, str):
             if "T" in fecha_iso:
                 fecha_iso = fecha_iso.split("T")[0]
