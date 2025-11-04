@@ -17,6 +17,7 @@ EVENT_STYLES = {
     "lesion": {"icon": "🤕", "bg": "#FFF4D6", "border": "#F59E0B", "text": "#7A4B00", "priority": 1},
     "nota": {"icon": "📝", "bg": "#F9FAFB", "border": "#6B7280", "text": "#374151", "priority": 5},
 }
+
 def mostrar_calendario_interactivo(eventos, id_atleta):
     """
     Renderiza un calendario interactivo tipo TrainingPeaks usando streamlit-calendar.
@@ -26,12 +27,8 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
     # ───────────────────────────────
     # Inicialización robusta
     # ───────────────────────────────
-    # Aseguramos que eventos_fc sea siempre lista
-    if not isinstance(eventos_fc, list):
-        eventos_fc = []
-
-    # Aseguramos que cal siempre exista como dict
-    cal = st.session_state.get("cal_config", {})
+    # Normalizamos la entrada a lista en una variable local
+    eventos = eventos if isinstance(eventos, list) else []
 
     st.markdown("### 🗓️ Calendario interactivo")
 
