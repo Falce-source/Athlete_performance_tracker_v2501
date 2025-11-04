@@ -109,12 +109,23 @@ def mostrar_calendario(rol_actual="admin"):
 
             data.append(fila)
 
-            # Para FullCalendar → solo fecha y allDay
+            # Para FullCalendar → fecha, allDay y props extendidas
             evento_fc = {
                 "id": e.id_evento,
-                "title": e.tipo_evento,
+                "title": "🧍 Estado diario",
                 "start": e.fecha.strftime("%Y-%m-%d"),
                 "allDay": True,
+                # Pasamos los campos que calendario_interactivo.py espera
+                "Síntomas": valor.get("sintomas"),
+                "Menstruacion": valor.get("menstruacion"),
+                "Ovulacion": valor.get("ovulacion"),
+                "Altitud": "Sí" if valor.get("altitud") else None,
+                "Respiratorio": "Sí" if valor.get("respiratorio") else None,
+                "Calor": "Sí" if valor.get("calor") else None,
+                "Cita_test": valor.get("cita_test"),
+                "fecha_competicion": valor.get("fecha_competicion"),
+                "Lesión": valor.get("lesion"),
+                "Comentario": valor.get("comentario_extra"),
             }
             eventos_fc.append(evento_fc)
 
