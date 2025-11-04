@@ -138,11 +138,11 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, rol_actual="admin"):
     """, unsafe_allow_html=True)
 
     # Renderizar calendario (ahora \n se interpreta como salto de línea)
-    # 🔑 Usamos un key único por atleta y rol para evitar colisiones en Streamlit
+    # 🔑 Usamos un key único basado únicamente en el id_atleta
     cal = calendar(
         events=fc_events,
         options=calendar_options,
-        key=f"calendar_{id_atleta}_{rol_actual}"
+        key=f"calendar_{id_atleta}"
     )
 
     # Modal de registro al hacer clic en un día vacío
@@ -228,11 +228,11 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, rol_actual="admin"):
         registrar_evento()
 
     # Renderizar calendario (ahora \n se interpreta como salto de línea)
-    # 🔑 Usamos un key único por atleta y rol para evitar colisiones en Streamlit
+    # 🔑 Usamos un key único basado únicamente en el id_atleta
     cal = calendar(
         events=fc_events,
         options=calendar_options,
-        key=f"calendar_{id_atleta}_{rol_actual}"
+        key=f"calendar_{id_atleta}"
     )
 
     # Modal editable al hacer clic en la cabecera
