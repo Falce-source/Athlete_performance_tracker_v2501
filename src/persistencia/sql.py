@@ -357,13 +357,17 @@ def evento_to_dict(evento):
         valor_dict = json.loads(evento.valor) if evento.valor else {}
     except Exception:
         valor_dict = {}
+
     return {
         "id": evento.id_evento,
+        # Normalizamos a ISO con hora 00:00 para que FullCalendar lo pinte en el día correcto
         "start": datetime.combine(evento.fecha, datetime.min.time()).isoformat(),
         "allDay": True,
         "tipo_evento": evento.tipo_evento,
+        # Aquí ya entregamos el dict deserializado para que mostrar_calendario_interactivo
+        # pueda acceder a claves como "Síntomas", "Menstruacion", etc.
         "extendedProps": valor_dict,
-        "notas": evento.notas
+        "notas": evento.notas or ""
     }
 
 # ─────────────────────────────────────────────
