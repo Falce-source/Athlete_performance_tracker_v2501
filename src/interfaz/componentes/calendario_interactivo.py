@@ -147,7 +147,6 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
     """, unsafe_allow_html=True)
 
     # Renderizar calendario (ahora \n se interpreta como salto de línea)
-    st.json(fc_events)
     cal = calendar(events=fc_events, options=calendar_options)
 
     # Modal editable al hacer clic en la cabecera
