@@ -114,30 +114,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
         "timeZone": "UTC",
         "forceEventDuration": True,
         "displayEventEnd": False,
-        # Renderizado personalizado: título fijo + filas desde extendedProps.rows
-        "eventContent": """
-        function(arg) {
-        const props = arg.event.extendedProps || {};
-        const rows = props.rows || [];
-        const container = document.createElement('div');
-
-        const titleEl = document.createElement('div');
-        titleEl.textContent = arg.event.title || '';
-        titleEl.style.fontWeight = '600';
-        container.appendChild(titleEl);
-
-        rows.forEach(function(line) {
-            if (line && line.trim().length > 0) {
-            const rowEl = document.createElement('div');
-            rowEl.textContent = line;
-            rowEl.style.marginTop = '2px';
-            container.appendChild(rowEl);
-            }
-        });
-
-        return { domNodes: [container] };
-        }
-        """
+        # Usamos HTML en el title directamente, no eventContent
     }
     # CSS para compactar las filas de eventos
     st.markdown("""
@@ -195,17 +172,17 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     if st.form_submit_button("Guardar estado"):
                         sql.crear_evento_calendario(
                             id_atleta=id_atleta,
-                            fecha=str(fecha_local),  # normalizamos a string
+                            fecha=str(fecha_local),
                             tipo_evento="estado_diario",
                             valor={
-                                "Síntomas": sintomas,
-                                "Menstruacion": menstruacion,
-                                "Ovulacion": ovulacion,
-                                "Altitud": altitud,
-                                "Respiratorio": respiratorio,
-                                "Calor": calor,
-                                "Lesión": lesion,
-                                "Comentario": comentario_extra
+                                "sintomas": sintomas,
+                                "menstruacion": menstruacion,
+                                "ovulacion": ovulacion,
+                                "altitud": altitud,
+                                "respiratorio": respiratorio,
+                                "calor": calor,
+                                "lesion": lesion,
+                                "comentario_extra": comentario_extra
                             },
                             notas=None
                         )
@@ -258,20 +235,13 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
 
         registrar_evento()
     
-    # Modal editable al hacer clic en la cabecera
+    # Modal editable al hacer clic en un evento
     if cal and "eventClick" in cal:
         ev = cal["eventClick"]["event"]
         props = ev.get("extendedProps", {})
         tipo_ev = props.get("tipo_evento") or ev.get("tipo_evento")
 
         if tipo_ev == "estado_diario":
-            editar_estado()
-        elif tipo_ev == "competicion":
-            editar_competicion()
-        elif tipo_ev == "cita_test":
-            editar_cita_test()
-            
-        if ev.get("tipo_evento") == "estado_diario":
             @st.dialog("📋 Editar estado diario")
             def editar_estado():
                 with st.form("form_editar_estado", clear_on_submit=True):
