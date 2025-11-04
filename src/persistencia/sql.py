@@ -350,19 +350,15 @@ def obtener_eventos_calendario_por_atleta(id_atleta, rol_actual="admin"):
             # Rol desconocido → no mostrar nada
             return []
 
-def borrar_evento_calendario(id_atleta, fecha):
+def borrar_evento_calendario(id_evento: int) -> bool:
     """
-    Elimina un evento de calendario existente para un atleta en una fecha concreta.
-    Si no existe, devuelve False.
+    Elimina un evento de calendario por su id_evento único.
+    Devuelve True si se eliminó, False si no existía.
     """
     with SessionLocal() as session:
-        evento = session.query(CalendarioEvento).filter_by(
-            id_atleta=id_atleta,
-            fecha=fecha
-        ).first()
+        evento = session.query(CalendarioEvento).filter_by(id_evento=id_evento).first()
         if not evento:
             return False
-
         session.delete(evento)
         session.commit()
         _sync_backup()

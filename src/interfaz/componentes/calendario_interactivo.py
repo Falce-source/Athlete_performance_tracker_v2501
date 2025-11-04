@@ -66,6 +66,7 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
 
         # Evento principal: cabecera "Estado diario"
         fc_events.append({
+            "id": str(ev.get("id_evento")),  # ← incluir id_evento real
             "title": "🧍 Estado diario",
             "start": fecha,
             "allDay": True,
@@ -202,9 +203,12 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
                         st.rerun()  # recarga para cerrar modal y refrescar calendario
 
                     if eliminar:
-                        fecha_dt = datetime.datetime.fromisoformat(ev["start"].replace("Z", "+00:00"))
-                        sql.borrar_evento_calendario(id_atleta=id_atleta, fecha=fecha_dt)
-                        st.success("🗑️ Estado diario eliminado")
+                        # Usamos el id_evento único en lugar de (id_atleta, fecha)
+                        event_id = ev.get("id") or ev.get("_def", {}).get("publicId")
+                        if event_id and sql.borrar_evento_calendario(int(event_id)):
+                            st.success("🗑️ Estado diario eliminado")
+                        else:
+                            st.error("❌ No se pudo eliminar el evento")
                         st.rerun()  # recarga para cerrar modal y refrescar calendario
 
             editar_estado()
