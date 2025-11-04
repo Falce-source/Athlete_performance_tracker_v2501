@@ -53,6 +53,19 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
             if details.get("lesion"): resto_icons.append(EVENT_STYLES["lesion"]["icon"])
             if details.get("comentario_extra"): resto_icons.append(EVENT_STYLES["nota"]["icon"])
 
+            # Prueba
+            icons = " ".join(ciclo_icons + entreno_icons + resto_icons)
+            title = f"🧍 {icons}" if icons else "🧍 Estado diario"
+
+            # 🔎 Depuración: mostramos lo que se está generando
+            st.write("Evento procesado:", {
+                "fecha": fecha,
+                "details": details,
+                "icons": icons,
+                "title": title
+            })
+            #--------
+
             out_events.append({
                 "id": str(ev.get("id")),
                 # Concatenamos iconos en el título
