@@ -67,20 +67,17 @@ def mostrar_calendario(rol_actual="admin"):
     data = []
     eventos_fc = []
     for e in eventos:
-        try:
-            valor = json.loads(e.valor) if e.valor else {}
-        except Exception:
-            valor = {}
+        valor = e.get("extendedProps", {}) or {}
 
         fila = {
             "id_evento": e["id"],
-            "Fecha": e.fecha.strftime("%Y-%m-%d"),
-            "Tipo": e.tipo_evento,
-            "Notas": e.notas or ""
+            "Fecha": e["start"],            # ya viene en formato ISO string
+            "Tipo": e["tipo_evento"],
+            "Notas": e.get("notas", "")
         }
 
         # Estado diario → síntomas, ciclo, etc.
-        if e.tipo_evento == "estado_diario":
+        if e["tipo_evento"] == "estado_diario":
             if valor.get("sintomas") not in ["No", "-", None, "Ninguno"]:
                 fila["Síntomas"] = valor.get("sintomas")
             if valor.get("menstruacion") not in ["No", "-", None]:
@@ -101,17 +98,23 @@ def mostrar_calendario(rol_actual="admin"):
             evento_fc = {
                 "id": e["id"],
                 "title": "🧍 Estado diario",
-                "start": e.fecha.strftime("%Y-%m-%d"),
+                "start": e["start"],
                 "allDay": True,
                 "extendedProps": valor
             }
             eventos_fc.append(evento_fc)
 
         # Competición → evento propio con contador
-        elif e.tipo_evento == "competicion":
+        elif e["tipo_evento"] == "competicion":
             try:
-                fecha_comp = e.fecha
-                dias_restantes = (fecha_comp - date.today()).days
+                from datetime import datetime, date
+
+                try:
+                    fecha_comp = datetime.fromisoformat(e["start"]).date()
+                    dias_restantes = (fecha_comp - date.today()).days
+                    fila["Competición"] = f"{dias_restantes} días"
+                except Exception:
+                    fila["Competición"] = "-"
                 fila["Competición"] = f"{dias_restantes} días"
             except Exception:
                 fila["Competición"] = "-"
@@ -119,20 +122,20 @@ def mostrar_calendario(rol_actual="admin"):
             evento_fc = {
                 "id": e["id"],
                 "title": "🏆 Competición",
-                "start": e.fecha.strftime("%Y-%m-%d"),
+                "start": e["start"],
                 "allDay": True,
                 "extendedProps": valor
             }
             eventos_fc.append(evento_fc)
 
         # Cita/Test → evento propio
-        elif e.tipo_evento == "cita_test":
+        elif e["tipo_evento"] == "cita_test":
             fila["Cita/Test"] = valor.get("tipo") or "Cita/Test"
 
             evento_fc = {
                 "id": e["id"],
                 "title": "📅 Cita/Test",
-                "start": e.fecha.strftime("%Y-%m-%d"),
+                "start": e["start"],
                 "allDay": True,
                 "extendedProps": valor
             }
