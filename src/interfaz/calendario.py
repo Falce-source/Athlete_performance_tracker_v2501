@@ -108,8 +108,8 @@ def mostrar_calendario(rol_actual="admin"):
 
             data.append(fila)
 
-        # Vista tabla
-        if vista == "Tabla":
+    # Vista tabla
+    if vista == "Tabla":
             df = pd.DataFrame(data).fillna("-")
 
             # Mapeo de estilos coherente con calendario_interactivo
@@ -151,10 +151,10 @@ def mostrar_calendario(rol_actual="admin"):
             styled_df = pd.DataFrame(styled_rows)
             st.markdown(styled_df.to_html(escape=False, index=False), unsafe_allow_html=True)
 
-        # Vista calendario interactivo (FullCalendar)
-        if vista == "Calendario":
-            from src.interfaz.componentes.calendario_interactivo import mostrar_calendario_interactivo
-            mostrar_calendario_interactivo(data, id_atleta)
+    # Vista calendario interactivo (FullCalendar)
+    if vista == "Calendario":
+        from src.interfaz.componentes.calendario_interactivo import mostrar_calendario_interactivo
+        mostrar_calendario_interactivo(data, id_atleta)
 
     # ───────────────────────────────
     # Sesiones del día (planificado vs completado)
