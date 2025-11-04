@@ -1,9 +1,8 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime, UTC
+from datetime import datetime, UTC, date
 from src.persistencia import sql
 import json
-from datetime import date
 
 def badge(text, color="#eee", text_color="#000"):
     """Devuelve un span HTML con estilo tipo chip/badge."""
@@ -16,7 +15,6 @@ def mostrar_calendario(rol_actual="admin"):
     # Información de depuración extendida
     # ───────────────────────────────
     import os
-    from src.persistencia import sql
     import backup_storage
 
     try:
@@ -25,7 +23,6 @@ def mostrar_calendario(rol_actual="admin"):
         num_atletas = len(sql.obtener_atletas())
         num_eventos = len(sql.obtener_eventos())
 
-        # Último backup en Drive
         backups = backup_storage.listar_backups()
         if backups:
             ultimo = sorted(backups, key=lambda b: b["createdTime"], reverse=True)[0]
@@ -57,7 +54,7 @@ def mostrar_calendario(rol_actual="admin"):
     st.markdown("---")
 
     # ───────────────────────────────
-    # Eventos del calendario (incluye competiciones con contador)
+    # Eventos del calendario
     # ───────────────────────────────
     st.subheader("🗓️ Calendario")
 
@@ -71,12 +68,12 @@ def mostrar_calendario(rol_actual="admin"):
 
         fila = {
             "id_evento": e["id"],
-            "Fecha": e["start"],            # ya viene en formato ISO string
+            "Fecha": e["start"],  # string ISO
             "Tipo": e["tipo_evento"],
             "Notas": e.get("notas", "")
         }
 
-        # Estado diario → síntomas, ciclo, etc.
+        # Estado diario
         if e["tipo_evento"] == "estado_diario":
             if valor.get("sintomas") not in ["No", "-", None, "Ninguno"]:
                 fila["Síntomas"] = valor.get("sintomas")
@@ -104,17 +101,11 @@ def mostrar_calendario(rol_actual="admin"):
             }
             eventos_fc.append(evento_fc)
 
-        # Competición → evento propio con contador
+        # Competición
         elif e["tipo_evento"] == "competicion":
             try:
-                from datetime import datetime, date
-
-                try:
-                    fecha_comp = datetime.fromisoformat(e["start"]).date()
-                    dias_restantes = (fecha_comp - date.today()).days
-                    fila["Competición"] = f"{dias_restantes} días"
-                except Exception:
-                    fila["Competición"] = "-"
+                fecha_comp = datetime.fromisoformat(e["start"]).date()
+                dias_restantes = (fecha_comp - date.today()).days
                 fila["Competición"] = f"{dias_restantes} días"
             except Exception:
                 fila["Competición"] = "-"
@@ -128,7 +119,7 @@ def mostrar_calendario(rol_actual="admin"):
             }
             eventos_fc.append(evento_fc)
 
-        # Cita/Test → evento propio
+        # Cita/Test
         elif e["tipo_evento"] == "cita_test":
             fila["Cita/Test"] = valor.get("tipo") or "Cita/Test"
 
@@ -145,46 +136,45 @@ def mostrar_calendario(rol_actual="admin"):
 
     # Vista tabla
     if vista == "Tabla":
-            df = pd.DataFrame(data).fillna("-")
+        df = pd.DataFrame(data).fillna("-")
 
-            # Mapeo de estilos coherente con calendario_interactivo
-            def style_cell(val, col):
-                if col == "Competición" and isinstance(val, str) and "días" in val:
-                    try:
-                        dias = int(val.split()[0])
-                        if dias <= 7:
-                            return f"<span style='background-color:#FDE2E2; color:#7A1D1D; font-weight:bold; padding:2px 6px; border-radius:8px;'>{val}</span>"
-                        elif dias <= 30:
-                            return f"<span style='background-color:#FFF4E5; color:#7C2D12; padding:2px 6px; border-radius:8px;'>{val}</span>"
-                        else:
-                            return f"<span style='background-color:#F3F4F6; color:#374151; padding:2px 6px; border-radius:8px;'>{val}</span>"
-                    except Exception:
-                        return val
-                if col == "Síntomas" and val not in ["-", "Ninguno"]:
-                    return f"<span style='background-color:#FDE2E2; color:#7A1D1D; padding:2px 6px; border-radius:8px;'>🩸 {val}</span>"
-                if col == "Menstruacion" and val not in ["-", "No"]:
-                    return f"<span style='background-color:#FEE2E2; color:#7A1D1D; padding:2px 6px; border-radius:8px;'>🩸 {val}</span>"
-                if col == "Ovulacion" and val not in ["-", "No"]:
-                    return f"<span style='background-color:#F3E8FF; color:#2E1065; padding:2px 6px; border-radius:8px;'>🔄 {val}</span>"
-                if col == "Altitud" and val == "Sí":
-                    return f"<span style='background-color:#E6F0FF; color:#0B3A82; padding:2px 6px; border-radius:8px;'>⛰️ {val}</span>"
-                if col == "Respiratorio" and val == "Sí":
-                    return f"<span style='background-color:#E0F7FA; color:#065F46; padding:2px 6px; border-radius:8px;'>🌬️ {val}</span>"
-                if col == "Calor" and val == "Sí":
-                    return f"<span style='background-color:#FFF4E5; color:#7C2D12; padding:2px 6px; border-radius:8px;'>🔥 {val}</span>"
-                if col == "Lesión" and val not in ["-", ""]:
-                    return f"<span style='background-color:#FFF4D6; color:#7A4B00; padding:2px 6px; border-radius:8px;'>🤕 {val}</span>"
-                if col == "Comentario" and val not in ["-", ""]:
-                    return f"<span style='background-color:#F9FAFB; color:#374151; padding:2px 6px; border-radius:8px;'>📝 {val}</span>"
-                return val if val != "nan" else "-"
+        def style_cell(val, col):
+            if col == "Competición" and isinstance(val, str) and "días" in val:
+                try:
+                    dias = int(val.split()[0])
+                    if dias <= 7:
+                        return f"<span style='background-color:#FDE2E2; color:#7A1D1D; font-weight:bold; padding:2px 6px; border-radius:8px;'>{val}</span>"
+                    elif dias <= 30:
+                        return f"<span style='background-color:#FFF4E5; color:#7C2D12; padding:2px 6px; border-radius:8px;'>{val}</span>"
+                    else:
+                        return f"<span style='background-color:#F3F4F6; color:#374151; padding:2px 6px; border-radius:8px;'>{val}</span>"
+                except Exception:
+                    return val
+            if col == "Síntomas" and val not in ["-", "Ninguno"]:
+                return f"<span style='background-color:#FDE2E2; color:#7A1D1D; padding:2px 6px; border-radius:8px;'>🩸 {val}</span>"
+            if col == "Menstruacion" and val not in ["-", "No"]:
+                return f"<span style='background-color:#FEE2E2; color:#7A1D1D; padding:2px 6px; border-radius:8px;'>🩸 {val}</span>"
+            if col == "Ovulacion" and val not in ["-", "No"]:
+                return f"<span style='background-color:#F3E8FF; color:#2E1065; padding:2px 6px; border-radius:8px;'>🔄 {val}</span>"
+            if col == "Altitud" and val == "Sí":
+                return f"<span style='background-color:#E6F0FF; color:#0B3A82; padding:2px 6px; border-radius:8px;'>⛰️ {val}</span>"
+            if col == "Respiratorio" and val == "Sí":
+                return f"<span style='background-color:#E0F7FA; color:#065F46; padding:2px 6px; border-radius:8px;'>🌬️ {val}</span>"
+            if col == "Calor" and val == "Sí":
+                return f"<span style='background-color:#FFF4E5; color:#7C2D12; padding:2px 6px; border-radius:8px;'>🔥 {val}</span>"
+            if col == "Lesión" and val not in ["-", ""]:
+                return f"<span style='background-color:#FFF4D6; color:#7A4B00; padding:2px 6px; border-radius:8px;'>🤕 {val}</span>"
+            if col == "Comentario" and val not in ["-", ""]:
+                return f"<span style='background-color:#F9FAFB; color:#374151; padding:2px 6px; border-radius:8px;'>📝 {val}</span>"
+            return val if val != "nan" else "-"
 
-            styled_rows = []
-            for _, row in df.iterrows():
-                styled_row = {col: style_cell(val, col) for col, val in row.items()}
-                styled_rows.append(styled_row)
+        styled_rows = []
+        for _, row in df.iterrows():
+            styled_row = {col: style_cell(val, col) for col, val in row.items()}
+            styled_rows.append(styled_row)
 
-            styled_df = pd.DataFrame(styled_rows)
-            st.markdown(styled_df.to_html(escape=False, index=False), unsafe_allow_html=True)
+        styled_df = pd.DataFrame(styled_rows)
+        st.markdown(styled_df.to_html(escape=False, index=False), unsafe_allow_html=True)
 
     # Vista calendario interactivo (FullCalendar)
     if vista == "Calendario":
