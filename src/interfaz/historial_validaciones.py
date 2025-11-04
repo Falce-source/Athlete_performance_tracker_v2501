@@ -56,13 +56,16 @@ def mostrar_historial():
             st.info("No hay validaciones registradas aún.")
             return
 
-        df = pd.DataFrame(data)
+        # Asegurar que todas las entradas tienen las claves necesarias
+        for entrada in data:
+            entrada.setdefault("fecha", datetime.now().isoformat())
+            entrada.setdefault("modulo", "-")
+            entrada.setdefault("resultado", "-")
+            entrada.setdefault("backup", "-")
+            entrada.setdefault("rol", "-")
 
-        # Asegurar que todas las columnas existen
-        for col in ["fecha", "modulo", "resultado", "backup", "rol"]:
-            if col not in df.columns:
-                df[col] = "-"
-
+        # Crear DataFrame con columnas garantizadas
+        df = pd.DataFrame(data, columns=["fecha", "modulo", "resultado", "backup", "rol"])
         df["fecha"] = pd.to_datetime(df["fecha"], errors="coerce")
         df = df.sort_values("fecha", ascending=False)
 
