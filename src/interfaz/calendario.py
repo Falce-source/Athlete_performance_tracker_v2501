@@ -105,7 +105,7 @@ def mostrar_calendario(rol_actual="admin"):
             eventos_fc.append(evento_fc)
 
         # Competición
-        elif e["tipo_evento"] == "competicion":
+        elif tipo == "competicion":
             try:
                 fecha_comp = datetime.fromisoformat(e["start"]).date()
                 dias_restantes = (fecha_comp - date.today()).days
@@ -123,7 +123,7 @@ def mostrar_calendario(rol_actual="admin"):
             eventos_fc.append(evento_fc)
 
         # Cita/Test
-        elif e["tipo_evento"] == "cita_test":
+        elif tipo == "cita_test":
             fila["Cita/Test"] = valor.get("tipo") or "Cita/Test"
 
             evento_fc = {
