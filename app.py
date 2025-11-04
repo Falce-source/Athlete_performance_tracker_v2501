@@ -49,7 +49,7 @@ opcion = st.sidebar.radio(
         "📅 Calendario",   # ← nuevo
         "👥 Usuarios",     # ← NUEVA PESTAÑA
         "💾 Backups",      # ← nueva pestaña
-        "🔍 Auditoría"     # ← NUEVA PESTAÑA
+        "🔍 Auditoría",    # ← NUEVA PESTAÑA
     ]
 )
 
