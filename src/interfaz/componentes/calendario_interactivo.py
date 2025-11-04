@@ -218,8 +218,11 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
     if cal and "dateClick" in cal:
         fecha_iso = cal["dateClick"].get("dateStr") or cal["dateClick"].get("date")
 
-        # Normalizamos: si ya es date, lo usamos; si es str, lo parseamos
+        # Normalizamos robustamente
         if isinstance(fecha_iso, str):
+            # Si viene con hora (ej. 2025-11-04T00:00:00Z), nos quedamos solo con la parte de fecha
+            if "T" in fecha_iso:
+                fecha_iso = fecha_iso.split("T")[0]
             fecha_local = datetime.date.fromisoformat(fecha_iso)
         elif isinstance(fecha_iso, datetime.date):
             fecha_local = fecha_iso
