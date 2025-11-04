@@ -148,7 +148,11 @@ def mostrar_perfil():
                 nuevo_contacto = st.text_input("Contacto", atleta.contacto or "")
                 nuevo_deporte = st.text_input("Deporte", atleta.deporte or "")
                 nueva_modalidad = st.text_input("Modalidad", atleta.modalidad or "")
-                nuevo_nivel = st.selectbox("Nivel", ["Iniciado", "Intermedio", "Avanzado", "Elite"], index=["Iniciado","Intermedio","Avanzado","Elite"].index(atleta.nivel) if atleta.nivel else 0)
+                niveles = ["Iniciado", "Intermedio", "Avanzado", "Elite"]
+                # Si el nivel actual no está en la lista, usamos índice 0 por defecto
+                nivel_actual = atleta.nivel if atleta.nivel in niveles else None
+                index_nivel = niveles.index(nivel_actual) if nivel_actual else 0
+                nuevo_nivel = st.selectbox("Nivel", niveles, index=index_nivel)
                 nuevo_equipo = st.text_input("Equipo", atleta.equipo or "")
                 nuevas_alergias = st.text_area("Alergias", atleta.alergias or "")
                 nuevo_consentimiento = st.checkbox("Consentimiento informado", value=atleta.consentimiento)
