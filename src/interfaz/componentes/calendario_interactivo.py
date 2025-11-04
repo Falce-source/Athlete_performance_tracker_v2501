@@ -28,13 +28,13 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
     # Inicialización robusta
     # ───────────────────────────────
     # Normalizamos la lista de eventos
-    fc_events = fc_events if isinstance(fc_events, list) else []
+    src_events = fc_events if isinstance(fc_events, list) else []
+    out_events = []
 
     st.markdown("### 🗓️ Calendario interactivo")
 
     # Construcción de eventos agrupados por día
-    fc_events = []
-    for ev in fc_events:
+    for ev in src_events:
         fecha = ev.get("start")
         if not fecha:
             continue
@@ -53,13 +53,10 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
             if details.get("lesion"): resto_icons.append(EVENT_STYLES["lesion"]["icon"])
             if details.get("comentario_extra"): resto_icons.append(EVENT_STYLES["nota"]["icon"])
 
-            # Concatenamos todos los iconos en el título principal
-            icons = " ".join(ciclo_icons + entreno_icons + resto_icons)
-            title = f"🧍 {icons}" if icons else "🧍 Estado diario"
-
-            fc_events.append({
+            out_events.append({
                 "id": str(ev.get("id")),
-                "title": title,
+                # Concatenamos iconos en el título
+                "title": "🧍 " + " ".join(ciclo_icons + entreno_icons + resto_icons) if (ciclo_icons or entreno_icons or resto_icons) else "🧍 Estado diario",
                 "start": fecha,
                 "allDay": True,
                 "backgroundColor": EVENT_STYLES["estado"]["bg"],
@@ -67,7 +64,6 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                 "textColor": EVENT_STYLES["estado"]["text"],
                 "extendedProps": {**details, "displayOrder": 0}
             })
-
 
         elif tipo == "competicion":
             fc_events.append({
@@ -131,7 +127,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
     # Renderizar calendario (una sola vez)
     # 🔑 Usamos un key único combinando id_atleta y vista
     cal = calendar(
-        events=fc_events,
+        events=out_events,
         options=calendar_options,
         key=f"calendar_{id_atleta}_{vista}"
     )
