@@ -19,6 +19,11 @@ def registrar_validacion(modulo, resultado, backup_generado=None, rol_actual=Non
         if os.path.exists(RUTA_LOG):
             with open(RUTA_LOG, "r", encoding="utf-8") as f:
                 data = json.load(f)
+            # Normalizar claves faltantes
+            for entrada in data:
+                entrada.setdefault("resultado", "-")
+                entrada.setdefault("backup", "-")
+                entrada.setdefault("rol", "-")
         else:
             data = []
 
