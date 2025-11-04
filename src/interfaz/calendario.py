@@ -97,11 +97,12 @@ def mostrar_calendario(rol_actual="admin"):
 
             evento_fc = {
                 "id": e["id"],
-                "title": "🧍 Estado diario",
                 "start": e["start"],
                 "allDay": True,
+                "tipo_evento": tipo,          # 🔑 añade el tipo para que el otro módulo lo use
                 "extendedProps": valor
             }
+
             eventos_fc.append(evento_fc)
 
         # Competición
@@ -115,9 +116,9 @@ def mostrar_calendario(rol_actual="admin"):
 
             evento_fc = {
                 "id": e["id"],
-                "title": "🏆 Competición",
                 "start": e["start"],
                 "allDay": True,
+                "tipo_evento": tipo,
                 "extendedProps": valor
             }
             eventos_fc.append(evento_fc)
@@ -128,9 +129,9 @@ def mostrar_calendario(rol_actual="admin"):
 
             evento_fc = {
                 "id": e["id"],
-                "title": "📅 Cita/Test",
                 "start": e["start"],
                 "allDay": True,
+                "tipo_evento": tipo,
                 "extendedProps": valor
             }
             eventos_fc.append(evento_fc)
