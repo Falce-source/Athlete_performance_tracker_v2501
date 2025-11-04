@@ -218,7 +218,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
     if cal and "eventClick" in cal:
         ev = cal["eventClick"]["event"]
         props = ev.get("extendedProps", {})
-        if props and props.get("displayOrder") == 0 and ev.get("title") == "🧍 Estado diario":
+        if ev.get("tipo_evento") == "estado_diario":
             @st.dialog("📋 Editar estado diario")
             def editar_estado():
                 with st.form("form_editar_estado", clear_on_submit=True):
@@ -277,7 +277,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
             editar_estado()
     
         # Modal para editar competición
-        if ev.get("title") == "🏆 Competición":
+        if ev.get("tipo_evento") == "competicion":
             @st.dialog("🏆 Editar competición")
             def editar_competicion():
                 with st.form("form_editar_competicion", clear_on_submit=True):
@@ -307,7 +307,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
             editar_competicion()
 
         # Modal para editar cita/test
-        if ev.get("title") == "📅 Cita/Test":
+        if ev.get("tipo_evento") == "cita_test":
             @st.dialog("📅 Editar cita/test")
             def editar_cita_test():
                 with st.form("form_editar_cita_test", clear_on_submit=True):
