@@ -50,7 +50,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
             if details.get("altitud"): entreno_icons.append(EVENT_STYLES["altitud"]["icon"])
             if details.get("respiratorio"): entreno_icons.append(EVENT_STYLES["respiratorio"]["icon"])
             if details.get("calor"): entreno_icons.append(EVENT_STYLES["calor"]["icon"])
-            if details.get("lesión"): resto_icons.append(EVENT_STYLES["lesion"]["icon"])
+            if details.get("lesion"): resto_icons.append(EVENT_STYLES["lesion"]["icon"])
             if details.get("comentario_extra"): resto_icons.append(EVENT_STYLES["nota"]["icon"])
 
             fc_events.append({
