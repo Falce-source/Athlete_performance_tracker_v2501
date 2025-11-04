@@ -64,70 +64,81 @@ def mostrar_calendario(rol_actual="admin"):
     eventos = sql.obtener_eventos_calendario_por_atleta(id_atleta, rol_actual=rol_actual)
     vista = st.radio("", ["Calendario", "Tabla"], horizontal=True, index=0)
 
-    # Construcción de data (tabla) y eventos_fc (calendario)
     data = []
     eventos_fc = []
     for e in eventos:
-            try:
-                valor = json.loads(e.valor) if e.valor else {}
-            except Exception:
-                valor = {}
+        try:
+            valor = json.loads(e.valor) if e.valor else {}
+        except Exception:
+            valor = {}
 
-            fila = {
-                "id_evento": e.id_evento,  # ← incluir id_evento único
-                "Fecha": e.fecha.strftime("%Y-%m-%d"),
-                "Tipo": e.tipo_evento,
-                "Notas": e.notas or ""
-            }
+        fila = {
+            "id_evento": e.id_evento,
+            "Fecha": e.fecha.strftime("%Y-%m-%d"),
+            "Tipo": e.tipo_evento,
+            "Notas": e.notas or ""
+        }
 
-            if valor.get("fecha_competicion"):
-                try:
-                    fecha_comp = date.fromisoformat(valor["fecha_competicion"])
-                    dias_restantes = (fecha_comp - date.today()).days
-                    fila["Competición"] = f"{dias_restantes} días"
-                except Exception:
-                    fila["Competición"] = valor["fecha_competicion"]
-
-            if "sintomas" in valor and valor["sintomas"] not in ["No", "-", None, "Ninguno"]:
-                fila["Síntomas"] = valor["sintomas"]
-            if "menstruacion" in valor and valor["menstruacion"] not in ["No", "-", None]:
-                fila["Menstruacion"] = valor["menstruacion"]
-            if "ovulacion" in valor and valor["ovulacion"] not in ["No", "-", None]:
-                fila["Ovulacion"] = valor["ovulacion"]
-            if "altitud" in valor and valor["altitud"]:
+        # Estado diario → síntomas, ciclo, etc.
+        if e.tipo_evento == "estado_diario":
+            if valor.get("sintomas") not in ["No", "-", None, "Ninguno"]:
+                fila["Síntomas"] = valor.get("sintomas")
+            if valor.get("menstruacion") not in ["No", "-", None]:
+                fila["Menstruacion"] = valor.get("menstruacion")
+            if valor.get("ovulacion") not in ["No", "-", None]:
+                fila["Ovulacion"] = valor.get("ovulacion")
+            if valor.get("altitud"):
                 fila["Altitud"] = "Sí"
-            if "respiratorio" in valor and valor["respiratorio"]:
+            if valor.get("respiratorio"):
                 fila["Respiratorio"] = "Sí"
-            if "calor" in valor and valor["calor"]:
+            if valor.get("calor"):
                 fila["Calor"] = "Sí"
-            if "lesion" in valor and valor["lesion"]:
-                fila["Lesión"] = valor["lesion"]
-            if "comentario_extra" in valor and valor["comentario_extra"]:
-                fila["Comentario"] = valor["comentario_extra"]
-            if "cita_test" in valor and valor["cita_test"] not in ["No", "-", None]:
-                fila["Cita_test"] = valor["cita_test"]
+            if valor.get("lesion"):
+                fila["Lesión"] = valor.get("lesion")
+            if valor.get("comentario_extra"):
+                fila["Comentario"] = valor.get("comentario_extra")
 
-            data.append(fila)
-
-            # Para FullCalendar → fecha, allDay y props extendidas
             evento_fc = {
                 "id": e.id_evento,
                 "title": "🧍 Estado diario",
                 "start": e.fecha.strftime("%Y-%m-%d"),
                 "allDay": True,
-                # Pasamos los campos que calendario_interactivo.py espera
-                "Síntomas": valor.get("sintomas"),
-                "Menstruacion": valor.get("menstruacion"),
-                "Ovulacion": valor.get("ovulacion"),
-                "Altitud": "Sí" if valor.get("altitud") else None,
-                "Respiratorio": "Sí" if valor.get("respiratorio") else None,
-                "Calor": "Sí" if valor.get("calor") else None,
-                "Cita_test": valor.get("cita_test"),
-                "fecha_competicion": valor.get("fecha_competicion"),
-                "Lesión": valor.get("lesion"),
-                "Comentario": valor.get("comentario_extra"),
+                "extendedProps": valor
             }
             eventos_fc.append(evento_fc)
+
+        # Competición → evento propio con contador
+        elif e.tipo_evento == "competicion":
+            try:
+                fecha_comp = e.fecha
+                dias_restantes = (fecha_comp - date.today()).days
+                fila["Competición"] = f"{dias_restantes} días"
+            except Exception:
+                fila["Competición"] = "-"
+
+            evento_fc = {
+                "id": e.id_evento,
+                "title": "🏆 Competición",
+                "start": e.fecha.strftime("%Y-%m-%d"),
+                "allDay": True,
+                "extendedProps": valor
+            }
+            eventos_fc.append(evento_fc)
+
+        # Cita/Test → evento propio
+        elif e.tipo_evento == "cita_test":
+            fila["Cita/Test"] = valor.get("tipo") or "Cita/Test"
+
+            evento_fc = {
+                "id": e.id_evento,
+                "title": "📅 Cita/Test",
+                "start": e.fecha.strftime("%Y-%m-%d"),
+                "allDay": True,
+                "extendedProps": valor
+            }
+            eventos_fc.append(evento_fc)
+
+        data.append(fila)
 
     # Vista tabla
     if vista == "Tabla":

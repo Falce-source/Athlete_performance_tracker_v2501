@@ -279,9 +279,9 @@ class CalendarioEvento(Base):
     id_evento = Column(Integer, primary_key=True, autoincrement=True)
     id_atleta = Column(Integer, ForeignKey("atletas.id_atleta"), nullable=False)
     fecha = Column(Date, nullable=False)   # solo fecha, sin hora ni zona horaria
-    tipo_evento = Column(String, nullable=False)
-    valor = Column(Text)  # guardamos JSON serializado
-    notas = Column(Text)
+    tipo_evento = Column(String, nullable=False)  # "estado_diario", "competicion", "cita_test"
+    valor = Column(Text)  # JSON serializado o string según tipo
+    notas = Column(Text)  # notas libres
     creado_en = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
 class Sesion(Base):
@@ -345,6 +345,47 @@ def crear_evento_calendario(id_atleta, fecha, tipo_evento, valor, notas=None):
         session.refresh(evento)
         _sync_backup()
         return evento
+
+# ─────────────────────────────────────────────
+# HELPERS ESPECÍFICOS POR TIPO DE EVENTO
+# ─────────────────────────────────────────────
+
+def crear_estado_diario(id_atleta, fecha, valores, notas=None):
+    """
+    Crea un evento de tipo 'estado_diario' con un JSON de parámetros:
+    {"sintomas": "...", "menstruacion": "...", "ovulacion": "...", "altitud": True, ...}
+    """
+    return crear_evento_calendario(id_atleta, fecha, "estado_diario", valores, notas)
+
+
+def crear_competicion(id_atleta, fecha, detalles, notas=None):
+    """
+    Crea un evento de tipo 'competicion'.
+    detalles: dict con claves como {"nombre": "Campeonato regional", "lugar": "Madrid"}
+    """
+    return crear_evento_calendario(id_atleta, fecha, "competicion", detalles, notas)
+
+
+def crear_cita_test(id_atleta, fecha, detalles, notas=None):
+    """
+    Crea un evento de tipo 'cita_test'.
+    detalles: dict con claves como {"tipo": "Test VO2max", "lugar": "Laboratorio"}
+    """
+    return crear_evento_calendario(id_atleta, fecha, "cita_test", detalles, notas)
+
+
+def obtener_competiciones_por_atleta(id_atleta):
+    with SessionLocal() as session:
+        return session.query(CalendarioEvento).filter_by(
+            id_atleta=id_atleta, tipo_evento="competicion"
+        ).order_by(CalendarioEvento.fecha.desc()).all()
+
+
+def obtener_citas_test_por_atleta(id_atleta):
+    with SessionLocal() as session:
+        return session.query(CalendarioEvento).filter_by(
+            id_atleta=id_atleta, tipo_evento="cita_test"
+        ).order_by(CalendarioEvento.fecha.desc()).all()
 
 def actualizar_evento_calendario(id_atleta, fecha, valores_actualizados, notas=None):
     """

@@ -33,83 +33,68 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
         if not fecha:
             continue
 
-        # Recoger iconos activos
-        icons = []
-        details = {}
-        for key, tipo in [
-            ("Síntomas", "sintomas"),
-            ("Menstruacion", "menstruacion"),
-            ("Ovulacion", "ovulacion"),
-            ("Altitud", "altitud"),
-            ("Respiratorio", "respiratorio"),
-            ("Calor", "calor"),
-            ("Cita_test", "cita_test"),
-            ("Competición", "competicion"),
-            ("Lesión", "lesion"),
-            ("Comentario", "nota"),
-        ]:
-            val = ev.get(key)
-            if val and val not in ["-", "No", "Ninguno", None]:
-                icons.append(EVENT_STYLES[tipo]["icon"])
-                details[key] = val
+        tipo = ev.get("Tipo") or ev.get("tipo_evento")
+        details = ev.get("extendedProps", {})
 
-        # Clasificación de iconos en tres líneas
-        ciclo_icons = []
-        entreno_icons = []
-        resto_icons = []
-        for k, t in [("Síntomas","sintomas"),("Menstruacion","menstruacion"),("Ovulacion","ovulacion")]:
-            if k in details: ciclo_icons.append(EVENT_STYLES[t]["icon"])
-        for k, t in [("Altitud","altitud"),("Respiratorio","respiratorio"),("Calor","calor")]:
-            if k in details: entreno_icons.append(EVENT_STYLES[t]["icon"])
-        for k, t in [("Competición","competicion"),("Lesión","lesion"),("Cita_test","cita_test"),("Comentario","nota")]:
-            if k in details: resto_icons.append(EVENT_STYLES[t]["icon"])
+        if tipo == "estado_diario":
+            ciclo_icons, entreno_icons, resto_icons = [], [], []
+            if details.get("Síntomas"): ciclo_icons.append(EVENT_STYLES["sintomas"]["icon"])
+            if details.get("Menstruacion"): ciclo_icons.append(EVENT_STYLES["menstruacion"]["icon"])
+            if details.get("Ovulacion"): ciclo_icons.append(EVENT_STYLES["ovulacion"]["icon"])
+            if details.get("Altitud"): entreno_icons.append(EVENT_STYLES["altitud"]["icon"])
+            if details.get("Respiratorio"): entreno_icons.append(EVENT_STYLES["respiratorio"]["icon"])
+            if details.get("Calor"): entreno_icons.append(EVENT_STYLES["calor"]["icon"])
+            if details.get("Lesión"): resto_icons.append(EVENT_STYLES["lesion"]["icon"])
+            if details.get("Comentario"): resto_icons.append(EVENT_STYLES["nota"]["icon"])
 
-        # Evento principal: cabecera "Estado diario"
-        fc_events.append({
-            "id": str(ev.get("id")),  # usamos el id que ya viene en eventos_fc
-            "title": "🧍 Estado diario",
-            "start": fecha,
-            "allDay": True,
-            "backgroundColor": EVENT_STYLES["estado"]["bg"],
-            "borderColor": EVENT_STYLES["estado"]["border"],
-            "textColor": EVENT_STYLES["estado"]["text"],
-            "extendedProps": {**details, "displayOrder": 0}
-        })
-
-        # Evento auxiliar: ciclo
-        if ciclo_icons:
             fc_events.append({
-                "title": " ".join(ciclo_icons),
+                "id": str(ev.get("id")),
+                "title": "🧍 Estado diario",
                 "start": fecha,
                 "allDay": True,
-                "backgroundColor": "transparent",
-                "borderColor": "transparent",
+                "backgroundColor": EVENT_STYLES["estado"]["bg"],
+                "borderColor": EVENT_STYLES["estado"]["border"],
                 "textColor": EVENT_STYLES["estado"]["text"],
-                "extendedProps": {**details, "displayOrder": 1}
+                "extendedProps": {**details, "displayOrder": 0}
+            })
+            if ciclo_icons:
+                fc_events.append({"title": " ".join(ciclo_icons), "start": fecha, "allDay": True,
+                                  "backgroundColor": "transparent", "borderColor": "transparent",
+                                  "textColor": EVENT_STYLES["estado"]["text"],
+                                  "extendedProps": {**details, "displayOrder": 1}})
+            if entreno_icons:
+                fc_events.append({"title": " ".join(entreno_icons), "start": fecha, "allDay": True,
+                                  "backgroundColor": "transparent", "borderColor": "transparent",
+                                  "textColor": EVENT_STYLES["estado"]["text"],
+                                  "extendedProps": {**details, "displayOrder": 2}})
+            if resto_icons:
+                fc_events.append({"title": " ".join(resto_icons), "start": fecha, "allDay": True,
+                                  "backgroundColor": "transparent", "borderColor": "transparent",
+                                  "textColor": EVENT_STYLES["estado"]["text"],
+                                  "extendedProps": {**details, "displayOrder": 3}})
+
+        elif tipo == "competicion":
+            fc_events.append({
+                "id": str(ev.get("id")),
+                "title": "🏆 Competición",
+                "start": fecha,
+                "allDay": True,
+                "backgroundColor": "#FFF4E5",
+                "borderColor": "#F97316",
+                "textColor": "#7C2D12",
+                "extendedProps": {**details, "displayOrder": 0}
             })
 
-        # Evento auxiliar: entreno
-        if entreno_icons:
+        elif tipo == "cita_test":
             fc_events.append({
-                "title": " ".join(entreno_icons),
+                "id": str(ev.get("id")),
+                "title": "📅 Cita/Test",
                 "start": fecha,
                 "allDay": True,
-                "backgroundColor": "transparent",
-                "borderColor": "transparent",
-                "textColor": EVENT_STYLES["estado"]["text"],
-                "extendedProps": {**details, "displayOrder": 2}
-            })
-
-        # Evento auxiliar: resto
-        if resto_icons:
-            fc_events.append({
-                "title": " ".join(resto_icons),
-                "start": fecha,
-                "allDay": True,
-                "backgroundColor": "transparent",
-                "borderColor": "transparent",
-                "textColor": EVENT_STYLES["estado"]["text"],
-                "extendedProps": {**details, "displayOrder": 3}
+                "backgroundColor": EVENT_STYLES["cita_test"]["bg"],
+                "borderColor": EVENT_STYLES["cita_test"]["border"],
+                "textColor": EVENT_STYLES["cita_test"]["text"],
+                "extendedProps": {**details, "displayOrder": 0}
             })
 
     # Configuración del calendario
@@ -153,7 +138,7 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
     if cal and "eventClick" in cal:
         ev = cal["eventClick"]["event"]
         props = ev.get("extendedProps", {})
-        if props and props.get("displayOrder") == 0:
+        if props and props.get("displayOrder") == 0 and ev.get("title") == "🧍 Estado diario":
             @st.dialog("📋 Editar estado diario")
             def editar_estado():
                 with st.form("form_editar_estado", clear_on_submit=True):
@@ -171,10 +156,6 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
                     respiratorio = st.checkbox("🌬️ Entrenamiento respiratorio", value=bool(props.get("Respiratorio")))
                     calor = st.checkbox("🔥 Entrenamiento en calor", value=bool(props.get("Calor")))
 
-                    cita_test = st.selectbox("📅 Citas / Tests", ["No","Cita","Test"],
-                        index=["No","Cita","Test"].index(props.get("Cita_test","No")))
-                    fecha_competicion = st.date_input("🏆 Fecha de competición",
-                        value=datetime.date.fromisoformat(props.get("fecha_competicion")) if props.get("fecha_competicion") else None)
                     lesion = st.text_input("🤕 Lesión", value=props.get("Lesión",""))
                     comentario_extra = st.text_area("📝 Notas adicionales", value=props.get("Comentario",""))
 
@@ -196,8 +177,6 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
                                     "altitud": altitud,
                                     "respiratorio": respiratorio,
                                     "calor": calor,
-                                    "cita_test": cita_test,
-                                    "fecha_competicion": str(fecha_competicion) if fecha_competicion else None,
                                     "lesion": lesion,
                                     "comentario_extra": comentario_extra
                                 }
@@ -216,6 +195,66 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
                         st.rerun()  # recarga para cerrar modal y refrescar calendario
 
             editar_estado()
+    
+        # Modal para editar competición
+        if ev.get("title") == "🏆 Competición":
+            @st.dialog("🏆 Editar competición")
+            def editar_competicion():
+                with st.form("form_editar_competicion", clear_on_submit=True):
+                    detalles = props or {}
+                    nombre = st.text_input("Nombre", value=detalles.get("nombre",""))
+                    lugar = st.text_input("Lugar", value=detalles.get("lugar",""))
+                    notas = st.text_area("Notas", value=detalles.get("notas",""))
+
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        submitted = st.form_submit_button("💾 Guardar")
+                    with col2:
+                        eliminar = st.form_submit_button("🗑️ Eliminar")
+
+                    if submitted:
+                        sql.actualizar_evento_calendario_por_id(
+                            id_evento=int(ev.get("id")),
+                            valores_actualizados={"nombre": nombre, "lugar": lugar},
+                            notas=notas
+                        )
+                        st.success("✅ Competición actualizada")
+                        st.rerun()
+                    if eliminar:
+                        sql.borrar_evento_calendario(int(ev.get("id")))
+                        st.success("🗑️ Competición eliminada")
+                        st.rerun()
+            editar_competicion()
+
+        # Modal para editar cita/test
+        if ev.get("title") == "📅 Cita/Test":
+            @st.dialog("📅 Editar cita/test")
+            def editar_cita_test():
+                with st.form("form_editar_cita_test", clear_on_submit=True):
+                    detalles = props or {}
+                    tipo = st.text_input("Tipo", value=detalles.get("tipo",""))
+                    lugar = st.text_input("Lugar", value=detalles.get("lugar",""))
+                    notas = st.text_area("Notas", value=detalles.get("notas",""))
+
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        submitted = st.form_submit_button("💾 Guardar")
+                    with col2:
+                        eliminar = st.form_submit_button("🗑️ Eliminar")
+
+                    if submitted:
+                        sql.actualizar_evento_calendario_por_id(
+                            id_evento=int(ev.get("id")),
+                            valores_actualizados={"tipo": tipo, "lugar": lugar},
+                            notas=notas
+                        )
+                        st.success("✅ Cita/Test actualizada")
+                        st.rerun()
+                    if eliminar:
+                        sql.borrar_evento_calendario(int(ev.get("id")))
+                        st.success("🗑️ Cita/Test eliminada")
+                        st.rerun()
+            editar_cita_test()
 
     # Modal de registro al hacer clic en un día vacío
     if cal and "dateClick" in cal:
@@ -236,36 +275,23 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
         @st.dialog(f"➕ Registrar estado diario para {fecha_local.strftime('%Y-%m-%d')}")
         def registrar_estado():
             with st.form("form_estado_diario_popup", clear_on_submit=True):
-                # 1. Datos de ciclo
                 with st.expander("🩸 Datos de ciclo"):
                     sintomas = st.selectbox("Síntomas menstruales", ["Ninguno","Dolor leve","Dolor moderado","Dolor intenso"])
                     menstruacion = st.selectbox("Menstruación", ["No","Día 1","Día 2","Día 3","Día 4+"])
                     ovulacion = st.selectbox("Ovulación", ["No","Estimada","Confirmada"])
 
-                # 2-4. Entrenamientos especiales
                 altitud = st.checkbox("⛰️ Entrenamiento en altitud")
                 respiratorio = st.checkbox("🌬️ Entrenamiento respiratorio")
                 calor = st.checkbox("🔥 Entrenamiento en calor")
 
-                # 5. Citas/tests
-                with st.expander("📅 Citas / Tests"):
-                    cita_test = st.selectbox("Selecciona", ["No","Cita","Test"])
-
-                # 6. Competición
-                with st.expander("🏆 Competición"):
-                    fecha_competicion = st.date_input("Fecha de competición", value=None)
-
-                # 7. Lesiones/molestias
                 with st.expander("🤕 Lesiones / molestias"):
                     lesion = st.text_input("Descripción de la lesión o molestia")
 
-                # 8. Notas adicionales
                 with st.expander("📝 Notas adicionales"):
                     comentario_extra = st.text_area("Escribe tu comentario")
 
                 submitted = st.form_submit_button("Guardar estado")
                 if submitted:
-                    # Guardamos directamente como date naive
                     fecha_guardar = fecha_local
                     sql.crear_evento_calendario(
                         id_atleta=id_atleta,
@@ -278,8 +304,6 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
                             "altitud": altitud,
                             "respiratorio": respiratorio,
                             "calor": calor,
-                            "cita_test": cita_test,
-                            "fecha_competicion": str(fecha_competicion) if fecha_competicion else None,
                             "lesion": lesion,
                             "comentario_extra": comentario_extra
                         },
@@ -288,3 +312,41 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
                     st.success("✅ Estado diario registrado correctamente")
 
         registrar_estado()
+
+        # Modal de registro de competición
+        @st.dialog(f"🏆 Registrar competición para {fecha_local.strftime('%Y-%m-%d')}")
+        def registrar_competicion():
+            with st.form("form_competicion_popup", clear_on_submit=True):
+                nombre = st.text_input("Nombre de la competición")
+                lugar = st.text_input("Lugar")
+                notas = st.text_area("Notas")
+                submitted = st.form_submit_button("Guardar competición")
+                if submitted:
+                    sql.crear_competicion(
+                        id_atleta=id_atleta,
+                        fecha=fecha_local,
+                        detalles={"nombre": nombre, "lugar": lugar},
+                        notas=notas
+                    )
+                    st.success("✅ Competición registrada")
+                    st.rerun()
+        registrar_competicion()
+
+        # Modal de registro de cita/test
+        @st.dialog(f"📅 Registrar cita/test para {fecha_local.strftime('%Y-%m-%d')}")
+        def registrar_cita_test():
+            with st.form("form_cita_test_popup", clear_on_submit=True):
+                tipo = st.text_input("Tipo de cita/test")
+                lugar = st.text_input("Lugar")
+                notas = st.text_area("Notas")
+                submitted = st.form_submit_button("Guardar cita/test")
+                if submitted:
+                    sql.crear_cita_test(
+                        id_atleta=id_atleta,
+                        fecha=fecha_local,
+                        detalles={"tipo": tipo, "lugar": lugar},
+                        notas=notas
+                    )
+                    st.success("✅ Cita/Test registrada")
+                    st.rerun()
+        registrar_cita_test()
