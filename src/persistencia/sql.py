@@ -334,6 +334,25 @@ def actualizar_evento_calendario(id_atleta, fecha, valores_actualizados, notas=N
         _sync_backup()
         return evento
 
+def actualizar_evento_calendario_por_id(id_evento: int, valores_actualizados, notas=None):
+    """
+    Actualiza un evento de calendario existente usando su id_evento único.
+    Devuelve el evento actualizado o None si no existe.
+    """
+    with SessionLocal() as session:
+        evento = session.query(CalendarioEvento).filter_by(id_evento=id_evento).first()
+        if not evento:
+            return None
+
+        evento.valor = json.dumps(valores_actualizados) if isinstance(valores_actualizados, dict) else valores_actualizados
+        if notas is not None:
+            evento.notas = notas
+
+        session.commit()
+        session.refresh(evento)
+        _sync_backup()
+        return evento
+
 def obtener_eventos_calendario_por_atleta(id_atleta, rol_actual="admin"):
     with SessionLocal() as session:
         query = session.query(CalendarioEvento).filter_by(id_atleta=id_atleta)

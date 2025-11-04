@@ -182,29 +182,30 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
                         eliminar = st.form_submit_button("🗑️ Eliminar")
 
                     if submitted:
-                        fecha_dt = datetime.datetime.fromisoformat(ev["start"].replace("Z", "+00:00"))
-                        sql.actualizar_evento_calendario(
-                            id_atleta=id_atleta,
-                            fecha=fecha_dt,
-                            valores_actualizados={
-                                "sintomas": sintomas,
-                                "menstruacion": menstruacion,
-                                "ovulacion": ovulacion,
-                                "altitud": altitud,
-                                "respiratorio": respiratorio,
-                                "calor": calor,
-                                "cita_test": cita_test,
-                                "fecha_competicion": str(fecha_competicion) if fecha_competicion else None,
-                                "lesion": lesion,
-                                "comentario_extra": comentario_extra
-                            }
-                        )
-                        st.success("✅ Estado diario actualizado")
+                        event_id = ev.get("id")
+                        if event_id:
+                            sql.actualizar_evento_calendario_por_id(
+                                id_evento=int(event_id),
+                                valores_actualizados={
+                                    "sintomas": sintomas,
+                                    "menstruacion": menstruacion,
+                                    "ovulacion": ovulacion,
+                                    "altitud": altitud,
+                                    "respiratorio": respiratorio,
+                                    "calor": calor,
+                                    "cita_test": cita_test,
+                                    "fecha_competicion": str(fecha_competicion) if fecha_competicion else None,
+                                    "lesion": lesion,
+                                    "comentario_extra": comentario_extra
+                                }
+                            )
+                            st.success("✅ Estado diario actualizado")
+                        else:
+                            st.error("❌ No se pudo identificar el evento")
                         st.rerun()  # recarga para cerrar modal y refrescar calendario
 
                     if eliminar:
-                        # Usamos el id_evento único en lugar de (id_atleta, fecha)
-                        event_id = ev.get("id") or ev.get("_def", {}).get("publicId")
+                        event_id = ev.get("id")
                         if event_id and sql.borrar_evento_calendario(int(event_id)):
                             st.success("🗑️ Estado diario eliminado")
                         else:
@@ -252,11 +253,8 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
 
                 submitted = st.form_submit_button("Guardar estado")
                 if submitted:
-                    fecha_guardar = datetime.datetime.combine(
-                        fecha_local,
-                        datetime.time.min,
-                        tzinfo=datetime.timezone.utc
-                    )
+                    # Guardamos directamente la fecha en UTC para evitar desfases
+                    fecha_guardar = datetime.datetime.fromisoformat(fecha_iso.replace("Z", "+00:00"))
                     sql.crear_evento_calendario(
                         id_atleta=id_atleta,
                         fecha=fecha_guardar,
