@@ -171,14 +171,14 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
                             sql.actualizar_evento_calendario_por_id(
                                 id_evento=int(event_id),
                                 valores_actualizados={
-                                    "sintomas": sintomas,
-                                    "menstruacion": menstruacion,
-                                    "ovulacion": ovulacion,
-                                    "altitud": altitud,
-                                    "respiratorio": respiratorio,
-                                    "calor": calor,
-                                    "lesion": lesion,
-                                    "comentario_extra": comentario_extra
+                                    "Sintomas": sintomas,
+                                    "mMenstruacion": menstruacion,
+                                    "Ovulacion": ovulacion,
+                                    "Altitud": altitud,
+                                    "Respiratorio": respiratorio,
+                                    "Calor": calor,
+                                    "Lesion": lesion,
+                                    "Comentario_extra": comentario_extra
                                 }
                             )
                             st.success("✅ Estado diario actualizado")
@@ -289,17 +289,17 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
                     if st.form_submit_button("Guardar estado"):
                         sql.crear_evento_calendario(
                             id_atleta=id_atleta,
-                            fecha=fecha_local,
+                            fecha=str(fecha_local),  # normalizamos a string
                             tipo_evento="estado_diario",
                             valor={
-                                "sintomas": sintomas,
-                                "menstruacion": menstruacion,
-                                "ovulacion": ovulacion,
-                                "altitud": altitud,
-                                "respiratorio": respiratorio,
-                                "calor": calor,
-                                "lesion": lesion,
-                                "comentario_extra": comentario_extra
+                                "Síntomas": sintomas,
+                                "Menstruacion": menstruacion,
+                                "Ovulacion": ovulacion,
+                                "Altitud": altitud,
+                                "Respiratorio": respiratorio,
+                                "Calor": calor,
+                                "Lesión": lesion,
+                                "Comentario": comentario_extra
                             },
                             notas=None
                         )
@@ -314,7 +314,7 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
                     if st.form_submit_button("Guardar competición"):
                         sql.crear_competicion(
                             id_atleta=id_atleta,
-                            fecha=fecha_local,
+                            fecha=str(fecha_local),
                             detalles={"nombre": nombre, "lugar": lugar},
                             notas=notas
                         )
@@ -329,7 +329,7 @@ def mostrar_calendario_interactivo(eventos, id_atleta):
                     if st.form_submit_button("Guardar cita/test"):
                         sql.crear_cita_test(
                             id_atleta=id_atleta,
-                            fecha=fecha_local,
+                            fecha=str(fecha_local),
                             detalles={"tipo": tipo, "lugar": lugar},
                             notas=notas
                         )
