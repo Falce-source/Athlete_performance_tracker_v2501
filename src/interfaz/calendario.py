@@ -4,11 +4,14 @@ from datetime import datetime, UTC, date
 from src.persistencia import sql
 import json
 
+# Importar control de roles
+from src.utils.roles import Contexto, puede_crear_evento_calendario, puede_borrar_evento_calendario
+
 def badge(text, color="#eee", text_color="#000"):
     """Devuelve un span HTML con estilo tipo chip/badge."""
     return f"<span style='background-color:{color}; color:{text_color}; padding:2px 6px; border-radius:8px; font-size:90%'>{text}</span>"
 
-def mostrar_calendario(rol_actual="admin"):
+def mostrar_calendario(rol_actual="admin", usuario_id=None):
     st.header("📅 Calendario del atleta")
 
     # ───────────────────────────────
@@ -51,6 +54,13 @@ def mostrar_calendario(rol_actual="admin"):
     seleccion = st.selectbox("Selecciona un atleta", list(opciones.keys()))
     id_atleta = opciones[seleccion]
 
+    # Construir contexto de permisos base (propietario_id se ajusta por evento)
+    ctx_base = Contexto(
+        rol_actual=rol_actual,
+        usuario_id=usuario_id or 0,
+        atleta_id=id_atleta,
+        propietario_id=None
+    )
     st.markdown("---")
 
     # ───────────────────────────────
@@ -202,10 +212,20 @@ def mostrar_calendario(rol_actual="admin"):
                     unsafe_allow_html=True
                 )
             with cols[1]:
-                if st.button("🗑️", key=f"del_{row['id_evento']}"):
-                    sql.borrar_evento_calendario(int(row["id_evento"]))
-                    st.success(f"Evento {row['id_evento']} eliminado")
-                    st.rerun()
+                # Contexto con propietario del evento
+                ctx_evento = Contexto(
+                    rol_actual=rol_actual,
+                    usuario_id=usuario_id or 0,
+                    atleta_id=id_atleta,
+                    propietario_id=id_atleta  # aquí asumimos que el evento pertenece al atleta seleccionado
+                )
+                if puede_borrar_evento_calendario(ctx_evento):
+                    if st.button("🗑️", key=f"del_{row['id_evento']}"):
+                        sql.borrar_evento_calendario(int(row["id_evento"]))
+                        st.success(f"Evento {row['id_evento']} eliminado")
+                        st.rerun()
+                else:
+                    st.caption("⛔ Sin permiso para borrar")
 
     # Vista calendario interactivo (FullCalendar)
     if vista == "Calendario":
@@ -273,17 +293,27 @@ def mostrar_calendario(rol_actual="admin"):
     # Prueba
 
     with st.expander("🔍 Depuración de eventos (solo pruebas)"):
-        if st.button("Crear evento de prueba"):
-            try:
-                ev = sql.crear_estado_diario(
-                    id_atleta=id_atleta,
-                    fecha=date.today(),
-                    valores={"sintomas": "Dolor leve", "altitud": True},
-                    notas="prueba desde Streamlit"
-                )
-                st.success(f"✅ Evento creado con id {ev.id_evento}")
-            except Exception as e:
-                st.error(f"❌ Error al crear evento: {e}")
+        # Solo permitir crear evento de prueba si el rol tiene permiso
+        ctx_creacion = Contexto(
+            rol_actual=rol_actual,
+            usuario_id=usuario_id or 0,
+            atleta_id=id_atleta,
+            propietario_id=id_atleta
+        )
+        if puede_crear_evento_calendario(ctx_creacion):
+            if st.button("Crear evento de prueba"):
+                try:
+                    ev = sql.crear_estado_diario(
+                        id_atleta=id_atleta,
+                        fecha=date.today(),
+                        valores={"sintomas": "Dolor leve", "altitud": True},
+                        notas="prueba desde Streamlit"
+                    )
+                    st.success(f"✅ Evento creado con id {ev.id_evento}")
+                except Exception as e:
+                    st.error(f"❌ Error al crear evento: {e}")
+        else:
+            st.caption("⛔ Sin permiso para crear eventos de prueba")
 
         if st.button("Listar eventos actuales"):
             eventos = sql.obtener_eventos_calendario_por_atleta(id_atleta, rol_actual="admin")

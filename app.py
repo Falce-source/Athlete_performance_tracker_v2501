@@ -57,6 +57,12 @@ rol_actual = st.sidebar.selectbox(
     key="ROL_ACTUAL"
 )
 
+# ID de usuario actual (por ahora simulado en sesión)
+if "USUARIO_ID" not in st.session_state:
+    st.session_state["USUARIO_ID"] = 1  # ⚠️ Ajusta según tu lógica de login real
+
+usuario_id = st.session_state["USUARIO_ID"]
+
 # Pestañas visibles según rol
 tabs_visibles = tabs_visibles_por_rol(rol_actual)
 
@@ -83,10 +89,10 @@ if opcion == "🏠 Inicio":
     st.write("Bienvenido. Selecciona una sección en el menú lateral.")
 
 elif opcion == "👤 Perfil atleta":
-    perfil.mostrar_perfil()
+    perfil.mostrar_perfil(rol_actual=rol_actual, usuario_id=usuario_id)
 
 elif opcion == "📅 Calendario":
-    calendario.mostrar_calendario(rol_actual=rol_actual)
+    calendario.mostrar_calendario(rol_actual=rol_actual, usuario_id=usuario_id)
 
 elif opcion == "👥 Usuarios":
     usuarios.mostrar_usuarios()
