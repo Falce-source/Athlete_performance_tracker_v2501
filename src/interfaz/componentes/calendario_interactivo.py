@@ -282,73 +282,73 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
         props = ev.get("extendedProps", {}) or {}
         tipo_ev = props.get("tipo_evento") or ev.get("tipo_evento")
 
-        # -------------------------
-        # Estado diario
-        # -------------------------
-        if tipo_ev == "estado_diario":
-            @st.dialog("📋 Editar estado diario")
-            def editar_estado():
-                with st.form("form_editar_estado", clear_on_submit=True):
-                    sintomas = st.selectbox(
-                        "Síntomas menstruales",
-                        ["Ninguno","Dolor leve","Dolor moderado","Dolor intenso"],
-                        index=["Ninguno","Dolor leve","Dolor moderado","Dolor intenso"].index(props.get("sintomas","Ninguno"))
-                    )
-                    menstruacion = st.selectbox(
-                        "Menstruación",
-                        ["No","Día 1","Día 2","Día 3","Día 4+"],
-                        index=["No","Día 1","Día 2","Día 3","Día 4+"].index(props.get("menstruacion","No"))
-                    )
-                    ovulacion = st.selectbox(
-                        "Ovulación",
-                        ["No","Estimada","Confirmada"],
-                        index=["No","Estimada","Confirmada"].index(props.get("ovulacion","No"))
-                    )
+    # -------------------------
+    # Estado diario
+    # -------------------------
+    if tipo_ev == "estado_diario":
+        @st.dialog("📋 Editar estado diario")
+        def editar_estado():
+            with st.form("form_editar_estado", clear_on_submit=True):
+                sintomas = st.selectbox(
+                    "Síntomas menstruales",
+                    ["Ninguno","Dolor leve","Dolor moderado","Dolor intenso"],
+                    index=["Ninguno","Dolor leve","Dolor moderado","Dolor intenso"].index(props.get("sintomas","Ninguno"))
+                )
+                menstruacion = st.selectbox(
+                    "Menstruación",
+                    ["No","Día 1","Día 2","Día 3","Día 4+"],
+                    index=["No","Día 1","Día 2","Día 3","Día 4+"].index(props.get("menstruacion","No"))
+                )
+                ovulacion = st.selectbox(
+                    "Ovulación",
+                    ["No","Estimada","Confirmada"],
+                    index=["No","Estimada","Confirmada"].index(props.get("ovulacion","No"))
+                )
 
-                    altitud = st.checkbox("⛰️ Entrenamiento en altitud", value=bool(props.get("altitud")))
-                    respiratorio = st.checkbox("🌬️ Entrenamiento respiratorio", value=bool(props.get("respiratorio")))
-                    calor = st.checkbox("🔥 Entrenamiento en calor", value=bool(props.get("calor")))
+                altitud = st.checkbox("⛰️ Entrenamiento en altitud", value=bool(props.get("altitud")))
+                respiratorio = st.checkbox("🌬️ Entrenamiento respiratorio", value=bool(props.get("respiratorio")))
+                calor = st.checkbox("🔥 Entrenamiento en calor", value=bool(props.get("calor")))
 
-                    lesion = st.text_input("🤕 Lesión", value=props.get("lesion",""))
-                    comentario_extra = st.text_area("📝 Notas adicionales", value=props.get("comentario_extra",""))
+                lesion = st.text_input("🤕 Lesión", value=props.get("lesion",""))
+                comentario_extra = st.text_area("📝 Notas adicionales", value=props.get("comentario_extra",""))
 
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        submitted = st.form_submit_button("💾 Guardar cambios")
-                    with col2:
-                        eliminar = st.form_submit_button("🗑️ Eliminar")
+                col1, col2 = st.columns(2)
+                with col1:
+                    submitted = st.form_submit_button("💾 Guardar cambios")
+                with col2:
+                    eliminar = st.form_submit_button("🗑️ Eliminar")
 
-                    if submitted:
-                        event_id = props.get("id_base")
-                        if event_id is not None:
-                            sql.actualizar_evento_calendario_por_id(
-                                id_evento=int(event_id),
-                                valores_actualizados={
-                                    "valor": normalize_details({
-                                        "sintomas": sintomas,
-                                        "menstruacion": menstruacion,
-                                        "ovulacion": ovulacion,
-                                        "altitud": altitud,
-                                        "respiratorio": respiratorio,
-                                        "calor": calor,
-                                        "lesion": lesion,
-                                        "comentario_extra": comentario_extra
-                                    })
-                                }
-                            )
-                            st.success("✅ Estado diario actualizado")
-                        else:
-                            st.error("❌ No se pudo identificar el evento")
-                        st.rerun()
+                if submitted:
+                    event_id = props.get("id_base")
+                    if event_id is not None:
+                        sql.actualizar_evento_calendario_por_id(
+                            id_evento=int(event_id),
+                            valores_actualizados={
+                                "valor": normalize_details({
+                                    "sintomas": sintomas,
+                                    "menstruacion": menstruacion,
+                                    "ovulacion": ovulacion,
+                                    "altitud": altitud,
+                                    "respiratorio": respiratorio,
+                                    "calor": calor,
+                                    "lesion": lesion,
+                                    "comentario_extra": comentario_extra
+                                })
+                            }
+                        )
+                        st.success("✅ Estado diario actualizado")
+                    else:
+                        st.error("❌ No se pudo identificar el evento")
+                    st.rerun()
 
-                    if eliminar:
-                        event_id = props.get("id_base")
-                        if event_id is not None and sql.borrar_evento_calendario(int(event_id)):
-                            st.success("🗑️ Estado diario eliminado")
-                        else:
-                            st.error("❌ No se pudo eliminar el evento")
-                        st.rerun()
-            editar_estado()
+                if eliminar:
+                    event_id = props.get("id_base")
+                    if event_id is not None and sql.borrar_evento_calendario(int(event_id)):
+                        st.success("🗑️ Estado diario eliminado")
+                    else:
+                        st.error("❌ No se pudo eliminar el evento")
+                    st.rerun()
+        editar_estado()
 
         # -------------------------
         # Competición
