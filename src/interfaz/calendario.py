@@ -172,20 +172,36 @@ def mostrar_calendario(rol_actual="admin"):
                 return f"<span style='background-color:#F9FAFB; color:#374151; padding:2px 6px; border-radius:8px;'>📝 {val}</span>"
             return val if val != "nan" else "-"
 
-        # Renderizado con botones de borrado
+        styled_rows = []
         for _, row in df.iterrows():
-            cols = st.columns([8, 1])  # 8 partes para datos, 1 para botón
-            with cols[0]:
-                styled_row = {col: style_cell(val, col) for col, val in row.items()}
-                st.markdown(
-                    pd.DataFrame([styled_row]).to_html(escape=False, index=False, header=True),
-                    unsafe_allow_html=True
+            styled_row = {col: style_cell(val, col) for col, val in row.items()}
+            # Añadimos columna Acciones con un marcador de posición
+            styled_row["Acciones"] = f"🗑️ Eliminar {row['ID']}"
+            styled_rows.append(styled_row)
+
+        styled_df = pd.DataFrame(styled_rows)
+
+        # Usamos st.data_editor para permitir interacción
+        edited = st.data_editor(
+            styled_df,
+            hide_index=True,
+            column_config={
+                "Acciones": st.column_config.Column(
+                    "Acciones",
+                    help="Eliminar evento",
+                    width="small"
                 )
-            with cols[1]:
-                if st.button("🗑️", key=f"del_{row['ID']}"):
-                    sql.borrar_evento_calendario(int(row["ID"]))
-                    st.success(f"Evento {row['ID']} eliminado")
-                    st.rerun()
+            },
+            disabled=[col for col in styled_df.columns if col != "Acciones"]
+        )
+
+        # Detectar clic en la columna Acciones
+        for i, row in edited.iterrows():
+            if row["Acciones"] != styled_df.loc[i, "Acciones"]:
+                # Se ha hecho clic en el botón de borrado
+                sql.borrar_evento_calendario(int(df.loc[i, "ID"]))
+                st.success(f"Evento {df.loc[i, 'ID']} eliminado")
+                st.rerun()
 
     # Vista calendario interactivo (FullCalendar)
     if vista == "Calendario":
