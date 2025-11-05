@@ -172,13 +172,20 @@ def mostrar_calendario(rol_actual="admin"):
                 return f"<span style='background-color:#F9FAFB; color:#374151; padding:2px 6px; border-radius:8px;'>📝 {val}</span>"
             return val if val != "nan" else "-"
 
-        styled_rows = []
+        # Renderizado con botones de borrado
         for _, row in df.iterrows():
-            styled_row = {col: style_cell(val, col) for col, val in row.items()}
-            styled_rows.append(styled_row)
-
-        styled_df = pd.DataFrame(styled_rows)
-        st.markdown(styled_df.to_html(escape=False, index=False), unsafe_allow_html=True)
+            cols = st.columns([8, 1])  # 8 partes para datos, 1 para botón
+            with cols[0]:
+                styled_row = {col: style_cell(val, col) for col, val in row.items()}
+                st.markdown(
+                    pd.DataFrame([styled_row]).to_html(escape=False, index=False, header=True),
+                    unsafe_allow_html=True
+                )
+            with cols[1]:
+                if st.button("🗑️", key=f"del_{row['ID']}"):
+                    sql.borrar_evento_calendario(int(row["ID"]))
+                    st.success(f"Evento {row['ID']} eliminado")
+                    st.rerun()
 
     # Vista calendario interactivo (FullCalendar)
     if vista == "Calendario":
