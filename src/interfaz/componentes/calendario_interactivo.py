@@ -61,9 +61,12 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
         if tipo == "estado_diario":
             # Agrupamos iconos por filas
             fila2, fila3 = [], []
-            if details.get("sintomas"): fila2.append(EVENT_STYLES["sintomas"]["icon"])
-            if details.get("menstruacion"): fila2.append(EVENT_STYLES["menstruacion"]["icon"])
-            if details.get("ovulacion"): fila2.append(EVENT_STYLES["ovulacion"]["icon"])
+            if details.get("sintomas") not in [None, "", "No", "Ninguno", "-"]:
+                fila2.append(EVENT_STYLES["sintomas"]["icon"])
+            if details.get("menstruacion") not in [None, "", "No", "-"]:
+                fila2.append(EVENT_STYLES["menstruacion"]["icon"])
+            if details.get("ovulacion") not in [None, "", "No", "-"]:
+                fila2.append(EVENT_STYLES["ovulacion"]["icon"])
             if details.get("lesion"): fila2.append(EVENT_STYLES["lesion"]["icon"])
             if details.get("comentario_extra"): fila2.append(EVENT_STYLES["nota"]["icon"])
 
