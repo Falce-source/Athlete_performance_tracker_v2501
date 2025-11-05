@@ -100,19 +100,19 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     "extendedProps": {**safe_details, "displayOrder": 1, "tipo_evento": tipo, "id_base": ev.get("id")}
                 })
 
-    # Fila 3: condiciones externas (neutro)
-    if fila3:
-        out_events.append({
-            "id": f"{ev.get('id')}-2",
-            "title": " ".join(fila3),
-            "start": fecha,
-            "allDay": True,
-            "backgroundColor": "#FFFFFF",   # fondo blanco
-            "borderColor": "#FFFFFF",       # sin borde
-            "textColor": "#000000",         # texto negro
-            "tipo_evento": tipo,
-            "extendedProps": {**safe_details, "displayOrder": 2, "tipo_evento": tipo, "id_base": ev.get("id")}
-        })
+            # Fila 3: condiciones externas (neutro)
+            if fila3:
+                out_events.append({
+                    "id": f"{ev.get('id')}-2",
+                    "title": " ".join(fila3),
+                    "start": fecha,
+                    "allDay": True,
+                    "backgroundColor": "#FFFFFF",   # fondo blanco
+                    "borderColor": "#FFFFFF",       # sin borde
+                    "textColor": "#000000",         # texto negro
+                    "tipo_evento": tipo,
+                    "extendedProps": {**safe_details, "displayOrder": 2, "tipo_evento": tipo, "id_base": ev.get("id")}
+                })
 
         elif tipo == "competicion":
             title = "🏆 Competición"
