@@ -315,22 +315,31 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
     # Modal editable al hacer clic en un evento
     if cal and "eventClick" in cal:
         ev = cal["eventClick"]["event"]
-        props = ev.get("extendedProps", {})
+        props = ev.get("extendedProps", {}) or {}
         tipo_ev = props.get("tipo_evento") or ev.get("tipo_evento")
 
+        # -------------------------
+        # Estado diario
+        # -------------------------
         if tipo_ev == "estado_diario":
             @st.dialog("📋 Editar estado diario")
             def editar_estado():
                 with st.form("form_editar_estado", clear_on_submit=True):
-                    sintomas = st.selectbox("Síntomas menstruales",
+                    sintomas = st.selectbox(
+                        "Síntomas menstruales",
                         ["Ninguno","Dolor leve","Dolor moderado","Dolor intenso"],
-                        index=["Ninguno","Dolor leve","Dolor moderado","Dolor intenso"].index(props.get("sintomas","Ninguno")))
-                    menstruacion = st.selectbox("Menstruación",
+                        index=["Ninguno","Dolor leve","Dolor moderado","Dolor intenso"].index(props.get("sintomas","Ninguno"))
+                    )
+                    menstruacion = st.selectbox(
+                        "Menstruación",
                         ["No","Día 1","Día 2","Día 3","Día 4+"],
-                        index=["No","Día 1","Día 2","Día 3","Día 4+"].index(props.get("menstruacion","No")))
-                    ovulacion = st.selectbox("Ovulación",
+                        index=["No","Día 1","Día 2","Día 3","Día 4+"].index(props.get("menstruacion","No"))
+                    )
+                    ovulacion = st.selectbox(
+                        "Ovulación",
                         ["No","Estimada","Confirmada"],
-                        index=["No","Estimada","Confirmada"].index(props.get("ovulacion","No")))
+                        index=["No","Estimada","Confirmada"].index(props.get("ovulacion","No"))
+                    )
 
                     altitud = st.checkbox("⛰️ Entrenamiento en altitud", value=bool(props.get("altitud")))
                     respiratorio = st.checkbox("🌬️ Entrenamiento respiratorio", value=bool(props.get("respiratorio")))
@@ -364,7 +373,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                             st.success("✅ Estado diario actualizado")
                         else:
                             st.error("❌ No se pudo identificar el evento")
-                        st.rerun()  # recarga para cerrar modal y refrescar calendario
+                        st.rerun()
 
                     if eliminar:
                         event_id = props.get("id_base") or ev.get("id")
@@ -372,19 +381,19 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                             st.success("🗑️ Estado diario eliminado")
                         else:
                             st.error("❌ No se pudo eliminar el evento")
-                        st.rerun()  # recarga para cerrar modal y refrescar calendario
-
+                        st.rerun()
             editar_estado()
-    
-        # Modal para editar competición
-        if ev.get("tipo_evento") == "competicion":
+
+        # -------------------------
+        # Competición
+        # -------------------------
+        if tipo_ev == "competicion":
             @st.dialog("🏆 Editar competición")
             def editar_competicion():
                 with st.form("form_editar_competicion", clear_on_submit=True):
-                    detalles = props or {}
-                    nombre = st.text_input("Nombre", value=detalles.get("nombre",""))
-                    lugar = st.text_input("Lugar", value=detalles.get("lugar",""))
-                    notas = st.text_area("Notas", value=detalles.get("notas",""))
+                    nombre = st.text_input("Nombre", value=props.get("nombre",""))
+                    lugar = st.text_input("Lugar", value=props.get("lugar",""))
+                    notas = st.text_area("Notas", value=props.get("notas",""))
 
                     col1, col2 = st.columns(2)
                     with col1:
@@ -393,28 +402,33 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                         eliminar = st.form_submit_button("🗑️ Eliminar")
 
                     if submitted:
-                        sql.actualizar_evento_calendario_por_id(
-                            id_evento=int(ev.get("id")),
-                            valores_actualizados={"nombre": nombre, "lugar": lugar},
-                            notas=notas
-                        )
-                        st.success("✅ Competición actualizada")
+                        event_id = props.get("id_base") or ev.get("id")
+                        if event_id:
+                            sql.actualizar_evento_calendario_por_id(
+                                id_evento=int(event_id),
+                                valores_actualizados={"nombre": nombre, "lugar": lugar},
+                                notas=notas
+                            )
+                            st.success("✅ Competición actualizada")
                         st.rerun()
                     if eliminar:
-                        sql.borrar_evento_calendario(int(ev.get("id")))
-                        st.success("🗑️ Competición eliminada")
+                        event_id = props.get("id_base") or ev.get("id")
+                        if event_id:
+                            sql.borrar_evento_calendario(int(event_id))
+                            st.success("🗑️ Competición eliminada")
                         st.rerun()
             editar_competicion()
 
-        # Modal para editar cita/test
-        if ev.get("tipo_evento") == "cita_test":
+        # -------------------------
+        # Cita/Test
+        # -------------------------
+        if tipo_ev == "cita_test":
             @st.dialog("📅 Editar cita/test")
             def editar_cita_test():
                 with st.form("form_editar_cita_test", clear_on_submit=True):
-                    detalles = props or {}
-                    tipo = st.text_input("Tipo", value=detalles.get("tipo",""))
-                    lugar = st.text_input("Lugar", value=detalles.get("lugar",""))
-                    notas = st.text_area("Notas", value=detalles.get("notas",""))
+                    tipo = st.text_input("Tipo", value=props.get("tipo",""))
+                    lugar = st.text_input("Lugar", value=props.get("lugar",""))
+                    notas = st.text_area("Notas", value=props.get("notas",""))
 
                     col1, col2 = st.columns(2)
                     with col1:
@@ -423,15 +437,19 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                         eliminar = st.form_submit_button("🗑️ Eliminar")
 
                     if submitted:
-                        sql.actualizar_evento_calendario_por_id(
-                            id_evento=int(ev.get("id")),
-                            valores_actualizados={"tipo": tipo, "lugar": lugar},
-                            notas=notas
-                        )
-                        st.success("✅ Cita/Test actualizada")
+                        event_id = props.get("id_base") or ev.get("id")
+                        if event_id:
+                            sql.actualizar_evento_calendario_por_id(
+                                id_evento=int(event_id),
+                                valores_actualizados={"tipo": tipo, "lugar": lugar},
+                                notas=notas
+                            )
+                            st.success("✅ Cita/Test actualizada")
                         st.rerun()
                     if eliminar:
-                        sql.borrar_evento_calendario(int(ev.get("id")))
-                        st.success("🗑️ Cita/Test eliminada")
+                        event_id = props.get("id_base") or ev.get("id")
+                        if event_id:
+                            sql.borrar_evento_calendario(int(event_id))
+                            st.success("🗑️ Cita/Test eliminada")
                         st.rerun()
             editar_cita_test()
