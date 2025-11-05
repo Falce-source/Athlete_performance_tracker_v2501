@@ -24,6 +24,21 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
     - eventos: lista de diccionarios con al menos 'start' (YYYY-MM-DD) y 'allDay'.
     - id_atleta: necesario para registrar nuevos estados diarios.
     """
+    import json
+
+    # Helper interno para normalizar extendedProps
+    def normalize_details(details: dict) -> dict:
+        safe = {}
+        for k, v in (details or {}).items():
+            if v is None:
+                continue
+            try:
+                json.dumps(v)  # si es serializable, lo dejamos
+                safe[k] = v
+            except TypeError:
+                safe[k] = str(v)
+        return safe
+
     # ───────────────────────────────
     # Inicialización robusta
     # ───────────────────────────────
@@ -65,6 +80,8 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
             # 🔑 Normalizamos details para que no haya objetos no serializables
             safe_details = {k: str(v) for k, v in details.items() if v is not None}
 
+            safe_details = normalize_details(details)
+
             out_events.append({
                 "id": str(ev.get("id")),
                 "title": title,  # 🔑 string con \n interpretado por CSS
@@ -89,6 +106,8 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
             # 🔑 Normalizamos details para que no haya objetos no serializables
             safe_details = {k: str(v) for k, v in details.items() if v is not None}
 
+            safe_details = normalize_details(details)
+
             out_events.append({
                 "id": str(ev.get("id")),
                 "title": title,
@@ -112,6 +131,8 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
             
             # 🔑 Normalizamos details para que no haya objetos no serializables
             safe_details = {k: str(v) for k, v in details.items() if v is not None}
+
+            safe_details = normalize_details(details)
 
             out_events.append({
                 "id": str(ev.get("id")),
@@ -221,48 +242,6 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                         )
                         st.success("✅ Estado diario registrado")
                         st.rerun()
-         
-            elif tipo == "competicion":
-                rows = []
-                if details.get("nombre"):
-                    rows.append(details.get("nombre"))
-                if details.get("lugar"):
-                    rows.append("📍 " + details.get("lugar"))
-                if details.get("notas"):
-                    rows.append("📝 " + details.get("notas"))
-
-                out_events.append({
-                    "id": str(ev.get("id")),
-                    "title": "🏆 Competición",
-                    "start": fecha,
-                    "allDay": True,
-                    "backgroundColor": "#FFF4E5",
-                    "borderColor": "#F97316",
-                    "textColor": "#7C2D12",
-                    "tipo_evento": tipo,
-                    "extendedProps": {**details, "displayOrder": 0, "tipo_evento": tipo, "rows": rows}
-                })
-
-            elif tipo == "cita_test":
-                rows = []
-                if details.get("tipo"):
-                    rows.append(details.get("tipo"))
-                if details.get("lugar"):
-                    rows.append("📍 " + details.get("lugar"))
-                if details.get("notas"):
-                    rows.append("📝 " + details.get("notas"))
-
-                out_events.append({
-                    "id": str(ev.get("id")),
-                    "title": "📅 Cita/Test",
-                    "start": fecha,
-                    "allDay": True,
-                    "backgroundColor": EVENT_STYLES["cita_test"]["bg"],
-                    "borderColor": EVENT_STYLES["cita_test"]["border"],
-                    "textColor": EVENT_STYLES["cita_test"]["text"],
-                    "tipo_evento": tipo,
-                    "extendedProps": {**details, "displayOrder": 0, "tipo_evento": tipo, "rows": rows}
-                })
 
         registrar_evento()
     
