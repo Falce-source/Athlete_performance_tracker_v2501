@@ -115,49 +115,33 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                 })
 
         elif tipo == "competicion":
-            title = "🏆 Competición"
-            if details.get("nombre"):
-                title += "\n" + details.get("nombre")
-            if details.get("lugar"):
-                title += "\n📍 " + details.get("lugar")
-            if details.get("notas"):
-                title += "\n📝 " + details.get("notas")
-
-            # 🔑 Normalizamos details para que no haya objetos no serializables
+            # Solo icono 🏆, detalles en extendedProps
             safe_details = normalize_details(details)
             out_events.append({
                 "id": str(ev.get("id")),
-                "title": title,
+                "title": "🏆",
                 "start": fecha,
                 "allDay": True,
                 "backgroundColor": "#FFF4E5",
                 "borderColor": "#F97316",
                 "textColor": "#7C2D12",
                 "tipo_evento": tipo,
-                "extendedProps": {**safe_details, "displayOrder": 0, "tipo_evento": tipo}
+                "extendedProps": {**safe_details, "displayOrder": 3, "tipo_evento": tipo}
             })
 
         elif tipo == "cita_test":
-            title = "📅 Cita/Test"
-            if details.get("tipo"):
-                title += "\n" + details.get("tipo")
-            if details.get("lugar"):
-                title += "\n📍 " + details.get("lugar")
-            if details.get("notas"):
-                title += "\n📝 " + details.get("notas")
-            
-            # 🔑 Normalizamos details para que no haya objetos no serializables
+            # Solo icono 📅, detalles en extendedProps
             safe_details = normalize_details(details)
             out_events.append({
                 "id": str(ev.get("id")),
-                "title": title,
+                "title": "📅",
                 "start": fecha,
                 "allDay": True,
                 "backgroundColor": EVENT_STYLES["cita_test"]["bg"],
                 "borderColor": EVENT_STYLES["cita_test"]["border"],
                 "textColor": EVENT_STYLES["cita_test"]["text"],
                 "tipo_evento": tipo,
-                "extendedProps": {**safe_details, "displayOrder": 0, "tipo_evento": tipo}
+                "extendedProps": {**safe_details, "displayOrder": 3, "tipo_evento": tipo}
             })
 
     # Configuración del calendario (sin eventContent, usamos saltos de línea en title)
