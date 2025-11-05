@@ -360,22 +360,31 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                                 "lesion": lesion,
                                 "comentario_extra": comentario_extra
                             })
-                            sql.actualizar_evento_calendario_por_id(
-                                id_evento=int(event_id),
-                                valores_actualizados=valores
-                            )
-                            st.success("✅ Estado diario actualizado")
+                            valores = normalize_details({
+                                "sintomas": sintomas,
+                                "menstruacion": menstruacion,
+                                "ovulacion": ovulacion,
+                                "altitud": altitud,
+                                "respiratorio": respiratorio,
+                                "calor": calor,
+                                "lesion": lesion,
+                                "comentario_extra": comentario_extra
+                            })
+                            valores_neutros = [None, "", "No", "Ninguno", "-", False]
+                            datos_relevantes = any(v not in valores_neutros for v in valores.values())
 
+                            if datos_relevantes:
+                                sql.actualizar_evento_calendario_por_id(
+                                    id_evento=int(event_id),
+                                    valores_actualizados=valores
+                                )
+                                st.success("✅ Estado diario actualizado")
+                            else:
+                                # Si no hay datos relevantes, borramos el evento
+                                sql.borrar_evento_calendario(int(event_id))
+                                st.info("🗑️ Estado diario eliminado por quedar vacío")
                         else:
                             st.error("❌ No se pudo identificar el evento")
-                        st.rerun()
-
-                    if eliminar:
-                        event_id = props.get("id_base")
-                        if event_id is not None and sql.borrar_evento_calendario(int(event_id)):
-                            st.success("🗑️ Estado diario eliminado")
-                        else:
-                            st.error("❌ No se pudo eliminar el evento")
                         st.rerun()
             editar_estado()
 
