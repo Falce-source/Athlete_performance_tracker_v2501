@@ -78,10 +78,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                 title += "\n" + " ".join(resto_icons)
 
             # 🔑 Normalizamos details para que no haya objetos no serializables
-            safe_details = {k: str(v) for k, v in details.items() if v is not None}
-
             safe_details = normalize_details(details)
-
             out_events.append({
                 "id": str(ev.get("id")),
                 "title": title,  # 🔑 string con \n interpretado por CSS
@@ -104,10 +101,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                 title += "\n📝 " + details.get("notas")
 
             # 🔑 Normalizamos details para que no haya objetos no serializables
-            safe_details = {k: str(v) for k, v in details.items() if v is not None}
-
             safe_details = normalize_details(details)
-
             out_events.append({
                 "id": str(ev.get("id")),
                 "title": title,
@@ -130,10 +124,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                 title += "\n📝 " + details.get("notas")
             
             # 🔑 Normalizamos details para que no haya objetos no serializables
-            safe_details = {k: str(v) for k, v in details.items() if v is not None}
-
             safe_details = normalize_details(details)
-
             out_events.append({
                 "id": str(ev.get("id")),
                 "title": title,
@@ -222,7 +213,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
 
                     if st.form_submit_button("Guardar estado"):
                         # Guardamos en snake_case para que edición y renderizado coincidan
-                        valores = {
+                        valores = normalize_details({
                             "sintomas": sintomas,
                             "menstruacion": menstruacion,
                             "ovulacion": ovulacion,
@@ -231,7 +222,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                             "calor": calor,
                             "lesion": lesion,
                             "comentario_extra": comentario_extra
-                        }
+                        })
 
                         sql.crear_evento_calendario(
                             id_atleta=id_atleta,
