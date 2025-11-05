@@ -370,9 +370,13 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     if submitted:
                         event_id = props.get("id_base") or ev.get("id")
                         if event_id:
+                            valores = normalize_details({
+                                "nombre": nombre,
+                                "lugar": lugar
+                            })
                             sql.actualizar_evento_calendario_por_id(
                                 id_evento=int(event_id),
-                                valores_actualizados={"nombre": nombre, "lugar": lugar},
+                                valores_actualizados=valores,
                                 notas=notas
                             )
                             st.success("✅ Competición actualizada")
@@ -405,9 +409,13 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     if submitted:
                         event_id = props.get("id_base") or ev.get("id")
                         if event_id:
+                            valores = normalize_details({
+                                "tipo": tipo,
+                                "lugar": lugar
+                            })
                             sql.actualizar_evento_calendario_por_id(
                                 id_evento=int(event_id),
-                                valores_actualizados={"tipo": tipo, "lugar": lugar},
+                                valores_actualizados=valores,
                                 notas=notas
                             )
                             st.success("✅ Cita/Test actualizada")
