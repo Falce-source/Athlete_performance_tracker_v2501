@@ -320,6 +320,26 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
 
                     if submitted:
                         event_id = props.get("id_base")
+                        # Prueba
+                        st.write("DEBUG event_id_raw:", event_id)
+                        st.write("DEBUG event_id_type:", type(event_id))
+
+                        valor_dict = normalize_details({
+                            "sintomas": sintomas,
+                            "menstruacion": menstruacion,
+                            "ovulacion": ovulacion,
+                            "altitud": altitud,
+                            "respiratorio": respiratorio,
+                            "calor": calor,
+                            "lesion": lesion,
+                            "comentario_extra": comentario_extra
+                        })
+                        st.write("DEBUG valor_dict:", valor_dict)
+
+                        import json
+                        valores_actualizados = {"valor": json.dumps(valor_dict)}
+                        st.write("DEBUG valores_actualizados:", valores_actualizados)
+                        # -----
                         if event_id is not None:
                             sql.actualizar_evento_calendario_por_id(
                                 id_evento=int(event_id),
