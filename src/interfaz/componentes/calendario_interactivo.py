@@ -83,7 +83,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                 "borderColor": EVENT_STYLES["estado"]["border"],
                 "textColor": EVENT_STYLES["estado"]["text"],
                 "tipo_evento": tipo,
-                "extendedProps": {**safe_details, "displayOrder": 0, "tipo_evento": tipo}
+                "extendedProps": {**safe_details, "displayOrder": 0, "tipo_evento": tipo, "id_base": ev.get("id")}
             })
 
             # Fila 2: ciclo/estado corporal
@@ -97,7 +97,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     "borderColor": EVENT_STYLES["estado"]["border"],
                     "textColor": EVENT_STYLES["estado"]["text"],
                     "tipo_evento": tipo,
-                    "extendedProps": {**safe_details, "displayOrder": 1, "tipo_evento": tipo}
+                    "extendedProps": {**safe_details, "displayOrder": 1, "tipo_evento": tipo, "id_base": ev.get("id")}
                 })
 
             # Fila 3: condiciones externas
@@ -111,7 +111,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     "borderColor": EVENT_STYLES["estado"]["border"],
                     "textColor": EVENT_STYLES["estado"]["text"],
                     "tipo_evento": tipo,
-                    "extendedProps": {**safe_details, "displayOrder": 2, "tipo_evento": tipo}
+                    "extendedProps": {**safe_details, "displayOrder": 2, "tipo_evento": tipo, "id_base": ev.get("id")}
                 })
 
         elif tipo == "competicion":
@@ -319,7 +319,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                         eliminar = st.form_submit_button("🗑️ Eliminar")
 
                     if submitted:
-                        event_id = ev.get("id")
+                        event_id = props.get("id_base") or ev.get("id")
                         if event_id:
                             sql.actualizar_evento_calendario_por_id(
                                 id_evento=int(event_id),
@@ -340,7 +340,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                         st.rerun()  # recarga para cerrar modal y refrescar calendario
 
                     if eliminar:
-                        event_id = ev.get("id")
+                        event_id = props.get("id_base") or ev.get("id")
                         if event_id and sql.borrar_evento_calendario(int(event_id)):
                             st.success("🗑️ Estado diario eliminado")
                         else:
