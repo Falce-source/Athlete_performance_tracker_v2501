@@ -320,7 +320,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
 
                     if submitted:
                         event_id = props.get("id_base")
-                        if event_id:
+                        if event_id is not None:
                             sql.actualizar_evento_calendario_por_id(
                                 id_evento=int(event_id),
                                 valor=normalize_details({
@@ -330,8 +330,8 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                                     "altitud": altitud,
                                     "respiratorio": respiratorio,
                                     "calor": calor,
-                                    "lesion": lesion,
-                                    "comentario_extra": comentario_extra
+                                "lesion": lesion,
+                                 "comentario_extra": comentario_extra
                                 })
                             )
                             st.success("✅ Estado diario actualizado")
@@ -341,7 +341,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
 
                     if eliminar:
                         event_id = props.get("id_base")
-                        if event_id and sql.borrar_evento_calendario(int(event_id)):
+                        if event_id is not None and sql.borrar_evento_calendario(int(event_id)):
                             st.success("🗑️ Estado diario eliminado")
                         else:
                             st.error("❌ No se pudo eliminar el evento")
