@@ -323,16 +323,18 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                         if event_id is not None:
                             sql.actualizar_evento_calendario_por_id(
                                 id_evento=int(event_id),
-                                valor=normalize_details({
-                                    "sintomas": sintomas,
-                                    "menstruacion": menstruacion,
-                                    "ovulacion": ovulacion,
-                                    "altitud": altitud,
-                                    "respiratorio": respiratorio,
-                                    "calor": calor,
-                                    "lesion": lesion,
-                                    "comentario_extra": comentario_extra
-                                })
+                                valores_actualizados={
+                                    "valor": normalize_details({
+                                        "sintomas": sintomas,
+                                        "menstruacion": menstruacion,
+                                        "ovulacion": ovulacion,
+                                        "altitud": altitud,
+                                        "respiratorio": respiratorio,
+                                        "calor": calor,
+                                        "lesion": lesion,
+                                        "comentario_extra": comentario_extra
+                                    })
+                                }
                             )
                             st.success("✅ Estado diario actualizado")
                         else:
