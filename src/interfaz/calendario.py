@@ -173,12 +173,32 @@ def mostrar_calendario(rol_actual="admin"):
             return val if val != "nan" else "-"
 
         # Renderizado fila a fila con botón de borrado
+        # Estilos CSS para fijar ancho de celdas
+        table_style = """
+        <style>
+        .fixed-table td {
+            width: 120px;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+        .fixed-table th {
+            width: 120px;
+        }
+        </style>
+        """
+        st.markdown(table_style, unsafe_allow_html=True)
+
         for _, row in df.iterrows():
             cols = st.columns([8, 1])  # 8 partes para datos, 1 para botón
             with cols[0]:
                 styled_row = {col: style_cell(val, col) for col, val in row.items() if col != "id_evento"}
                 st.markdown(
-                    pd.DataFrame([styled_row]).to_html(escape=False, index=False, header=False),
+                    pd.DataFrame([styled_row]).to_html(
+                        escape=False, index=False, header=False, classes="fixed-table"
+                    ),
                     unsafe_allow_html=True
                 )
             with cols[1]:
