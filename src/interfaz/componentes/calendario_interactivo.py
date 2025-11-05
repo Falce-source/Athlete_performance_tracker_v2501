@@ -244,15 +244,22 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                             "lesion": lesion,
                             "comentario_extra": comentario_extra
                         })
-                        sql.crear_evento_calendario(
-                            id_atleta=id_atleta,
-                            fecha=str(fecha_local),
-                            tipo_evento="estado_diario",
-                            valor=valores,
-                            notas=None
-                        )
-                        st.success("✅ Estado diario registrado")
-                        st.rerun()
+                        # Detectar si hay algún dato realmente significativo
+                        valores_neutros = [None, "", "No", "Ninguno", "-", False]
+                        datos_relevantes = any(v not in valores_neutros for v in valores.values())
+
+                        if datos_relevantes:
+                            sql.crear_evento_calendario(
+                                id_atleta=id_atleta,
+                                fecha=str(fecha_local),
+                                tipo_evento="estado_diario",
+                                valor=valores,
+                                notas=None
+                            )
+                            st.success("✅ Estado diario registrado")
+                            st.rerun()
+                        else:
+                            st.info("ℹ️ No se guardó el evento porque no contiene datos")
 
             # -------------------------
             # Competición
