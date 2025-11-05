@@ -32,10 +32,11 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
         for k, v in (details or {}).items():
             if v is None:
                 continue
-            try:
-                json.dumps(v)  # si es serializable, lo dejamos
+            if isinstance(v, (str, int, float, bool)):
                 safe[k] = v
-            except TypeError:
+            elif isinstance(v, (datetime.date, datetime.datetime)):
+                safe[k] = v.isoformat()
+            else:
                 safe[k] = str(v)
         return safe
 
