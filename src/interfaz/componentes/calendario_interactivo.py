@@ -73,7 +73,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
 
             safe_details = normalize_details(details)
 
-            # Fila 1: título principal
+            # Fila 1: título principal (verde)
             out_events.append({
                 "id": f"{ev.get('id')}-0",
                 "title": "🧍 Evento diario",
@@ -86,33 +86,33 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                 "extendedProps": {**safe_details, "displayOrder": 0, "tipo_evento": tipo, "id_base": ev.get("id")}
             })
 
-            # Fila 2: ciclo/estado corporal
+            # Fila 2: ciclo/estado corporal (neutro)
             if fila2:
                 out_events.append({
                     "id": f"{ev.get('id')}-1",
                     "title": " ".join(fila2),
                     "start": fecha,
                     "allDay": True,
-                    "backgroundColor": EVENT_STYLES["estado"]["bg"],
-                    "borderColor": EVENT_STYLES["estado"]["border"],
-                    "textColor": EVENT_STYLES["estado"]["text"],
+                    "backgroundColor": "#FFFFFF",   # fondo blanco
+                    "borderColor": "#FFFFFF",       # sin borde
+                    "textColor": "#000000",         # texto negro
                     "tipo_evento": tipo,
                     "extendedProps": {**safe_details, "displayOrder": 1, "tipo_evento": tipo, "id_base": ev.get("id")}
                 })
 
-            # Fila 3: condiciones externas
-            if fila3:
-                out_events.append({
-                    "id": f"{ev.get('id')}-2",
-                    "title": " ".join(fila3),
-                    "start": fecha,
-                    "allDay": True,
-                    "backgroundColor": EVENT_STYLES["estado"]["bg"],
-                    "borderColor": EVENT_STYLES["estado"]["border"],
-                    "textColor": EVENT_STYLES["estado"]["text"],
-                    "tipo_evento": tipo,
-                    "extendedProps": {**safe_details, "displayOrder": 2, "tipo_evento": tipo, "id_base": ev.get("id")}
-                })
+    # Fila 3: condiciones externas (neutro)
+    if fila3:
+        out_events.append({
+            "id": f"{ev.get('id')}-2",
+            "title": " ".join(fila3),
+            "start": fecha,
+            "allDay": True,
+            "backgroundColor": "#FFFFFF",   # fondo blanco
+            "borderColor": "#FFFFFF",       # sin borde
+            "textColor": "#000000",         # texto negro
+            "tipo_evento": tipo,
+            "extendedProps": {**safe_details, "displayOrder": 2, "tipo_evento": tipo, "id_base": ev.get("id")}
+        })
 
         elif tipo == "competicion":
             title = "🏆 Competición"
