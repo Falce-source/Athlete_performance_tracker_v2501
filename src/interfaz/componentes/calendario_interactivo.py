@@ -81,11 +81,15 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
 
             # Fila 1: título principal (verde)
             # Solo creamos el título verde si hay algún dato realmente relevante
+            claves_relevantes = [
+                "sintomas", "menstruacion", "ovulacion",
+                "altitud", "respiratorio", "calor",
+                "lesion", "comentario_extra"
+            ]
+            valores_neutros = [None, "", "No", "Ninguno", "-"]
             datos_relevantes = any(
-                v not in [None, "", "No", "Ninguno", "-"]
-                for k, v in details.items()
-                if k in ["sintomas", "menstruacion", "ovulacion", "altitud",
-                         "respiratorio", "calor", "lesion", "comentario_extra"]
+                details.get(k) not in valores_neutros
+                for k in claves_relevantes
             )
             if datos_relevantes:
                 out_events.append({
