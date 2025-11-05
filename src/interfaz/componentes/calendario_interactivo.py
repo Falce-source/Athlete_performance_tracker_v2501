@@ -80,17 +80,19 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
             extended = {**safe_details, "tipo_evento": tipo, "id_base": ev.get("id")}
 
             # Fila 1: título principal (verde)
-            out_events.append({
-                "id": f"{ev.get('id')}-0",
-                "title": "🧍 Evento diario",
-                "start": fecha,
-                "allDay": True,
-                "backgroundColor": EVENT_STYLES["estado"]["bg"],
-                "borderColor": EVENT_STYLES["estado"]["border"],
-                "textColor": EVENT_STYLES["estado"]["text"],
-                "tipo_evento": tipo,
-                "extendedProps": {**extended, "displayOrder": 0}
-            })
+            # Solo creamos el título verde si hay algún dato relevante
+            if any(v not in [None, "", "No", "Ninguno", "-"] for v in details.values()):
+                out_events.append({
+                    "id": f"{ev.get('id')}-0",
+                    "title": "🧍 Evento diario",
+                    "start": fecha,
+                    "allDay": True,
+                    "backgroundColor": EVENT_STYLES["estado"]["bg"],
+                    "borderColor": EVENT_STYLES["estado"]["border"],
+                    "textColor": EVENT_STYLES["estado"]["text"],
+                    "tipo_evento": tipo,
+                    "extendedProps": {**extended, "displayOrder": 0}
+                })
 
             # Fila 2: ciclo/estado corporal (neutro)
             if fila2:
@@ -192,12 +194,19 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
         else:
             fecha_local = datetime.date.today()
 
+        # Verificamos si ya hay un estado_diario en esa fecha
+        ya_existe = any(
+            ev.get("tipo_evento") == "estado_diario"
+            and ev.get("start", "").startswith(str(fecha_local))
+            for ev in src_events
+        )
+
         @st.dialog(f"➕ Registrar evento para {fecha_local.strftime('%Y-%m-%d')}")
         def registrar_evento():
-            tipo_evento = st.radio(
-                "Selecciona el tipo de evento",
-                ["Estado diario", "Competición", "Cita/Test"]
-            )
+            opciones = ["Competición", "Cita/Test"]
+            if not ya_existe:
+                opciones.insert(0, "Estado diario")
+            tipo_evento = st.radio("Selecciona el tipo de evento", opciones)
 
             # -------------------------
             # Estado diario
