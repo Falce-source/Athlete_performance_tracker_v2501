@@ -355,7 +355,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                         eliminar = st.form_submit_button("🗑️ Eliminar")
 
                     if submitted:
-                        event_id = props.get("id_base") or ev.get("id")
+                        event_id = props.get("id_base")
                         if event_id:
                             sql.actualizar_evento_calendario_por_id(
                                 id_evento=int(event_id),
@@ -376,7 +376,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                         st.rerun()
 
                     if eliminar:
-                        event_id = props.get("id_base") or ev.get("id")
+                        event_id = props.get("id_base")
                         if event_id and sql.borrar_evento_calendario(int(event_id)):
                             st.success("🗑️ Estado diario eliminado")
                         else:
@@ -402,7 +402,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                         eliminar = st.form_submit_button("🗑️ Eliminar")
 
                     if submitted:
-                        event_id = props.get("id_base") or ev.get("id")
+                        event_id = props.get("id_base")
                         if event_id:
                             sql.actualizar_evento_calendario_por_id(
                                 id_evento=int(event_id),
@@ -412,7 +412,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                             st.success("✅ Competición actualizada")
                         st.rerun()
                     if eliminar:
-                        event_id = props.get("id_base") or ev.get("id")
+                        event_id = props.get("id_base")
                         if event_id:
                             sql.borrar_evento_calendario(int(event_id))
                             st.success("🗑️ Competición eliminada")
@@ -437,7 +437,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                         eliminar = st.form_submit_button("🗑️ Eliminar")
 
                     if submitted:
-                        event_id = props.get("id_base") or ev.get("id")
+                        event_id = props.get("id_base")
                         if event_id:
                             sql.actualizar_evento_calendario_por_id(
                                 id_evento=int(event_id),
@@ -447,7 +447,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                             st.success("✅ Cita/Test actualizada")
                         st.rerun()
                     if eliminar:
-                        event_id = props.get("id_base") or ev.get("id")
+                        event_id = props.get("id_base")
                         if event_id:
                             sql.borrar_evento_calendario(int(event_id))
                             st.success("🗑️ Cita/Test eliminada")
