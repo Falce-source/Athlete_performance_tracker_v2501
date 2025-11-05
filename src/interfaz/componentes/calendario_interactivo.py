@@ -62,6 +62,9 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
             if resto_icons:
                 title += "\n" + " ".join(resto_icons)
 
+            # 🔑 Normalizamos details para que no haya objetos no serializables
+            safe_details = {k: str(v) for k, v in details.items() if v is not None}
+
             out_events.append({
                 "id": str(ev.get("id")),
                 "title": title,  # 🔑 string con \n interpretado por CSS
@@ -71,7 +74,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                 "borderColor": EVENT_STYLES["estado"]["border"],
                 "textColor": EVENT_STYLES["estado"]["text"],
                 "tipo_evento": tipo,
-                "extendedProps": {**details, "displayOrder": 0, "tipo_evento": tipo}
+                "extendedProps": {**safe_details, "displayOrder": 0, "tipo_evento": tipo}
             })
 
         elif tipo == "competicion":
@@ -83,6 +86,9 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
             if details.get("notas"):
                 title += "\n📝 " + details.get("notas")
 
+            # 🔑 Normalizamos details para que no haya objetos no serializables
+            safe_details = {k: str(v) for k, v in details.items() if v is not None}
+
             out_events.append({
                 "id": str(ev.get("id")),
                 "title": title,
@@ -92,7 +98,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                 "borderColor": "#F97316",
                 "textColor": "#7C2D12",
                 "tipo_evento": tipo,
-                "extendedProps": {**details, "displayOrder": 0, "tipo_evento": tipo}
+                "extendedProps": {**safe_details, "displayOrder": 0, "tipo_evento": tipo}
             })
 
         elif tipo == "cita_test":
@@ -103,6 +109,9 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                 title += "\n📍 " + details.get("lugar")
             if details.get("notas"):
                 title += "\n📝 " + details.get("notas")
+            
+            # 🔑 Normalizamos details para que no haya objetos no serializables
+            safe_details = {k: str(v) for k, v in details.items() if v is not None}
 
             out_events.append({
                 "id": str(ev.get("id")),
@@ -113,7 +122,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                 "borderColor": EVENT_STYLES["cita_test"]["border"],
                 "textColor": EVENT_STYLES["cita_test"]["text"],
                 "tipo_evento": tipo,
-                "extendedProps": {**details, "displayOrder": 0, "tipo_evento": tipo}
+                "extendedProps": {**safe_details, "displayOrder": 0, "tipo_evento": tipo}
             })
 
     # Configuración del calendario (sin eventContent, usamos saltos de línea en title)
