@@ -248,6 +248,9 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                 ["Estado diario", "Competición", "Cita/Test"]
             )
 
+            # -------------------------
+            # Estado diario
+            # -------------------------
             if tipo_evento == "Estado diario":
                 with st.form("form_estado_diario", clear_on_submit=True):
                     with st.expander("🩸 Datos de ciclo"):
@@ -261,7 +264,6 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     comentario_extra = st.text_area("📝 Notas adicionales")
 
                     if st.form_submit_button("Guardar estado"):
-                        # Guardamos en snake_case para que edición y renderizado coincidan
                         valores = normalize_details({
                             "sintomas": sintomas,
                             "menstruacion": menstruacion,
@@ -272,7 +274,6 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                             "lesion": lesion,
                             "comentario_extra": comentario_extra
                         })
-
                         sql.crear_evento_calendario(
                             id_atleta=id_atleta,
                             fecha=str(fecha_local),
@@ -281,6 +282,48 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                             notas=None
                         )
                         st.success("✅ Estado diario registrado")
+                        st.rerun()
+
+            # -------------------------
+            # Competición
+            # -------------------------
+            elif tipo_evento == "Competición":
+                with st.form("form_competicion", clear_on_submit=True):
+                    nombre = st.text_input("Nombre")
+                    lugar = st.text_input("Lugar")
+                    notas = st.text_area("Notas")
+
+                    if st.form_submit_button("Guardar competición"):
+                        valores = normalize_details({"nombre": nombre, "lugar": lugar})
+                        sql.crear_evento_calendario(
+                            id_atleta=id_atleta,
+                            fecha=str(fecha_local),
+                            tipo_evento="competicion",
+                            valor=valores,
+                            notas=notas
+                        )
+                        st.success("✅ Competición registrada")
+                        st.rerun()
+
+            # -------------------------
+            # Cita/Test
+            # -------------------------
+            elif tipo_evento == "Cita/Test":
+                with st.form("form_cita_test", clear_on_submit=True):
+                    tipo = st.text_input("Tipo")
+                    lugar = st.text_input("Lugar")
+                    notas = st.text_area("Notas")
+
+                    if st.form_submit_button("Guardar cita/test"):
+                        valores = normalize_details({"tipo": tipo, "lugar": lugar})
+                        sql.crear_evento_calendario(
+                            id_atleta=id_atleta,
+                            fecha=str(fecha_local),
+                            tipo_evento="cita_test",
+                            valor=valores,
+                            notas=notas
+                        )
+                        st.success("✅ Cita/Test registrada")
                         st.rerun()
 
         registrar_evento()
