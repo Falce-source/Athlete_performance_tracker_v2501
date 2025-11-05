@@ -324,7 +324,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                             sql.actualizar_evento_calendario_por_id(
                                 id_evento=int(event_id),
                                 valores_actualizados={
-                                    "valor": normalize_details({
+                                    "valor": json.dumps(normalize_details({
                                         "sintomas": sintomas,
                                         "menstruacion": menstruacion,
                                         "ovulacion": ovulacion,
@@ -333,7 +333,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                                         "calor": calor,
                                         "lesion": lesion,
                                         "comentario_extra": comentario_extra
-                                    })
+                                    }))
                                 }
                             )
                             st.success("✅ Estado diario actualizado")
