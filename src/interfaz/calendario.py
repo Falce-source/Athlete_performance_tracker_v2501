@@ -175,8 +175,8 @@ def mostrar_calendario(rol_actual="admin"):
         styled_rows = []
         for _, row in df.iterrows():
             styled_row = {col: style_cell(val, col) for col, val in row.items()}
-            # Añadimos columna Acciones con un marcador de posición
-            styled_row["Acciones"] = f"🗑️ Eliminar {row['ID']}"
+            # Añadimos columna Acciones con el id_evento correcto
+            styled_row["Acciones"] = f"🗑️ Eliminar {row['id_evento']}"
             styled_rows.append(styled_row)
 
         styled_df = pd.DataFrame(styled_rows)
@@ -199,8 +199,8 @@ def mostrar_calendario(rol_actual="admin"):
         for i, row in edited.iterrows():
             if row["Acciones"] != styled_df.loc[i, "Acciones"]:
                 # Se ha hecho clic en el botón de borrado
-                sql.borrar_evento_calendario(int(df.loc[i, "ID"]))
-                st.success(f"Evento {df.loc[i, 'ID']} eliminado")
+                sql.borrar_evento_calendario(int(df.loc[i, "id_evento"]))
+                st.success(f"Evento {df.loc[i, 'id_evento']} eliminado")
                 st.rerun()
 
     # Vista calendario interactivo (FullCalendar)
