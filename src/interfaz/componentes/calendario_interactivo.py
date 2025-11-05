@@ -175,10 +175,6 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
     # Renderizar calendario (ahora \n se interpreta como salto de línea)
     # Renderizar calendario (una sola vez)
     # 🔑 Usamos un key único combinando id_atleta y vista
-    
-    # Prueba
-    st.json(out_events)
-    # ------
 
     cal = calendar(
         events=out_events,
