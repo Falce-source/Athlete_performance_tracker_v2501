@@ -59,30 +59,24 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
         details = ev.get("extendedProps", {})
 
         if tipo == "estado_diario":
-            ciclo_icons, entreno_icons, resto_icons = [], [], []
-            if details.get("sintomas"): ciclo_icons.append(EVENT_STYLES["sintomas"]["icon"])
-            if details.get("menstruacion"): ciclo_icons.append(EVENT_STYLES["menstruacion"]["icon"])
-            if details.get("ovulacion"): ciclo_icons.append(EVENT_STYLES["ovulacion"]["icon"])
-            if details.get("altitud"): entreno_icons.append(EVENT_STYLES["altitud"]["icon"])
-            if details.get("respiratorio"): entreno_icons.append(EVENT_STYLES["respiratorio"]["icon"])
-            if details.get("calor"): entreno_icons.append(EVENT_STYLES["calor"]["icon"])
-            if details.get("lesion"): entreno_icons.append(EVENT_STYLES["lesion"]["icon"])
-            if details.get("comentario_extra"): resto_icons.append(EVENT_STYLES["nota"]["icon"])
+            # Agrupamos iconos por filas
+            fila2, fila3 = [], []
+            if details.get("sintomas"): fila2.append(EVENT_STYLES["sintomas"]["icon"])
+            if details.get("menstruacion"): fila2.append(EVENT_STYLES["menstruacion"]["icon"])
+            if details.get("ovulacion"): fila2.append(EVENT_STYLES["ovulacion"]["icon"])
+            if details.get("lesion"): fila2.append(EVENT_STYLES["lesion"]["icon"])
+            if details.get("comentario_extra"): fila2.append(EVENT_STYLES["nota"]["icon"])
 
-            # Construimos título con saltos de línea
-            title = "🧍 Evento diario"
-            if ciclo_icons:
-                title += "\n" + " ".join(ciclo_icons)
-            if entreno_icons:
-                title += "\n" + " ".join(entreno_icons)
-            if resto_icons:
-                title += "\n" + " ".join(resto_icons)
+            if details.get("altitud"): fila3.append(EVENT_STYLES["altitud"]["icon"])
+            if details.get("respiratorio"): fila3.append(EVENT_STYLES["respiratorio"]["icon"])
+            if details.get("calor"): fila3.append(EVENT_STYLES["calor"]["icon"])
 
-            # 🔑 Normalizamos details para que no haya objetos no serializables
             safe_details = normalize_details(details)
+
+            # Fila 1: título principal
             out_events.append({
-                "id": str(ev.get("id")),
-                "title": title,  # 🔑 string con \n interpretado por CSS
+                "id": f"{ev.get('id')}-0",
+                "title": "🧍 Evento diario",
                 "start": fecha,
                 "allDay": True,
                 "backgroundColor": EVENT_STYLES["estado"]["bg"],
@@ -91,6 +85,34 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                 "tipo_evento": tipo,
                 "extendedProps": {**safe_details, "displayOrder": 0, "tipo_evento": tipo}
             })
+
+            # Fila 2: ciclo/estado corporal
+            if fila2:
+                out_events.append({
+                    "id": f"{ev.get('id')}-1",
+                    "title": " ".join(fila2),
+                    "start": fecha,
+                    "allDay": True,
+                    "backgroundColor": EVENT_STYLES["estado"]["bg"],
+                    "borderColor": EVENT_STYLES["estado"]["border"],
+                    "textColor": EVENT_STYLES["estado"]["text"],
+                    "tipo_evento": tipo,
+                    "extendedProps": {**safe_details, "displayOrder": 1, "tipo_evento": tipo}
+                })
+
+            # Fila 3: condiciones externas
+            if fila3:
+                out_events.append({
+                    "id": f"{ev.get('id')}-2",
+                    "title": " ".join(fila3),
+                    "start": fecha,
+                    "allDay": True,
+                    "backgroundColor": EVENT_STYLES["estado"]["bg"],
+                    "borderColor": EVENT_STYLES["estado"]["border"],
+                    "textColor": EVENT_STYLES["estado"]["text"],
+                    "tipo_evento": tipo,
+                    "extendedProps": {**safe_details, "displayOrder": 2, "tipo_evento": tipo}
+                })
 
         elif tipo == "competicion":
             title = "🏆 Competición"
