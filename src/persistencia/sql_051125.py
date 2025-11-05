@@ -1,0 +1,699 @@
+from sqlalchemy import (
+    create_engine, Column, Integer, String, Text, Boolean, DateTime, Date, ForeignKey
+)
+from sqlalchemy.orm import declarative_base, relationship, sessionmaker
+from datetime import datetime, date, timezone, UTC
+from sqlalchemy import JSON  # si usas SQLAlchemy 1.4+ puedes definir JSON
+import json
+import os
+import shutil
+import backup_storage
+
+ # ─────────────────────────────────────────────
+ # CONFIGURACIÓN BÁSICA
+ # ─────────────────────────────────────────────
+
+DB_PATH = os.path.join("/tmp", "base.db")
+# Inicialización robusta: siempre intentamos restaurar el último backup desde Drive.
+# Si no hay backups, arrancamos vacíos y generamos el primer backup.
+NEED_INIT_SCHEMA = False
+try:
+    backups = backup_storage.listar_backups()
+    if backups:
+        ultimo = sorted(backups, key=lambda b: b["createdTime"], reverse=True)[0]
+        backup_storage.descargar_backup(ultimo["id"], DB_PATH)
+        print(f"📦 Restaurado backup inicial desde Drive: {ultimo['name']}")
+    else:
+        print("ℹ️ No hay backups en Drive: se iniciará base vacía.")
+        # Creamos un archivo vacío; el esquema se creará tras configurar el engine.
+        open(DB_PATH, "wb").close()
+        NEED_INIT_SCHEMA = True
+except Exception as e:
+    print(f"⚠️ Error al consultar/restaurar backups: {e}")
+    # Fallback: si existe base local en el repo la copiamos; si no, vacía.
+    if os.path.exists("base.db"):
+        shutil.copy("base.db", DB_PATH)
+        print("📄 Copiado base.db local al /tmp como semilla.")
+    else:
+        open(DB_PATH, "wb").close()
+        NEED_INIT_SCHEMA = True
+
+DATABASE_URL = f"sqlite:///{DB_PATH}"
+engine = create_engine(DATABASE_URL, echo=False)
+SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
+Base = declarative_base()
+
+# Helper para sincronizar backup tras cada commit
+def _sync_backup():
+    try:
+        file_id = backup_storage.subir_backup(DB_PATH)
+        backup_storage.rotar_backups(max_backups=5)
+        print(f"Backup actualizado en Drive: {file_id}")
+    except Exception as e:
+        print(f"⚠️ Error al subir backup: {e}")
+
+# Si se marcó que no había backups, inicializamos el esquema y creamos el primer backup vacío.
+if NEED_INIT_SCHEMA:
+    try:
+        # Nota: el esquema se define más adelante con los modelos; este bloque se ejecutará al final del import.
+        # Para asegurar creación del esquema, lo reforzaremos en init_db() también.
+        print("🛠️ Inicializando esquema en base vacía...")
+        # La función init_db se define más abajo; si aún no existe en este punto por orden de import,
+        # se recomienda llamar a Base.metadata.create_all en init_db() al primer uso.
+        # Aquí no llamamos directamente para evitar dependencia del orden: se crea en init_db().
+    except Exception as e:
+        print(f"⚠️ Error al inicializar esquema: {e}")
+
+# ─────────────────────────────────────────────
+# MODELOS
+# ─────────────────────────────────────────────
+
+class Usuario(Base):
+    __tablename__ = "usuarios"
+
+    id_usuario = Column(Integer, primary_key=True, autoincrement=True)
+    nombre = Column(String, nullable=False)
+    email = Column(String, unique=True, nullable=False)
+    rol = Column(String, nullable=False)  # admin, entrenadora, atleta
+    creado_en = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
+
+    atletas = relationship("Atleta", back_populates="usuario")
+
+
+class Atleta(Base):
+    __tablename__ = "atletas"
+
+    id_atleta = Column(Integer, primary_key=True, autoincrement=True)
+    id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario"), nullable=True)
+
+    nombre = Column(String, nullable=False)
+    apellidos = Column(String)
+    edad = Column(Integer)
+    talla = Column(Integer)
+    contacto = Column(String)
+    deporte = Column(String)
+    modalidad = Column(String)
+    nivel = Column(String)
+    equipo = Column(String)
+    alergias = Column(Text)
+    consentimiento = Column(Boolean, default=False)
+    creado_en = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
+
+    usuario = relationship("Usuario", back_populates="atletas")
+
+  # Relación con Evento
+    eventos = relationship("Evento", back_populates="atleta", cascade="all, delete-orphan")
+
+class Evento(Base):
+    __tablename__ = "eventos"
+
+    id_evento = Column(Integer, primary_key=True, autoincrement=True)
+    id_atleta = Column(Integer, ForeignKey("atletas.id_atleta"), nullable=False)
+
+    titulo = Column(String, nullable=False)          # Ej: "Entrenamiento fuerza"
+    descripcion = Column(Text)                       # Detalles opcionales
+    fecha = Column(DateTime(timezone=True), nullable=False)    # Cuándo ocurre
+    lugar = Column(String)                           # Ej: "Gimnasio municipal"
+    tipo = Column(String)                            # Ej: "Entrenamiento", "Competición", "Revisión médica"
+
+    creado_en = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
+
+    # Relación con Atleta
+    atleta = relationship("Atleta", back_populates="eventos")
+
+# ─────────────────────────────────────────────
+# INICIALIZACIÓN
+# ─────────────────────────────────────────────
+
+def init_db():
+    Base.metadata.create_all(bind=engine)
+
+# ─────────────────────────────────────────────
+# FUNCIONES CRUD: USUARIOS
+# ─────────────────────────────────────────────
+
+def crear_usuario(nombre, email, rol):
+    with SessionLocal() as session:
+        usuario = Usuario(nombre=nombre, email=email, rol=rol)
+        session.add(usuario)
+        session.flush()
+        session.refresh(usuario)
+        session.commit()
+        _sync_backup()
+        return usuario
+
+def obtener_usuarios():
+    with SessionLocal() as session:
+        return session.query(Usuario).all()
+
+def actualizar_usuario(id_usuario, **kwargs):
+    with SessionLocal() as session:
+        usuario = session.query(Usuario).filter_by(id_usuario=id_usuario).first()
+        if not usuario:
+            return None
+        for campo, valor in kwargs.items():
+            if hasattr(usuario, campo):
+                setattr(usuario, campo, valor)
+        session.commit()
+        session.refresh(usuario)
+        _sync_backup()
+        return usuario
+
+def borrar_usuario(id_usuario):
+    with SessionLocal() as session:
+        usuario = session.query(Usuario).filter_by(id_usuario=id_usuario).first()
+        if usuario:
+            session.delete(usuario)
+            session.commit()
+            _sync_backup()
+
+# ─────────────────────────────────────────────
+# FUNCIONES CRUD: ATLETAS
+# ─────────────────────────────────────────────
+
+def crear_atleta(**kwargs):
+    with SessionLocal() as session:
+        atleta = Atleta(**kwargs)
+        session.add(atleta)
+        session.flush()
+        session.refresh(atleta)
+        session.commit()
+        _sync_backup()
+        return atleta
+
+def obtener_atletas():
+    with SessionLocal() as session:
+        return session.query(Atleta).all()
+
+def obtener_atleta_por_id(id_atleta):
+    with SessionLocal() as session:
+        return session.query(Atleta).filter_by(id_atleta=id_atleta).first()
+
+def actualizar_atleta(id_atleta, **kwargs):
+    """
+    Actualiza uno o varios campos de un atleta existente.
+    Uso:
+        actualizar_atleta(3, nombre="Nuevo", nivel="Avanzado")
+    """
+    with SessionLocal() as session:
+        atleta = session.query(Atleta).filter_by(id_atleta=id_atleta).first()
+        if not atleta:
+            return None
+
+        # Solo actualizamos los campos que existen en el modelo
+        for campo, valor in kwargs.items():
+            if hasattr(atleta, campo):
+                setattr(atleta, campo, valor)
+
+        session.commit()
+        session.refresh(atleta)
+        _sync_backup()
+        return atleta
+
+def borrar_atleta(id_atleta):
+    with SessionLocal() as session:
+        atleta = session.query(Atleta).filter_by(id_atleta=id_atleta).first()
+        if atleta:
+            session.delete(atleta)
+            session.commit()
+            _sync_backup()
+
+# ─────────────────────────────────────────────
+# FUNCIONES CRUD: EVENTOS
+# ─────────────────────────────────────────────
+
+def crear_evento(id_atleta, titulo, fecha, descripcion=None, lugar=None, tipo=None):
+    with SessionLocal() as session:
+        evento = Evento(
+            id_atleta=id_atleta,
+            titulo=titulo,
+            fecha=fecha,
+            descripcion=descripcion,
+            lugar=lugar,
+            tipo=tipo,
+        )
+        session.add(evento)
+        session.flush()
+        session.refresh(evento)
+        session.commit()
+        _sync_backup()
+        return evento
+
+def obtener_eventos():
+    with SessionLocal() as session:
+        return session.query(Evento).all()
+
+def obtener_eventos_basicos_por_atleta(id_atleta):
+    """Obtiene eventos de la tabla 'eventos' asociados a un atleta"""
+    with SessionLocal() as session:
+        return session.query(Evento).filter_by(id_atleta=id_atleta).all()
+
+def actualizar_evento(id_evento, **kwargs):
+    with SessionLocal() as session:
+        evento = session.query(Evento).filter_by(id_evento=id_evento).first()
+        if not evento:
+            return None
+        for campo, valor in kwargs.items():
+            if hasattr(evento, campo):
+                setattr(evento, campo, valor)
+        session.commit()
+        session.refresh(evento)
+        _sync_backup()
+        return evento
+
+def borrar_evento(id_evento):
+    with SessionLocal() as session:
+        evento = session.query(Evento).filter_by(id_evento=id_evento).first()
+        if evento:
+            session.delete(evento)
+            session.commit()
+            _sync_backup()
+
+# ─────────────────────────────────────────────
+# MODELOS EXTRA: CALENDARIO, SESIONES, MÉTRICAS, COMENTARIOS
+# ─────────────────────────────────────────────
+
+class CalendarioEvento(Base):
+    __tablename__ = "calendario_eventos"
+
+    id_evento = Column(Integer, primary_key=True, autoincrement=True)
+    id_atleta = Column(Integer, ForeignKey("atletas.id_atleta"), nullable=False)
+    fecha = Column(Date, nullable=False)   # solo fecha, sin hora ni zona horaria
+    tipo_evento = Column(String, nullable=False)  # "estado_diario", "competicion", "cita_test"
+    valor = Column(Text)  # JSON serializado o string según tipo
+    notas = Column(Text)  # notas libres
+    creado_en = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
+
+class Sesion(Base):
+    __tablename__ = "sesiones"
+
+    id_sesion = Column(Integer, primary_key=True, autoincrement=True)
+    id_atleta = Column(Integer, ForeignKey("atletas.id_atleta"), nullable=False)
+    fecha = Column(DateTime(timezone=True), nullable=False)
+    tipo_sesion = Column(String, nullable=False)
+    planificado_json = Column(Text)
+    realizado_json = Column(Text)
+
+class Metrica(Base):
+    __tablename__ = "metricas"
+
+    id_metrica = Column(Integer, primary_key=True, autoincrement=True)
+    id_atleta = Column(Integer, ForeignKey("atletas.id_atleta"), nullable=False)
+    fecha = Column(DateTime(timezone=True), nullable=False)
+    tipo_metrica = Column(String, nullable=False)
+    valor = Column(String)
+    unidad = Column(String)
+
+class Comentario(Base):
+    __tablename__ = "comentarios"
+
+    id_comentario = Column(Integer, primary_key=True, autoincrement=True)
+    id_atleta = Column(Integer, ForeignKey("atletas.id_atleta"), nullable=False)
+    id_autor = Column(Integer, ForeignKey("usuarios.id_usuario"), nullable=True)
+    texto = Column(Text, nullable=False)
+    visible_para = Column(String, default="staff")
+    fecha = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
+
+# ─────────────────────────────────────────────
+# CRUD: CALENDARIO
+# ─────────────────────────────────────────────
+def crear_evento_calendario(id_atleta, fecha, tipo_evento, valor, notas=None):
+    with SessionLocal() as session:
+        # Normalizamos fecha a medianoche sin zona horaria (naive)
+        if isinstance(fecha, datetime):
+            fecha = fecha.date()
+        elif isinstance(fecha, date):
+            fecha = fecha
+        elif isinstance(fecha, str):
+            try:
+                base = datetime.fromisoformat(fecha.replace("Z", "+00:00"))
+                fecha = base.date()
+            except Exception:
+                fecha = date.today()
+        else:
+            fecha = date.today()
+
+        evento = CalendarioEvento(
+            id_atleta=id_atleta,
+            fecha=fecha,
+            tipo_evento=tipo_evento,
+            valor=json.dumps(valor) if isinstance(valor, dict) else valor,
+            notas=notas,
+        )
+        session.add(evento)
+        session.commit()
+        session.refresh(evento)
+        _sync_backup()
+        return evento
+
+# ─────────────────────────────────────────────
+# HELPERS DE TRANSFORMACIÓN
+# ─────────────────────────────────────────────
+import json
+
+def evento_to_dict(evento):
+    """Convierte un objeto CalendarioEvento en un dict listo para el calendario."""
+    try:
+        valor_dict = json.loads(evento.valor) if evento.valor else {}
+    except Exception:
+        valor_dict = {}
+
+        # Normalización de claves antiguas
+    mapping = {
+        "Síntomas": "sintomas",
+        "Sintomas": "sintomas",
+        "Menstruacion": "menstruacion",
+        "Ovulacion": "ovulacion",
+        "Altitud": "altitud",
+        "Respiratorio": "respiratorio",
+        "Calor": "calor",
+        "Lesión": "lesion",
+        "Lesion": "lesion",
+        "Comentario": "comentario_extra",
+        "Comentario_extra": "comentario_extra",
+    }
+    normalizado = {}
+    for k, v in valor_dict.items():
+        normalizado[mapping.get(k, k)] = v
+
+    return {
+        "id": evento.id_evento,
+        # Normalizamos a ISO con hora 00:00 para que FullCalendar lo pinte en el día correcto
+        "start": datetime.combine(evento.fecha, datetime.min.time()).isoformat(),
+        "allDay": True,
+        "tipo_evento": evento.tipo_evento,
+        # Aquí ya entregamos el dict deserializado para que mostrar_calendario_interactivo
+        # pueda acceder a claves como "Síntomas", "Menstruacion", etc.
+        "extendedProps": normalizado,
+        "notas": evento.notas or ""
+    }
+
+# ─────────────────────────────────────────────
+# HELPERS ESPECÍFICOS POR TIPO DE EVENTO
+# ─────────────────────────────────────────────
+
+def crear_estado_diario(id_atleta, fecha, valores, notas=None):
+    """
+    Crea un evento de tipo 'estado_diario' con un JSON de parámetros:
+    {"sintomas": "...", "menstruacion": "...", "ovulacion": "...", "altitud": True, ...}
+    """
+    return crear_evento_calendario(id_atleta, fecha, "estado_diario", valores, notas)
+
+def crear_competicion(id_atleta, fecha, detalles, notas=None):
+    """
+    Crea un evento de tipo 'competicion'.
+    detalles: dict con claves como {"nombre": "Campeonato regional", "lugar": "Madrid"}
+    """
+    return crear_evento_calendario(id_atleta, fecha, "competicion", detalles, notas)
+
+def crear_cita_test(id_atleta, fecha, detalles, notas=None):
+    """
+    Crea un evento de tipo 'cita_test'.
+    detalles: dict con claves como {"tipo": "Test VO2max", "lugar": "Laboratorio"}
+    """
+    return crear_evento_calendario(id_atleta, fecha, "cita_test", detalles, notas)
+
+def obtener_competiciones_por_atleta(id_atleta):
+    with SessionLocal() as session:
+        eventos = session.query(CalendarioEvento).filter_by(
+            id_atleta=id_atleta, tipo_evento="competicion"
+        ).order_by(CalendarioEvento.fecha.desc()).all()
+        return [evento_to_dict(ev) for ev in eventos]
+
+def obtener_citas_test_por_atleta(id_atleta):
+    with SessionLocal() as session:
+        eventos = session.query(CalendarioEvento).filter_by(
+            id_atleta=id_atleta, tipo_evento="cita_test"
+        ).order_by(CalendarioEvento.fecha.desc()).all()
+        return [evento_to_dict(ev) for ev in eventos]
+
+def actualizar_evento_calendario(id_atleta, fecha, valores_actualizados, notas=None):
+    """
+    Actualiza un evento de calendario existente para un atleta en una fecha concreta.
+    Si no existe, devuelve None.
+    """
+    with SessionLocal() as session:
+        # Normalizamos fecha a medianoche sin zona horaria (naive)
+        if isinstance(fecha, datetime):
+            fecha = fecha.date()
+        elif isinstance(fecha, date):
+            fecha = fecha
+        elif isinstance(fecha, str):
+            try:
+                base = datetime.fromisoformat(fecha.replace("Z", "+00:00"))
+                fecha = base.date()
+            except Exception:
+                fecha = date.today()
+        else:
+            fecha = date.today()
+
+        evento = session.query(CalendarioEvento).filter_by(
+            id_atleta=id_atleta,
+            fecha=fecha
+        ).first()
+        if not evento:
+            return None
+
+        # Guardamos el dict como JSON serializado
+        evento.valor = json.dumps(valores_actualizados) if isinstance(valores_actualizados, dict) else valores_actualizados
+        if notas is not None:
+            evento.notas = notas
+
+        session.commit()
+        session.refresh(evento)
+        _sync_backup()
+        return evento
+
+def actualizar_evento_calendario_por_id(id_evento: int, valores_actualizados, notas=None):
+    """
+    Actualiza un evento de calendario existente usando su id_evento único.
+    Devuelve el evento actualizado o None si no existe.
+    """
+    with SessionLocal() as session:
+        evento = session.query(CalendarioEvento).filter_by(id_evento=id_evento).first()
+        if not evento:
+            return None
+
+        evento.valor = json.dumps(valores_actualizados) if isinstance(valores_actualizados, dict) else valores_actualizados
+        if notas is not None:
+            evento.notas = notas
+
+        session.commit()
+        session.refresh(evento)
+        _sync_backup()
+        return evento
+
+def obtener_eventos_calendario_por_atleta(id_atleta, rol_actual="admin"):
+    with SessionLocal() as session:
+        query = session.query(CalendarioEvento).filter_by(id_atleta=id_atleta)
+        if rol_actual == "admin":
+            eventos = query.order_by(CalendarioEvento.fecha.desc()).all()
+        elif rol_actual == "entrenadora":
+            eventos = query.filter(
+                CalendarioEvento.tipo_evento.notin_(["PrivadoAtleta"])
+            ).order_by(CalendarioEvento.fecha.desc()).all()
+        elif rol_actual == "atleta":
+            eventos = query.filter(
+                CalendarioEvento.tipo_evento.notin_(["PrivadoStaff"])
+            ).order_by(CalendarioEvento.fecha.desc()).all()
+        else:
+            return []
+
+        # 🔑 Transformamos cada evento a dict con valor deserializado
+        return [evento_to_dict(ev) for ev in eventos]
+
+
+def borrar_evento_calendario(id_evento: int) -> bool:
+    """
+    Elimina un evento de calendario por su id_evento único.
+    Devuelve True si se eliminó, False si no existía.
+    """
+    with SessionLocal() as session:
+        evento = session.query(CalendarioEvento).filter_by(id_evento=id_evento).first()
+        if not evento:
+            return False
+        session.delete(evento)
+        session.commit()
+        _sync_backup()
+        return True
+
+def borrar_evento_calendario_por_fecha(id_atleta, fecha) -> bool:
+    """
+    Elimina un evento de calendario por atleta y fecha (normalizada a medianoche sin zona horaria).
+    Devuelve True si se eliminó, False si no existía.
+    """
+    with SessionLocal() as session:
+        # Normalizamos fecha a medianoche sin zona horaria (naive)
+        if isinstance(fecha, datetime):
+            fecha = fecha.date()
+        elif isinstance(fecha, date):
+            fecha = fecha
+        elif isinstance(fecha, str):
+            try:
+                base = datetime.fromisoformat(fecha.replace("Z", "+00:00"))
+                fecha = base.date()
+            except Exception:
+                fecha = date.today()
+        else:
+            fecha = date.today()
+
+        evento = session.query(CalendarioEvento).filter_by(
+            id_atleta=id_atleta,
+            fecha=fecha
+        ).first()
+        if not evento:
+            return False
+
+        session.delete(evento)
+        session.commit()
+        _sync_backup()
+        return True
+
+# ─────────────────────────────────────────────
+# CRUD: SESIONES
+# ─────────────────────────────────────────────
+def crear_sesion(id_atleta, fecha, tipo_sesion, planificado_json=None, realizado_json=None):
+    with SessionLocal() as session:
+        sesion = Sesion(
+            id_atleta=id_atleta,
+            fecha=fecha,
+            tipo_sesion=tipo_sesion,
+            planificado_json=planificado_json,
+            realizado_json=realizado_json
+        )
+        session.add(sesion)
+        session.commit()
+        session.refresh(sesion)
+        _sync_backup()
+        return sesion
+
+def obtener_sesiones_por_atleta(id_atleta):
+    with SessionLocal() as session:
+        return session.query(Sesion).filter_by(id_atleta=id_atleta).order_by(Sesion.fecha.desc()).all()
+
+def actualizar_sesion(id_sesion, **kwargs):
+    with SessionLocal() as session:
+        sesion = session.query(Sesion).filter_by(id_sesion=id_sesion).first()
+        if not sesion:
+            return None
+        for campo, valor in kwargs.items():
+            if hasattr(sesion, campo):
+                setattr(sesion, campo, valor)
+        session.commit()
+        session.refresh(sesion)
+        _sync_backup()
+        return sesion
+
+def borrar_sesion(id_sesion):
+    with SessionLocal() as session:
+        sesion = session.query(Sesion).filter_by(id_sesion=id_sesion).first()
+        if sesion:
+            session.delete(sesion)
+            session.commit()
+            _sync_backup()
+
+# ─────────────────────────────────────────────
+# CRUD: MÉTRICAS
+# ─────────────────────────────────────────────
+def crear_metrica(id_atleta, tipo_metrica, valor, unidad):
+    with SessionLocal() as session:
+        metrica = Metrica(
+            id_atleta=id_atleta,
+            fecha=datetime.now(timezone.utc),
+            tipo_metrica=tipo_metrica,
+            valor=str(valor),
+            unidad=unidad
+        )
+        session.add(metrica)
+        session.commit()
+        session.refresh(metrica)
+        _sync_backup()
+        return metrica
+
+def obtener_metricas_por_tipo(id_atleta, tipo_metrica):
+    with SessionLocal() as session:
+        return session.query(Metrica).filter_by(id_atleta=id_atleta, tipo_metrica=tipo_metrica).order_by(Metrica.fecha).all()
+
+def actualizar_metrica(id_metrica, **kwargs):
+    with SessionLocal() as session:
+        metrica = session.query(Metrica).filter_by(id_metrica=id_metrica).first()
+        if not metrica:
+            return None
+        for campo, valor in kwargs.items():
+            if hasattr(metrica, campo):
+                setattr(metrica, campo, valor)
+        session.commit()
+        session.refresh(metrica)
+        _sync_backup()
+        return metrica
+
+def borrar_metrica(id_metrica):
+    with SessionLocal() as session:
+        metrica = session.query(Metrica).filter_by(id_metrica=id_metrica).first()
+        if metrica:
+            session.delete(metrica)
+            session.commit()
+            _sync_backup()
+
+# ─────────────────────────────────────────────
+# CRUD: COMENTARIOS
+# ─────────────────────────────────────────────
+def crear_comentario(id_atleta, texto, visible_para="staff", id_autor=None):
+    with SessionLocal() as session:
+        comentario = Comentario(
+            id_atleta=id_atleta,
+            id_autor=id_autor,
+            texto=texto,
+            visible_para=visible_para,
+        )
+        session.add(comentario)
+        session.commit()
+        session.refresh(comentario)
+        _sync_backup()
+        return comentario
+
+def obtener_comentarios_por_atleta(id_atleta, rol_actual="admin"):
+    with SessionLocal() as session:
+        query = session.query(Comentario).filter_by(id_atleta=id_atleta)
+        if rol_actual == "admin":
+            return query.order_by(Comentario.fecha.desc()).all()
+        elif rol_actual == "entrenadora":
+            return query.filter(Comentario.visible_para.in_(["entrenadora", "staff", "todos"])).order_by(Comentario.fecha.desc()).all()
+        elif rol_actual == "atleta":
+            return query.filter(Comentario.visible_para.in_(["atleta", "todos"])).order_by(Comentario.fecha.desc()).all()
+        else:
+            return []
+
+def actualizar_comentario(id_comentario, **kwargs):
+    with SessionLocal() as session:
+        comentario = session.query(Comentario).filter_by(id_comentario=id_comentario).first()
+        if not comentario:
+            return None
+        for campo, valor in kwargs.items():
+            if hasattr(comentario, campo):
+                setattr(comentario, campo, valor)
+        session.commit()
+        session.refresh(comentario)
+        _sync_backup()
+        return comentario
+
+def borrar_comentario(id_comentario):
+    with SessionLocal() as session:
+        comentario = session.query(Comentario).filter_by(id_comentario=id_comentario).first()
+        if comentario:
+            session.delete(comentario)
+            session.commit()
+            _sync_backup()
+
+# ─────────────────────────────────────────────
+# Inicialización del esquema si no había backups
+# ─────────────────────────────────────────────
+try:
+    if 'NEED_INIT_SCHEMA' in globals() and NEED_INIT_SCHEMA:
+        print("🛠️ Creando esquema inicial en base vacía...")
+        Base.metadata.create_all(bind=engine)
+        _sync_backup()  # subimos primer backup vacío
+        print("✅ Esquema creado y primer backup generado")
+except Exception as e:
+    print(f"⚠️ Error al crear esquema inicial: {e}")
+
