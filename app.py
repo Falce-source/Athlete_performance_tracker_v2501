@@ -13,6 +13,9 @@ from dotenv import load_dotenv
 import os
 import backup_storage
 
+# Importar control de roles
+from src.utils.roles import tabs_visibles_por_rol
+
 # Cargar variables desde .env (local) o st.secrets (Cloud)
 load_dotenv()
 
@@ -42,31 +45,38 @@ if missing:
 # NAVEGACIÓN LATERAL
 # ─────────────────────────────────────────────
 st.sidebar.title("🏋️ Athlete Performance Tracker")
-opcion = st.sidebar.radio(
-    "Navegación",
-    [
-        "🏠 Inicio",
-        "👤 Perfil atleta",
-        "📅 Calendario",
-        "👥 Usuarios",
-        "💾 Backups",
-        "🔍 Auditoría",
-        "📈 Historial de Validaciones"
-    ]
-)
 
+# Rol actual en sesión (por ahora seleccionable manualmente)
 if "ROL_ACTUAL" not in st.session_state:
     st.session_state["ROL_ACTUAL"] = "admin"
 
-st.sidebar.selectbox(
+rol_actual = st.sidebar.selectbox(
     "Rol actual",
     ["admin", "entrenadora", "atleta"],
     index=["admin", "entrenadora", "atleta"].index(st.session_state["ROL_ACTUAL"]),
     key="ROL_ACTUAL"
 )
 
+# Pestañas visibles según rol
+tabs_visibles = tabs_visibles_por_rol(rol_actual)
+
+# Mapeo de etiquetas a nombres internos
+TAB_LABELS = {
+    "Inicio": "🏠 Inicio",
+    "Perfil Atleta": "👤 Perfil atleta",
+    "Calendario": "📅 Calendario",
+    "Usuarios": "👥 Usuarios",
+    "Backups": "💾 Backups",
+    "Auditoria": "🔍 Auditoría",
+    "Historial de Validaciones": "📈 Historial de Validaciones",
+}
+
+labels_visibles = [TAB_LABELS[t] for t in tabs_visibles if t in TAB_LABELS]
+
+opcion = st.sidebar.radio("Navegación", labels_visibles)
+
 # ─────────────────────────────────────────────
-# CONTENIDO PRINCIPAL
+# CONTENIDO PRINCIPAL (según pestaña elegida)
 # ─────────────────────────────────────────────
 if opcion == "🏠 Inicio":
     st.title("Athlete Performance Tracker v2501")
@@ -76,7 +86,7 @@ elif opcion == "👤 Perfil atleta":
     perfil.mostrar_perfil()
 
 elif opcion == "📅 Calendario":
-    calendario.mostrar_calendario(rol_actual=st.session_state["ROL_ACTUAL"])
+    calendario.mostrar_calendario(rol_actual=rol_actual)
 
 elif opcion == "👥 Usuarios":
     usuarios.mostrar_usuarios()
