@@ -158,7 +158,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
         "displayEventEnd": False
     }
     
-    # CSS para compactar las filas de eventos
+    # CSS para compactar las filas de eventos y respetar saltos de línea
     st.markdown("""
     <style>
     .fc-daygrid-event {
@@ -167,7 +167,9 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
     }
     .fc-daygrid-event .fc-event-title {
         white-space: pre-line !important;  /* respeta \n como salto de línea */
-        line-height: 1.2em !important;
+        display: block !important;         /* fuerza bloque en vez de inline */
+        line-height: 1.3em !important;     /* un poco más de aire entre filas */
+        word-break: break-word !important; /* evita desbordes raros */
     }
     </style>
     """, unsafe_allow_html=True)
