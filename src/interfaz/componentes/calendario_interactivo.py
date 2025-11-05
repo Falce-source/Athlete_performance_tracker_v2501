@@ -330,8 +330,8 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                                     "altitud": altitud,
                                     "respiratorio": respiratorio,
                                     "calor": calor,
-                                "lesion": lesion,
-                                 "comentario_extra": comentario_extra
+                                    "lesion": lesion,
+                                    "comentario_extra": comentario_extra
                                 })
                             )
                             st.success("✅ Estado diario actualizado")
