@@ -86,7 +86,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                 "altitud", "respiratorio", "calor",
                 "lesion", "comentario_extra"
             ]
-            valores_neutros = [None, "", "No", "Ninguno", "-"]
+            valores_neutros = [None, "", "No", "Ninguno", "-", False]
             datos_relevantes = any(
                 details.get(k) not in valores_neutros
                 for k in claves_relevantes
