@@ -158,20 +158,44 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
         "displayEventEnd": False
     }
     
-    # CSS para compactar las filas de eventos
+    # CSS para respetar \n como saltos de línea y evitar recortes
     st.markdown("""
     <style>
+    /* Asegura que el texto principal del evento respete saltos de línea */
+    .fc-daygrid-event .fc-event-main,
+    .fc-daygrid-event .fc-event-main-frame,
+    .fc-daygrid-event .fc-event-title {
+        white-space: pre-line !important;  /* respeta \n */
+        display: block !important;         /* fuerza bloques */
+        line-height: 1.25em !important;    /* separa filas */
+        overflow: visible !important;      /* evita truncado */
+    }
+
+    /* Permite que el evento crezca en altura si tiene varias filas */
+    .fc-daygrid-day .fc-daygrid-event-harness .fc-h-event,
+    .fc-daygrid-day .fc-daygrid-event-harness {
+        height: auto !important;
+        max-height: none !important;
+    }
+
+    /* Compacta padding y evita que los iconos se escondan */
     .fc-daygrid-event {
         margin: 0 !important;
         padding: 2px 4px !important;
     }
+
+    /* Previene recortes dentro del frame */
+    .fc-event-main-frame {
+        overflow: visible !important;
+    }
+
+    /* En móviles o celdas estrechas, permite saltos en cualquier punto */
+    .fc-daygrid-event .fc-event-main,
     .fc-daygrid-event .fc-event-title {
-        white-space: pre-line !important;  /* respeta \n como salto de línea */
-        line-height: 1.2em !important;
+        word-break: break-word !important;
     }
     </style>
     """, unsafe_allow_html=True)
-
 
     # Renderizar calendario (ahora \n se interpreta como salto de línea)
     # Renderizar calendario (una sola vez)
