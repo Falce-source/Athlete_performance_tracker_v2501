@@ -140,7 +140,7 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
         "Creado en": u.creado_en.strftime("%Y-%m-%d %H:%M") if isinstance(u.creado_en, datetime) else str(u.creado_en),
         # 🔑 Si es atleta, buscamos su perfil y mostramos entrenadora asignada
         "Entrenadora asignada": (
-            next((a.usuario.nombre for a in sql.obtener_atletas() if getattr(a, "propietario_id", None) == u.id_usuario and a.usuario), "—")
+            next((a.usuario.nombre for a in sql.obtener_atletas() if getattr(a, "atleta_usuario_id", None) == u.id_usuario and a.usuario), "—")
             if u.rol == "atleta" else "—"
         )
     } for u in usuarios])
