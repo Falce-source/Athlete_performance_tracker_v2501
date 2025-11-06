@@ -72,6 +72,8 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
             else:
                 id_usuario_asignado = usuario_id
 
+            # 🔑 admin → entrenadora seleccionada, entrenadora → ella misma, atleta → su propio usuario
+
             nombre = st.text_input("Nombre", "")
             apellidos = st.text_input("Apellidos", "")
             edad = st.number_input("Edad", min_value=0, max_value=120, step=1)
@@ -124,7 +126,7 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
         opciones_entrenadora = {f"{e.nombre} (ID {e.id_usuario})": e.id_usuario for e in entrenadoras}
         seleccion_entrenadora = st.selectbox("Filtrar atletas por entrenadora", list(opciones_entrenadora.keys()))
         id_entrenadora = opciones_entrenadora[seleccion_entrenadora]
-        # 🔑 obtenemos atletas directamente vinculados a la entrenadora seleccionada
+        # 🔑 obtenemos atletas vinculados a la entrenadora seleccionada con relación usuario cargada
         atletas = sql.obtener_atletas_por_usuario(id_entrenadora)
 
     else:
