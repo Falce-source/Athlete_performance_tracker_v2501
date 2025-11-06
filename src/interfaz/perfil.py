@@ -105,8 +105,18 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
 
     if rol_actual == "entrenadora":
         atletas = sql.obtener_atletas_por_usuario(usuario_id)  # 🔍 solo los suyos
+
+    elif rol_actual == "admin":
+        usuarios = sql.obtener_usuarios()
+        entrenadoras = [u for u in usuarios if u.rol == "entrenadora"]
+        opciones_entrenadora = {f"{e.nombre} (ID {e.id_usuario})": e.id_usuario for e in entrenadoras}
+        seleccion_entrenadora = st.selectbox("Filtrar atletas por entrenadora", list(opciones_entrenadora.keys()))
+        id_entrenadora = opciones_entrenadora[seleccion_entrenadora]
+        atletas = [a for a in sql.obtener_atletas() if a.id_usuario == id_entrenadora]
+
     else:
         atletas = sql.obtener_atletas()
+
     if not atletas:
         st.info("No hay atletas registrados todavía")
         return
@@ -119,7 +129,7 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
         "Deporte": a.deporte,
         "Nivel": a.nivel,
         "Equipo": a.equipo,
-        "Entrenadora": a.usuario.nombre if rol_actual == "admin" and a.usuario else "—"
+        "Entrenadora": a.usuario.nombre if a.usuario else "—"
     } for a in atletas])
 
     col1, col2 = st.columns(2)
