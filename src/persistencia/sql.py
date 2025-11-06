@@ -197,6 +197,13 @@ def actualizar_usuario(id_usuario, **kwargs):
         usuario = session.query(Usuario).filter_by(id_usuario=id_usuario).first()
         if not usuario:
             return None
+
+        # 🚨 Protección: impedir cambiar el rol del último admin
+        if "rol" in kwargs and usuario.rol == "admin" and kwargs["rol"] != "admin":
+            admins = session.query(Usuario).filter_by(rol="admin").all()
+            if len(admins) <= 1:
+                raise ValueError("⚠️ No se puede cambiar el rol del último admin del sistema")
+
         for campo, valor in kwargs.items():
             if hasattr(usuario, campo):
                 setattr(usuario, campo, valor)
@@ -208,10 +215,19 @@ def actualizar_usuario(id_usuario, **kwargs):
 def borrar_usuario(id_usuario):
     with SessionLocal() as session:
         usuario = session.query(Usuario).filter_by(id_usuario=id_usuario).first()
-        if usuario:
-            session.delete(usuario)
-            session.commit()
-            _sync_backup()
+        if not usuario:
+            return False
+
+        # 🚨 Protección: impedir borrar el último admin
+        if usuario.rol == "admin":
+            admins = session.query(Usuario).filter_by(rol="admin").all()
+            if len(admins) <= 1:
+                raise ValueError("⚠️ No se puede eliminar el último admin del sistema")
+
+        session.delete(usuario)
+        session.commit()
+        _sync_backup()
+        return True
 
 # ─────────────────────────────────────────────
 # FUNCIONES CRUD: ATLETAS

@@ -160,17 +160,28 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
                 actualizar = st.form_submit_button("💾 Guardar cambios")
 
                 if actualizar:
-                    if nueva_password.strip():
-                        from src.utils.seguridad import hash_password
-                        ph = hash_password(nueva_password)
-                        sql.actualizar_usuario(
-                            id_usuario=usuario.id_usuario,
-                            nombre=nuevo_nombre,
-                            email=nuevo_email,
-                            rol=nuevo_rol,
-                            password_hash=ph
-                        )
-                        st.success(f"✅ Usuario '{nuevo_nombre}' actualizado y contraseña reseteada. 🔄 Recarga la página para ver los cambios.")
+                    try:
+                        if nueva_password.strip():
+                            from src.utils.seguridad import hash_password
+                            ph = hash_password(nueva_password)
+                            sql.actualizar_usuario(
+                                id_usuario=usuario.id_usuario,
+                                nombre=nuevo_nombre,
+                                email=nuevo_email,
+                                rol=nuevo_rol,
+                                password_hash=ph
+                            )
+                            st.success(f"✅ Usuario '{nuevo_nombre}' actualizado y contraseña reseteada. 🔄 Recarga la página para ver los cambios.")
+                        else:
+                            sql.actualizar_usuario(
+                                id_usuario=usuario.id_usuario,
+                                nombre=nuevo_nombre,
+                                email=nuevo_email,
+                                rol=nuevo_rol
+                            )
+                            st.success(f"✅ Usuario '{nuevo_nombre}' actualizado correctamente. 🔄 Recarga la página para ver los cambios.")
+                    except ValueError as e:
+                        st.error(str(e))
                     else:
                         sql.actualizar_usuario(
                             id_usuario=usuario.id_usuario,
@@ -181,6 +192,9 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
                         st.success(f"✅ Usuario '{nuevo_nombre}' actualizado correctamente. 🔄 Recarga la página para ver los cambios.")
 
         if st.button(f"🗑️ Eliminar usuario '{usuario.nombre}'", type="primary"):
-            sql.borrar_usuario(usuario.id_usuario)
-            st.warning(f"Usuario '{usuario.nombre}' eliminado correctamente. 🔄 Recarga la página para actualizar la lista.")
+            try:
+                sql.borrar_usuario(usuario.id_usuario)
+                st.warning(f"Usuario '{usuario.nombre}' eliminado correctamente. 🔄 Recarga la página para actualizar la lista.")
+            except ValueError as e:
+                st.error(str(e))
         
