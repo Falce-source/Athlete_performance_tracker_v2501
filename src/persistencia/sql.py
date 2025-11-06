@@ -115,7 +115,7 @@ class Usuario(Base):
     perfiles_como_atleta = relationship(
         "Atleta",
         back_populates="atleta_usuario",
-        foreign_keys=[Atleta.atleta_usuario_id]
+        foreign_keys="Atleta.atleta_usuario_id"
     )
 
 class Atleta(Base):
@@ -133,7 +133,7 @@ class Atleta(Base):
     atleta_usuario = relationship(
         "Usuario",
         back_populates="perfiles_como_atleta",
-        foreign_keys=[Atleta.atleta_usuario_id]
+        foreign_keys=[atleta_usuario_id]
     )
 
     nombre = Column(String, nullable=False)
