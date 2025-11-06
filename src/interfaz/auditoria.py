@@ -222,6 +222,32 @@ def validar_usuarios_duplicados():
     else:
         st.success("✅ No se detectaron duplicados por email o nombre.")
 
+def validar_desvinculados():
+    st.subheader("🧪 Detección de atletas y usuarios no vinculados")
+
+    atletas = sql.obtener_atletas()
+    usuarios = sql.obtener_usuarios()
+
+    errores = []
+
+    # Atletas sin usuario vinculado
+    sin_usuario = [a for a in atletas if not getattr(a, "atleta_usuario_id", None)]
+    for a in sin_usuario:
+        errores.append(f"❌ Atleta '{a.nombre}' (ID {a.id_atleta}) sin usuario vinculado")
+
+    # Usuarios con rol atleta sin perfil asociado
+    ids_vinculados = {a.atleta_usuario_id for a in atletas if a.atleta_usuario_id}
+    atletas_huerfanos = [u for u in usuarios if u.rol == "atleta" and u.id_usuario not in ids_vinculados]
+    for u in atletas_huerfanos:
+        errores.append(f"❌ Usuario atleta '{u.nombre}' (ID {u.id_usuario}) no está vinculado a ningún perfil")
+
+    if errores:
+        st.warning("🔍 Desvinculaciones detectadas:")
+        for e in errores:
+            st.markdown(f"- {e}")
+    else:
+        st.success("✅ Todos los atletas y usuarios están correctamente vinculados.")
+
 def mostrar_auditoria():
     st.header("🔍 Auditoría Técnica")
 
@@ -273,4 +299,4 @@ def mostrar_auditoria():
     validar_flujo_atleta()
     validar_atletas_duplicados()
     validar_usuarios_duplicados()
-
+    validar_desvinculados()
