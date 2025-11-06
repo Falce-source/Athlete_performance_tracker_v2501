@@ -9,6 +9,7 @@ import json
 import os
 import shutil
 import backup_storage
+import sqlite3
 
  # ─────────────────────────────────────────────
  # CONFIGURACIÓN BÁSICA
@@ -44,6 +45,26 @@ engine = create_engine(DATABASE_URL, echo=False)
 SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 Base = declarative_base()
 
+# ─────────────────────────────────────────────
+# MIGRACIÓN AUTOMÁTICA: columna password_hash
+# ─────────────────────────────────────────────
+def ensure_password_column():
+    """Asegura que la tabla usuarios tenga la columna password_hash"""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("PRAGMA table_info(usuarios);")
+        cols = [row[1] for row in cursor.fetchall()]
+        if "password_hash" not in cols:
+            cursor.execute("ALTER TABLE usuarios ADD COLUMN password_hash TEXT;")
+            conn.commit()
+            print("✅ Columna password_hash añadida automáticamente")
+        conn.close()
+    except Exception as e:
+        print(f"⚠️ Error al asegurar columna password_hash: {e}")
+
+ensure_password_column()
+
 # Helper para sincronizar backup tras cada commit
 def _sync_backup():
     try:
@@ -76,6 +97,7 @@ class Usuario(Base):
     nombre = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
     rol = Column(String, nullable=False)  # admin, entrenadora, atleta
+    password_hash = Column(String, nullable=False)  # 🔑 nuevo campo para login seguro
     creado_en = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
     atletas = relationship("Atleta", back_populates="usuario")
@@ -133,9 +155,10 @@ def init_db():
 # FUNCIONES CRUD: USUARIOS
 # ─────────────────────────────────────────────
 
-def crear_usuario(nombre, email, rol):
+def crear_usuario(nombre, email, rol, password_hash: str):
+    """Crea un usuario con contraseña ya hasheada"""
     with SessionLocal() as session:
-        usuario = Usuario(nombre=nombre, email=email, rol=rol)
+        usuario = Usuario(nombre=nombre, email=email, rol=rol, password_hash=password_hash)
         session.add(usuario)
         session.flush()
         session.refresh(usuario)
@@ -146,6 +169,28 @@ def crear_usuario(nombre, email, rol):
 def obtener_usuarios():
     with SessionLocal() as session:
         return session.query(Usuario).all()
+
+def obtener_usuario_por_email(email: str):
+    """Devuelve un usuario por email o None"""
+    with SessionLocal() as session:
+        return session.query(Usuario).filter_by(email=email).first()
+
+def obtener_usuario_por_id(id_usuario: int):
+    """Devuelve un usuario por id o None"""
+    with SessionLocal() as session:
+        return session.query(Usuario).filter_by(id_usuario=id_usuario).first()
+
+def actualizar_password(id_usuario: int, nuevo_hash: str):
+    """Actualiza la contraseña de un usuario"""
+    with SessionLocal() as session:
+        usuario = session.query(Usuario).filter_by(id_usuario=id_usuario).first()
+        if not usuario:
+            return None
+        usuario.password_hash = nuevo_hash
+        session.commit()
+        session.refresh(usuario)
+        _sync_backup()
+        return usuario
 
 def actualizar_usuario(id_usuario, **kwargs):
     with SessionLocal() as session:

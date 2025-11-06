@@ -12,6 +12,21 @@ import src.interfaz.historial_validaciones as historial_validaciones
 from dotenv import load_dotenv
 import os
 import backup_storage
+from src.interfaz import auth
+
+# Si no hay sesión, mostrar login y detener el resto
+if "USUARIO_ID" not in st.session_state or "ROL_ACTUAL" not in st.session_state:
+    logged = auth.login_form()
+    st.stop()
+
+rol_actual = st.session_state["ROL_ACTUAL"]
+usuario_id = st.session_state["USUARIO_ID"]
+usuario_nombre = st.session_state.get("USUARIO_NOMBRE", "—")
+
+# Barra lateral con identidad fija
+st.sidebar.markdown(f"**🧑 Usuario activo:** {usuario_nombre} (Rol: {rol_actual})")
+if st.sidebar.button("Cerrar sesión"):
+    auth.logout()
 
 # Importar control de roles
 from src.utils.roles import tabs_visibles_por_rol
