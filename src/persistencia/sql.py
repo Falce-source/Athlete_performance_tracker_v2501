@@ -181,9 +181,11 @@ def crear_atleta(**kwargs):
         _sync_backup()
         return atleta
 
+from sqlalchemy.orm import joinedload
+
 def obtener_atletas():
     with SessionLocal() as session:
-        return session.query(Atleta).all()
+        return session.query(Atleta).options(joinedload(Atleta.usuario)).all()
 
 def obtener_atletas_por_usuario(id_usuario):
     with SessionLocal() as session:
@@ -505,7 +507,6 @@ def obtener_eventos_calendario_por_atleta(id_atleta, rol_actual="admin"):
 
         # 🔑 Transformamos cada evento a dict con valor deserializado
         return [evento_to_dict(ev) for ev in eventos]
-
 
 def borrar_evento_calendario(id_evento: int) -> bool:
     """

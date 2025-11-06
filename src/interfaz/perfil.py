@@ -9,6 +9,18 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
     st.header("👤 Perfil de Atleta")
 
     # ───────────────────────────────
+    # Selector de entrenadora (solo admin)
+    # ───────────────────────────────
+    if rol_actual == "admin":
+        usuarios = sql.obtener_usuarios()
+        entrenadoras = [u for u in usuarios if u.rol == "entrenadora"]
+        opciones_entrenadora = {f"{e.nombre} (ID {e.id_usuario})": e.id_usuario for e in entrenadoras}
+        seleccion_entrenadora = st.selectbox("Asignar atleta a entrenadora", list(opciones_entrenadora.keys()))
+        id_entrenadora = opciones_entrenadora[seleccion_entrenadora]
+    else:
+        id_entrenadora = usuario_id
+
+    # ───────────────────────────────
     # Información de depuración extendida
     # ───────────────────────────────
     import os
@@ -74,7 +86,7 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
                     equipo=equipo,
                     alergias=alergias,
                     consentimiento=consentimiento,
-                    id_usuario=usuario_id  # 🔑 asignar propietario
+                    id_usuario=id_entrenadora  # 🔑 asignar propietario
                 )
                 st.success(f"✅ Atleta '{atleta.nombre}' creado correctamente")
 
@@ -101,6 +113,7 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
         "Deporte": a.deporte,
         "Nivel": a.nivel,
         "Equipo": a.equipo,
+        "Entrenadora": a.usuario.nombre if rol_actual == "admin" and a.usuario else "—"
     } for a in atletas])
 
     col1, col2 = st.columns(2)
