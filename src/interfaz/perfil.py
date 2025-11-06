@@ -4,6 +4,7 @@ from src.persistencia import sql
 
 # Importar control de roles
 from src.utils.roles import Contexto, puede_editar_perfil_atleta
+from src.utils.seguridad import hash_password
 
 def mostrar_perfil(rol_actual="admin", usuario_id=None):
     st.header("👤 Perfil de Atleta")
@@ -86,12 +87,34 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
             alergias = st.text_area("Alergias", "")
             consentimiento = st.checkbox("Consentimiento informado")
 
+            # Solo entrenadora puede crear usuario vinculado
+            if rol_actual == "entrenadora":
+                st.markdown("#### 🔐 Usuario del atleta")
+            email_atleta = st.text_input("Email del atleta (login)", "")
+            password_inicial = st.text_input("Contraseña inicial", type="password")
+
             submitted = st.form_submit_button("Guardar atleta")
 
             if submitted:
                 if nombre.strip() == "":
                     st.error("El nombre es obligatorio")
+                elif rol_actual == "entrenadora" and (email_atleta.strip() == "" or password_inicial.strip() == ""):
+                    st.error("Email y contraseña del atleta son obligatorios")
                 else:
+                    if rol_actual == "entrenadora":
+                        ph = hash_password(password_inicial)
+                        usuario_atleta = sql.crear_usuario(
+                            nombre=nombre,
+                            email=email_atleta,
+                            rol="atleta",
+                            password_hash=ph
+                        )
+                        atleta_usuario_id = usuario_atleta.id_usuario
+                        propietario_id = usuario_id
+                    else:
+                        atleta_usuario_id = None
+                        propietario_id = usuario_id if rol_actual == "admin" else None
+
                     atleta = sql.crear_atleta(
                         nombre=nombre,
                         apellidos=apellidos,
@@ -104,9 +127,12 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
                         equipo=equipo,
                         alergias=alergias,
                         consentimiento=consentimiento,
-                        id_usuario=id_usuario_asignado  # 🔑 admin → entrenadora seleccionada, entrenadora → ella misma, atleta → su propio usuario
+                        id_usuario=id_usuario_asignado,
+                        propietario_id=propietario_id,
+                        atleta_usuario_id=atleta_usuario_id
                     )
-                    st.success(f"✅ Atleta '{atleta.nombre}' creado correctamente")
+                    st.success(f"✅ Atleta '{atleta.nombre}' creado correctamente con usuario vinculado.")
+
     else:
         st.caption("⛔ No tienes permisos para crear atletas")
 

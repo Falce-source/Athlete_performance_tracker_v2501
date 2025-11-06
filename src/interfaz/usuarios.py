@@ -96,9 +96,9 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
                                 edad=int(edad_atleta) if edad_atleta else None,
                                 deporte=deporte_atleta,
                                 nivel=nivel_atleta,
-                                id_usuario=usuario_id,      # Entrendora asignada
-                                propietario_id=usuario.id,  # quien lo creó (admin)
-                                atleta_usuario_id=usuario_atleta.id_usuario,
+                                id_usuario=id_entrenadora,                      # Entrendora asignada
+                                propietario_id=usuario.id_usuario,              # quien lo creó (admin)
+                                atleta_usuario_id=usuario_atleta.id_usuario,    # login del atleta
                                 contacto=email_atleta
                             )
                             st.success(f"✅ Usuario y perfil de atleta '{atleta.nombre}' creados correctamente.")
