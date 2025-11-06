@@ -14,7 +14,12 @@ def probar_flujo(modulo, rol_actual="admin"):
         ids_antes = {b["id"] for b in backups_antes}
 
         if modulo == "Usuarios":
-            usuario = sql.crear_usuario("TestUser", f"test_{int(time.time())}@mail.com", "admin")
+            usuario = sql.crear_usuario(
+                nombre="TestUser",
+                email=f"test_{int(time.time())}@mail.com",
+                rol="admin",
+                password_hash="test_hash"  # ← valor dummy para test
+            )
             sql.borrar_usuario(usuario.id_usuario)
 
         elif modulo == "Atletas":
@@ -103,7 +108,7 @@ def probar_visibilidad_por_rol():
             eventos = sql.obtener_eventos_calendario_por_atleta(atleta.id_atleta, rol_actual=rol)
             comentarios = sql.obtener_comentarios_por_atleta(atleta.id_atleta, rol_actual=rol)
 
-            eventos_ok = any(e.tipo_evento != "Comentario" or rol == "admin" for e in eventos)
+            eventos_ok = any(e.get("tipo_evento") != "Comentario" or rol == "admin" for e in eventos)
             comentarios_ok = any(c.visible_para == rol for c in comentarios)
 
             if not eventos_ok or not comentarios_ok:
@@ -113,7 +118,7 @@ def probar_visibilidad_por_rol():
             for c in comentarios:
                 sql.borrar_comentario(c.id_comentario)
             for e in eventos:
-                sql.borrar_evento_calendario(e.id_atleta, e.fecha)
+                sql.borrar_evento_calendario(e["id_atleta"], e["fecha"])
             sql.borrar_atleta(atleta.id_atleta)
 
         if resultado["ok"]:
