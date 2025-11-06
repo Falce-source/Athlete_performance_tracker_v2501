@@ -16,11 +16,19 @@ from src.interfaz import auth
 from src.persistencia import sql
 
 # --- CREACIÓN ADMIN INICIAL (solo la primera vez) ---
-if not sql.obtener_usuario_por_email("admin@demo.com"):
+admin = sql.obtener_usuario_por_email("admin@demo.com")
+if not admin:
     from src.utils.seguridad import hash_password
     ph = hash_password("admin123")
-    sql.crear_usuario(nombre="Administrador", email="admin@demo.com", rol="admin", password_hash=ph)
+    sql.crear_usuario(
+        nombre="Administrador",
+        email="admin@demo.com",
+        rol="admin",
+        password_hash=ph
+    )
     print("✅ Admin inicial creado")
+else:
+    print("ℹ️ Admin ya existe, no se crea de nuevo")
 # ----------------------------------------------------
 
 # Si no hay sesión, mostrar login y detener el resto
