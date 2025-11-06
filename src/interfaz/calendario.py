@@ -45,7 +45,10 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
     # ───────────────────────────────
     # Selector de atleta
     # ───────────────────────────────
-    atletas = sql.obtener_atletas()
+    if rol_actual == "entrenadora":
+        atletas = sql.obtener_atletas_por_usuario(usuario_id)  # 🔍 solo los suyos
+    else:
+        atletas = sql.obtener_atletas()
     if not atletas:
         st.info("No hay atletas registrados todavía")
         return

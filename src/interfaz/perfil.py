@@ -74,6 +74,7 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
                     equipo=equipo,
                     alergias=alergias,
                     consentimiento=consentimiento,
+                    id_usuario=usuario_id  # 🔑 asignar propietario
                 )
                 st.success(f"✅ Atleta '{atleta.nombre}' creado correctamente")
 
@@ -84,7 +85,10 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
     # ───────────────────────────────
     st.subheader("📋 Atletas registrados")
 
-    atletas = sql.obtener_atletas()
+    if rol_actual == "entrenadora":
+        atletas = sql.obtener_atletas_por_usuario(usuario_id)  # 🔍 solo los suyos
+    else:
+        atletas = sql.obtener_atletas()
     if not atletas:
         st.info("No hay atletas registrados todavía")
         return

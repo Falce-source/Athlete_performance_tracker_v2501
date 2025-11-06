@@ -185,6 +185,10 @@ def obtener_atletas():
     with SessionLocal() as session:
         return session.query(Atleta).all()
 
+def obtener_atletas_por_usuario(id_usuario):
+    with SessionLocal() as session:
+        return session.query(Atleta).filter_by(id_usuario=id_usuario).all()
+
 def obtener_atleta_por_id(id_atleta):
     with SessionLocal() as session:
         return session.query(Atleta).filter_by(id_atleta=id_atleta).first()
