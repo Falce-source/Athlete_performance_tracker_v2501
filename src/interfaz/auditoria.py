@@ -273,6 +273,28 @@ def mostrar_atletas_ocultos_con_boton():
     else:
         st.success("✅ No hay atletas huérfanos por falta de vínculos.")
 
+def mostrar_usuarios_huerfanos_con_boton():
+    st.subheader("🧹 Usuarios atleta sin perfil vinculado")
+
+    usuarios = sql.obtener_usuarios()
+    atletas = sql.obtener_atletas()
+    ids_vinculados = {a.atleta_usuario_id for a in atletas if a.atleta_usuario_id}
+
+    huerfanos = [u for u in usuarios if u.rol == "atleta" and u.id_usuario not in ids_vinculados]
+
+    if huerfanos:
+        for u in huerfanos:
+            with st.expander(f"👤 Usuario: {u.nombre} (ID {u.id_usuario})"):
+                st.markdown(f"- Email: `{u.email}`")
+                st.markdown(f"- Rol: `{u.rol}`")
+                st.markdown(f"- Vinculado a perfil: ❌ No")
+
+                if st.button(f"🗑️ Eliminar usuario '{u.nombre}'", key=f"borrar_usuario_{u.id_usuario}"):
+                    sql.borrar_usuario(u.id_usuario)
+                    st.warning(f"✅ Usuario '{u.nombre}' eliminado. 🔄 Recarga la pestaña para actualizar la lista.")
+    else:
+        st.success("✅ No hay usuarios atleta sin perfil vinculado.")
+
 def mostrar_auditoria():
     st.header("🔍 Auditoría Técnica")
 
@@ -326,3 +348,4 @@ def mostrar_auditoria():
     validar_usuarios_duplicados()
     validar_desvinculados()
     mostrar_atletas_ocultos_con_boton()
+    mostrar_usuarios_huerfanos_con_boton()
