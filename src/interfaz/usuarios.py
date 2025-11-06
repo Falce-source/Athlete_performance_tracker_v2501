@@ -58,6 +58,8 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
                 edad_atleta = st.number_input("Edad", min_value=0, max_value=120, step=1)
                 deporte_atleta = st.text_input("Deporte", "")
                 nivel_atleta = st.selectbox("Nivel", ["Iniciado", "Intermedio", "Avanzado", "Elite"])
+                email_atleta = st.text_input("Email del atleta (login)", "")
+                password_atleta = st.text_input("Contraseña inicial del atleta", type="password")
 
                 # Admin asigna entrenadora
                 usuarios = sql.obtener_usuarios()
@@ -78,16 +80,45 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
 
                     # 🔑 Si es atleta, crear también perfil vinculado
                     if rol == "atleta":
-                        atleta = sql.crear_atleta(
-                            nombre=nombre_atleta,
-                            apellidos=apellidos_atleta,
-                            edad=int(edad_atleta) if edad_atleta else None,
-                            deporte=deporte_atleta,
+                        if email_atleta.strip() == "" or password_atleta.strip() == "":
+                            st.error("Email y contraseña del atleta son obligatorios")
+                        else:
+                            ph_atleta = hash_password(password_atleta)
+                            usuario_atleta = sql.crear_usuario(
+                                nombre=nombre_atleta,
+                                email=email_atleta,
+                                rol="atleta",
+                                password_hash=ph_atleta
+                            )
+                            atleta = sql.crear_atleta(
+                                nombre=nombre_atleta,
+                                apellidos=apellidos_atleta,
+                                edad=int(edad_atleta) if edad_atleta else None,
+                                deporte=deporte_atleta,
                             nivel=nivel_atleta,
-                            id_usuario=id_entrenadora,
-                            propietario_id=usuario.id_usuario
-                        )
-                        st.success(f"✅ Perfil de atleta '{atleta.nombre}' creado y vinculado a entrenadora.")
+                                id_usuario=id_entrenadora,
+                                propietario_id=usuario.id_usuario,  # quien lo creó (admin)
+                                atleta_usuario_id=usuario_atleta.id_usuario,
+                                contacto=email_atleta
+                            )
+                            st.success(f"✅ Usuario y perfil de atleta '{atleta.nombre}' creados correctamente.")
+                        # 🧩 Autoenlace: si este usuario es atleta creado después del perfil
+                        if rol == "atleta":
+                            # Buscar perfil por email (contacto) o por nombre+apellidos
+                            atletas = sql.obtener_atletas()
+                            candidato = next(
+                                (a for a in atletas if (a.contacto and a.contacto.strip().lower() == email.strip().lower())),
+                                None
+                            )
+                            if not candidato:
+                                candidato = next(
+                                    (a for a in atletas if a.nombre.strip() == nombre.strip()
+                                    and (a.apellidos or "").strip() == (apellidos_atleta or "").strip()),
+                                    None
+                                )
+                            if candidato and not getattr(candidato, "atleta_usuario_id", None):
+                                sql.actualizar_atleta(candidato.id_atleta, atleta_usuario_id=usuario.id_usuario)
+                                st.info(f"🔗 Usuario atleta enlazado con perfil '{candidato.nombre}'.")
 
     st.markdown("---")
 

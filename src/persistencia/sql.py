@@ -48,22 +48,27 @@ Base = declarative_base()
 # ─────────────────────────────────────────────
 # MIGRACIÓN AUTOMÁTICA: columna password_hash
 # ─────────────────────────────────────────────
-def ensure_password_column():
-    """Asegura que la tabla usuarios tenga la columna password_hash"""
+
+def ensure_schema():
+    """Asegura que la tabla atletas tenga las columnas propietario_id y atleta_usuario_id"""
     try:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        cursor.execute("PRAGMA table_info(usuarios);")
+        cursor.execute("PRAGMA table_info(atletas);")
         cols = [row[1] for row in cursor.fetchall()]
-        if "password_hash" not in cols:
-            cursor.execute("ALTER TABLE usuarios ADD COLUMN password_hash TEXT;")
+        changed = False
+        if "propietario_id" not in cols:
+            cursor.execute("ALTER TABLE atletas ADD COLUMN propietario_id INTEGER;")
+            changed = True
+        if "atleta_usuario_id" not in cols:
+            cursor.execute("ALTER TABLE atletas ADD COLUMN atleta_usuario_id INTEGER;")
+            changed = True
+        if changed:
             conn.commit()
-            print("✅ Columna password_hash añadida automáticamente")
+            print("✅ Esquema atletas actualizado (propietario_id / atleta_usuario_id)")
         conn.close()
     except Exception as e:
-        print(f"⚠️ Error al asegurar columna password_hash: {e}")
-
-ensure_password_column()
+        print(f"⚠️ Error al asegurar esquema atletas: {e}")
 
 # Helper para sincronizar backup tras cada commit
 def _sync_backup():
@@ -106,6 +111,9 @@ class Usuario(Base):
     # Relación con atletas creados (propietario)
     atletas_creados = relationship("Atleta", back_populates="propietario", foreign_keys="Atleta.propietario_id")
 
+    # (Opcional) relación inversa a perfiles que tienen esta cuenta como 'atleta_usuario'
+    perfiles_como_atleta = relationship("Atleta", foreign_keys="Atleta.atleta_usuario_id")
+
 
 class Atleta(Base):
     __tablename__ = "atletas"
@@ -115,6 +123,9 @@ class Atleta(Base):
 
     # Usuario que creó el atleta (admin o entrenadora)
     propietario_id = Column(Integer, ForeignKey("usuarios.id_usuario"), nullable=True)
+
+    # Usuario del propio atleta (cuenta de login del atleta)
+    atleta_usuario_id = Column(Integer, ForeignKey("usuarios.id_usuario"), nullable=True)
 
     nombre = Column(String, nullable=False)
     apellidos = Column(String)
@@ -134,6 +145,9 @@ class Atleta(Base):
 
     # Propietario (quien creó el atleta)
     propietario = relationship("Usuario", back_populates="atletas_creados", foreign_keys=[propietario_id])
+
+    # Cuenta de usuario del propio atleta (login)
+    atleta_usuario = relationship("Usuario", foreign_keys=[atleta_usuario_id])
 
   # Relación con Evento
     eventos = relationship("Evento", back_populates="atleta", cascade="all, delete-orphan")
