@@ -3,6 +3,9 @@ from streamlit_calendar import calendar
 import datetime
 from src.persistencia import sql
 
+# Importar control de roles
+from src.utils.roles import Contexto, puede_borrar_evento_calendario
+
 # Estilos por tipo de evento
 EVENT_STYLES = {
     "sintomas": {"icon": "🩸", "bg": "#FDE2E2", "border": "#EF4444", "text": "#7A1D1D", "priority": 3},
@@ -422,9 +425,18 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     if eliminar:
                         event_id = props.get("id_base") or ev.get("id")
                         if event_id:
-                            sql.borrar_evento_calendario(int(event_id))
-                            st.success("🗑️ Competición eliminada")
-                        st.rerun()
+                            ctx_evento = Contexto(
+                                rol_actual=st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin")),
+                                usuario_id=st.session_state.get("USUARIO_ID", 0),
+                                atleta_id=id_atleta,
+                                propietario_id=props.get("id_autor") or id_atleta
+                            )
+                            if ctx_evento.rol_actual == "admin" or puede_borrar_evento_calendario(ctx_evento):
+                                sql.borrar_evento_calendario(int(event_id))
+                                st.success("🗑️ Competición eliminada")
+                                st.rerun()
+                            else:
+                                st.caption("⛔ No tienes permisos para borrar esta competición")
             editar_competicion()
 
         # -------------------------
@@ -461,7 +473,16 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     if eliminar:
                         event_id = props.get("id_base") or ev.get("id")
                         if event_id:
-                            sql.borrar_evento_calendario(int(event_id))
-                            st.success("🗑️ Cita/Test eliminada")
-                        st.rerun()
+                            ctx_evento = Contexto(
+                                rol_actual=st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin")),
+                                usuario_id=st.session_state.get("USUARIO_ID", 0),
+                                atleta_id=id_atleta,
+                                propietario_id=props.get("id_autor") or id_atleta
+                            )
+                            if ctx_evento.rol_actual == "admin" or puede_borrar_evento_calendario(ctx_evento):
+                                sql.borrar_evento_calendario(int(event_id))
+                                st.success("🗑️ Cita/Test eliminada")
+                                st.rerun()
+                            else:
+                                st.caption("⛔ No tienes permisos para borrar esta cita/test")
             editar_cita_test()
