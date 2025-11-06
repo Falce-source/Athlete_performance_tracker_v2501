@@ -71,14 +71,28 @@ import src.persistencia.sql as sql
 if rol_actual == "entrenadora":
     entrenadoras = [u for u in sql.obtener_usuarios() if u.rol == "entrenadora"]
     opciones = {f"{e.nombre} (ID {e.id_usuario})": e.id_usuario for e in entrenadoras}
-    seleccion = st.sidebar.selectbox("Selecciona entrenadora", list(opciones.keys()))
-    usuario_id = opciones[seleccion]
+    if opciones:
+        seleccion = st.sidebar.selectbox("Selecciona entrenadora", list(opciones.keys()))
+        usuario_id = opciones.get(seleccion)
+        if usuario_id is None:
+            st.sidebar.warning("⚠️ Selección inválida o sin coincidencia.")
+            usuario_id = 0
+    else:
+        st.sidebar.info("No hay entrenadoras disponibles.")
+        usuario_id = 0
 
 elif rol_actual == "atleta":
     atletas = sql.obtener_atletas()
     opciones = {f"{a.nombre} (ID {a.id_atleta})": a.id_usuario for a in atletas if a.id_usuario}
-    seleccion = st.sidebar.selectbox("Selecciona atleta", list(opciones.keys()))
-    usuario_id = opciones[seleccion]
+    if opciones:
+        seleccion = st.sidebar.selectbox("Selecciona atleta", list(opciones.keys()))
+        usuario_id = opciones.get(seleccion)
+        if usuario_id is None:
+            st.sidebar.warning("⚠️ Selección inválida o sin coincidencia.")
+            usuario_id = 0
+    else:
+        st.sidebar.info("No hay atletas disponibles.")
+        usuario_id = 0
 
 else:
     usuario_id = 0  # admin
