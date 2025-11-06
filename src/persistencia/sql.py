@@ -102,7 +102,11 @@ class Usuario(Base):
     password_hash = Column(String, nullable=False)  # 🔑 nuevo campo para login seguro
     creado_en = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
-    atletas = relationship("Atleta", back_populates="usuario")
+    # Relación con atletas como entrenadora asignada
+    atletas = relationship("Atleta", back_populates="usuario", foreign_keys="Atleta.id_usuario")
+
+    # Relación con atletas creados (propietario)
+    atletas_creados = relationship("Atleta", back_populates="propietario", foreign_keys="Atleta.propietario_id")
 
 
 class Atleta(Base):
@@ -131,7 +135,7 @@ class Atleta(Base):
     usuario = relationship("Usuario", back_populates="atletas", foreign_keys=[id_usuario])
 
     # Propietario (quien creó el atleta)
-    propietario = relationship("Usuario", foreign_keys=[propietario_id])
+    propietario = relationship("Usuario", back_populates="atletas_creados", foreign_keys=[propietario_id])
 
   # Relación con Evento
     eventos = relationship("Evento", back_populates="atleta", cascade="all, delete-orphan")
