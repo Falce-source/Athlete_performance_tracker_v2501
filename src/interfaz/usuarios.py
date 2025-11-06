@@ -3,7 +3,7 @@ import pandas as pd
 from src.persistencia import sql
 from datetime import datetime
 
-def mostrar_usuarios():
+def mostrar_usuarios(rol_actual: str, usuario_id: int):
     st.header("👥 Gestión de Usuarios")
 
     # ───────────────────────────────
@@ -37,51 +37,52 @@ def mostrar_usuarios():
         st.warning(f"No se pudo obtener información de depuración: {e}")
 
     # ───────────────────────────────
-    # Formulario para crear usuario
+    # Formulario para crear usuario (solo admin)
     # ───────────────────────────────
-    with st.form("form_crear_usuario", clear_on_submit=True):
-        st.subheader("➕ Crear nuevo usuario")
+    if rol_actual == "admin":
+        with st.form("form_crear_usuario", clear_on_submit=True):
+            st.subheader("➕ Crear nuevo usuario")
 
-        nombre = st.text_input("Nombre", "")
-        email = st.text_input("Email", "")
-        rol = st.selectbox("Rol", ["admin", "entrenadora", "atleta"])
+            nombre = st.text_input("Nombre", "")
+            email = st.text_input("Email", "")
+            rol = st.selectbox("Rol", ["admin", "entrenadora", "atleta"])
 
-        # 🔑 Si el rol es atleta, mostrar subformulario de perfil
-        if rol == "atleta":
-            nombre_atleta = st.text_input("Nombre atleta", "")
-            apellidos_atleta = st.text_input("Apellidos", "")
-            edad_atleta = st.number_input("Edad", min_value=0, max_value=120, step=1)
-            deporte_atleta = st.text_input("Deporte", "")
-            nivel_atleta = st.selectbox("Nivel", ["Iniciado", "Intermedio", "Avanzado", "Elite"])
+            # 🔑 Si el rol es atleta, mostrar subformulario de perfil
+            if rol == "atleta":
+                nombre_atleta = st.text_input("Nombre atleta", "")
+                apellidos_atleta = st.text_input("Apellidos", "")
+                edad_atleta = st.number_input("Edad", min_value=0, max_value=120, step=1)
+                deporte_atleta = st.text_input("Deporte", "")
+                nivel_atleta = st.selectbox("Nivel", ["Iniciado", "Intermedio", "Avanzado", "Elite"])
 
-            # Solo admin puede asignar entrenadora
-            usuarios = sql.obtener_usuarios()
-            entrenadoras = [u for u in usuarios if u.rol == "entrenadora"]
-            opciones_entrenadora = {f"{e.nombre} (ID {e.id_usuario})": e.id_usuario for e in entrenadoras}
-            seleccion_entrenadora = st.selectbox("Asignar entrenadora", list(opciones_entrenadora.keys()))
-            id_entrenadora = opciones_entrenadora[seleccion_entrenadora]
+                # Admin asigna entrenadora
+                usuarios = sql.obtener_usuarios()
+                entrenadoras = [u for u in usuarios if u.rol == "entrenadora"]
+                opciones_entrenadora = {f"{e.nombre} (ID {e.id_usuario})": e.id_usuario for e in entrenadoras}
+                seleccion_entrenadora = st.selectbox("Asignar entrenadora", list(opciones_entrenadora.keys()))
+                id_entrenadora = opciones_entrenadora[seleccion_entrenadora]
 
-        submitted = st.form_submit_button("Guardar usuario")
+            submitted = st.form_submit_button("Guardar usuario")
 
-        if submitted:
-            if nombre.strip() == "" or email.strip() == "":
-                st.error("El nombre y el email son obligatorios")
-            else:
-                usuario = sql.crear_usuario(nombre=nombre, email=email, rol=rol)
-                st.success(f"✅ Usuario '{usuario.nombre}' creado correctamente")
+            if submitted:
+                if nombre.strip() == "" or email.strip() == "":
+                    st.error("El nombre y el email son obligatorios")
+                else:
+                    usuario = sql.crear_usuario(nombre=nombre, email=email, rol=rol)
+                    st.success(f"✅ Usuario '{usuario.nombre}' creado correctamente")
 
-                # 🔑 Si es atleta, crear también perfil vinculado
-                if rol == "atleta":
-                    atleta = sql.crear_atleta(
-                        nombre=nombre_atleta,
-                        apellidos=apellidos_atleta,
-                        edad=int(edad_atleta) if edad_atleta else None,
-                        deporte=deporte_atleta,
-                        nivel=nivel_atleta,
-                        id_usuario=id_entrenadora,       # entrenadora asignada
-                        propietario_id=usuario.id_usuario  # vínculo con usuario atleta
-                    )
-                    st.success(f"✅ Perfil de atleta '{atleta.nombre}' creado y vinculado a entrenadora.")
+                    # 🔑 Si es atleta, crear también perfil vinculado
+                    if rol == "atleta":
+                        atleta = sql.crear_atleta(
+                            nombre=nombre_atleta,
+                            apellidos=apellidos_atleta,
+                            edad=int(edad_atleta) if edad_atleta else None,
+                            deporte=deporte_atleta,
+                            nivel=nivel_atleta,
+                            id_usuario=id_entrenadora,
+                            propietario_id=usuario.id_usuario
+                        )
+                        st.success(f"✅ Perfil de atleta '{atleta.nombre}' creado y vinculado a entrenadora.")
 
     st.markdown("---")
 
@@ -139,30 +140,28 @@ def mostrar_usuarios():
         st.info("No hay usuarios disponibles para seleccionar.")
 
         # ───────────────────────────────
-        # Formulario de edición
+        # Formulario de edición y eliminación (solo admin)
         # ───────────────────────────────
-        with st.expander("✏️ Editar usuario"):
-            with st.form(f"form_editar_{id_usuario}"):
-                nuevo_nombre = st.text_input("Nombre", usuario.nombre)
-                nuevo_email = st.text_input("Email", usuario.email)
-                nuevo_rol = st.selectbox("Rol", ["admin", "entrenadora", "atleta"],
-                                         index=["admin","entrenadora","atleta"].index(usuario.rol))
+        if rol_actual == "admin":
+            with st.expander("✏️ Editar usuario"):
+                with st.form(f"form_editar_{id_usuario}"):
+                    nuevo_nombre = st.text_input("Nombre", usuario.nombre)
+                    nuevo_email = st.text_input("Email", usuario.email)
+                    nuevo_rol = st.selectbox("Rol", ["admin", "entrenadora", "atleta"],
+                                             index=["admin","entrenadora","atleta"].index(usuario.rol))
 
-                actualizar = st.form_submit_button("💾 Guardar cambios")
+                    actualizar = st.form_submit_button("💾 Guardar cambios")
 
-                if actualizar:
-                    sql.actualizar_usuario(
-                        id_usuario=usuario.id_usuario,
-                        nombre=nuevo_nombre,
-                        email=nuevo_email,
-                        rol=nuevo_rol
-                    )
-                    st.success(f"✅ Usuario '{nuevo_nombre}' actualizado correctamente. 🔄 Recarga la página para ver los cambios.")
+                    if actualizar:
+                        sql.actualizar_usuario(
+                            id_usuario=usuario.id_usuario,
+                            nombre=nuevo_nombre,
+                            email=nuevo_email,
+                            rol=nuevo_rol
+                        )
+                        st.success(f"✅ Usuario '{nuevo_nombre}' actualizado correctamente. 🔄 Recarga la página para ver los cambios.")
 
-        # ───────────────────────────────
-        # Botón de eliminación
-        # ───────────────────────────────
-        if st.button(f"🗑️ Eliminar usuario '{usuario.nombre}'", type="primary"):
-            sql.borrar_usuario(usuario.id_usuario)
-            st.warning(f"Usuario '{usuario.nombre}' eliminado correctamente. 🔄 Recarga la página para actualizar la lista.")
+            if st.button(f"🗑️ Eliminar usuario '{usuario.nombre}'", type="primary"):
+                sql.borrar_usuario(usuario.id_usuario)
+                st.warning(f"Usuario '{usuario.nombre}' eliminado correctamente. 🔄 Recarga la página para actualizar la lista.")
         

@@ -46,66 +46,19 @@ if missing:
 # ─────────────────────────────────────────────
 st.sidebar.title("🏋️ Athlete Performance Tracker")
 
-# Rol actual en sesión (por ahora seleccionable manualmente)
-if "ROL_ACTUAL" not in st.session_state:
-    st.session_state["ROL_ACTUAL"] = "admin"
-
-rol_actual = st.sidebar.selectbox(
-    "Rol actual",
-    ["admin", "entrenadora", "atleta"],
-    index=["admin", "entrenadora", "atleta"].index(st.session_state["ROL_ACTUAL"]),
-    key="ROL_ACTUAL"
-)
-
-# ID de usuario actual (por ahora simulado en sesión)
-if "USUARIO_ID" not in st.session_state:
-    st.session_state["USUARIO_ID"] = 1  # ⚠️ Ajusta según tu lógica de login real
-
-usuario_id = st.session_state["USUARIO_ID"]
-
-# Prueba 🔍 Simulación avanzada de roles
-st.sidebar.markdown("### Simulación avanzada")
-rol_actual = st.sidebar.selectbox("Simular como", ["admin", "entrenadora", "atleta"])
-
 import src.persistencia.sql as sql
-if rol_actual == "entrenadora":
-    entrenadoras = [u for u in sql.obtener_usuarios() if u.rol == "entrenadora"]
-    opciones = {f"{e.nombre} (ID {e.id_usuario})": e.id_usuario for e in entrenadoras}
-    if opciones:
-        seleccion = st.sidebar.selectbox("Selecciona entrenadora", list(opciones.keys()))
-        usuario_id = opciones.get(seleccion)
-        if usuario_id is None:
-            st.sidebar.warning("⚠️ Selección inválida o sin coincidencia.")
-            usuario_id = 0
-    else:
-        st.sidebar.info("No hay entrenadoras disponibles.")
-        usuario_id = 0
 
-elif rol_actual == "atleta":
-    atletas = sql.obtener_atletas()
-    opciones = {f"{a.nombre} (ID {a.id_atleta})": a.id_usuario for a in atletas if a.id_usuario}
-    if opciones:
-        seleccion = st.sidebar.selectbox("Selecciona atleta", list(opciones.keys()))
-        usuario_id = opciones.get(seleccion)
-        if usuario_id is None:
-            st.sidebar.warning("⚠️ Selección inválida o sin coincidencia.")
-            usuario_id = 0
-    else:
-        st.sidebar.info("No hay atletas disponibles.")
-        usuario_id = 0
+# Rol actual y usuario_id obtenidos de sesión/login real
+rol_actual = st.session_state.get("ROL_ACTUAL", "admin")
+usuario_id = st.session_state.get("USUARIO_ID", 0)
 
-else:
-    usuario_id = 0  # admin
-
-# Mostrar nombre del usuario activo (entrenadora o atleta)
+# Mostrar usuario activo en la barra lateral
 if rol_actual in ["entrenadora", "atleta"]:
     usuarios = sql.obtener_usuarios()
     nombre_usuario = next((u.nombre for u in usuarios if u.id_usuario == usuario_id), "—")
     st.sidebar.markdown(f"**🧑 Usuario activo:** {nombre_usuario} (ID {usuario_id})")
 elif rol_actual == "admin":
     st.sidebar.markdown("**🧑 Usuario activo:** Administrador")
-
-# ----------------------------
 
 # Pestañas visibles según rol
 tabs_visibles = tabs_visibles_por_rol(rol_actual)
@@ -139,7 +92,8 @@ elif opcion == "📅 Calendario":
     calendario.mostrar_calendario(rol_actual=rol_actual, usuario_id=usuario_id)
 
 elif opcion == "👥 Usuarios":
-    usuarios.mostrar_usuarios()
+    # 🔑 Pasamos rol_actual y usuario_id reales para condicionar permisos
+    usuarios.mostrar_usuarios(rol_actual=rol_actual, usuario_id=usuario_id)
 
 elif opcion == "💾 Backups":
     st.title("Gestión de Backups")
