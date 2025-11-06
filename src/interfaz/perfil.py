@@ -24,7 +24,6 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
     # Información de depuración extendida
     # ───────────────────────────────
     import os
-    from src.persistencia import sql
     import backup_storage
 
     try:
