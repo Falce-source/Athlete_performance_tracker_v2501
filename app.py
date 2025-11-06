@@ -63,19 +63,23 @@ if "USUARIO_ID" not in st.session_state:
 
 usuario_id = st.session_state["USUARIO_ID"]
 
-# Prueba. Bloque de depuración
-st.sidebar.markdown("### 🔍 Test rápido de roles")
+#Prueba. 🔍 Bloque de simulación rápida de roles (para test)
+st.sidebar.markdown("### Simulación rápida")
 if st.sidebar.button("Simular Admin"):
-    st.session_state["ROL_ACTUAL"] = "admin"
-    st.session_state["USUARIO_ID"] = 1
-
+    st.session_state["ROL_SIMULADO"] = "admin"
 if st.sidebar.button("Simular Entrenadora"):
-    st.session_state["ROL_ACTUAL"] = "entrenadora"
-    st.session_state["USUARIO_ID"] = 2  # ID ficticio de entrenadora
-
+    st.session_state["ROL_SIMULADO"] = "entrenadora"
 if st.sidebar.button("Simular Atleta"):
-    st.session_state["ROL_ACTUAL"] = "atleta"
-    st.session_state["USUARIO_ID"] = 3  # ID ficticio de atleta
+    st.session_state["ROL_SIMULADO"] = "atleta"
+
+# Usar el rol simulado si existe, si no el del selectbox
+rol_actual = st.session_state.get("ROL_SIMULADO", rol_actual)
+
+# ID de usuario actual (simulado en sesión)
+if "USUARIO_ID" not in st.session_state:
+    st.session_state["USUARIO_ID"] = 1  # ⚠️ Ajusta según tu lógica de login real
+
+usuario_id = st.session_state["USUARIO_ID"]
 # ----------------------------
 
 # Pestañas visibles según rol
