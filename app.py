@@ -63,6 +63,21 @@ if "USUARIO_ID" not in st.session_state:
 
 usuario_id = st.session_state["USUARIO_ID"]
 
+# Prueba. Bloque de depuración
+st.sidebar.markdown("### 🔍 Test rápido de roles")
+if st.sidebar.button("Simular Admin"):
+    st.session_state["ROL_ACTUAL"] = "admin"
+    st.session_state["USUARIO_ID"] = 1
+
+if st.sidebar.button("Simular Entrenadora"):
+    st.session_state["ROL_ACTUAL"] = "entrenadora"
+    st.session_state["USUARIO_ID"] = 2  # ID ficticio de entrenadora
+
+if st.sidebar.button("Simular Atleta"):
+    st.session_state["ROL_ACTUAL"] = "atleta"
+    st.session_state["USUARIO_ID"] = 3  # ID ficticio de atleta
+# ----------------------------
+
 # Pestañas visibles según rol
 tabs_visibles = tabs_visibles_por_rol(rol_actual)
 
