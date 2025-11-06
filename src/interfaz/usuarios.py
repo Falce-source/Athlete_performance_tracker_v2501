@@ -182,14 +182,6 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
                             st.success(f"✅ Usuario '{nuevo_nombre}' actualizado correctamente. 🔄 Recarga la página para ver los cambios.")
                     except ValueError as e:
                         st.error(str(e))
-                    else:
-                        sql.actualizar_usuario(
-                            id_usuario=usuario.id_usuario,
-                            nombre=nuevo_nombre,
-                            email=nuevo_email,
-                            rol=nuevo_rol
-                        )
-                        st.success(f"✅ Usuario '{nuevo_nombre}' actualizado correctamente. 🔄 Recarga la página para ver los cambios.")
 
         if st.button(f"🗑️ Eliminar usuario '{usuario.nombre}'", type="primary"):
             try:
