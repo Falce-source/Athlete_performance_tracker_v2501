@@ -212,14 +212,18 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
                     unsafe_allow_html=True
                 )
             with cols[1]:
-                # Contexto con propietario del evento
+                # Determinar propietario real del evento (si está en datos)
+                propietario_evento = e.get("id_autor") or id_atleta
+
                 ctx_evento = Contexto(
                     rol_actual=rol_actual,
                     usuario_id=usuario_id or 0,
                     atleta_id=id_atleta,
-                    propietario_id=id_atleta  # aquí asumimos que el evento pertenece al atleta seleccionado
+                    propietario_id=propietario_evento
                 )
-                if puede_borrar_evento_calendario(ctx_evento):
+
+                # Admin siempre puede borrar
+                if rol_actual == "admin" or puede_borrar_evento_calendario(ctx_evento):
                     if st.button("🗑️", key=f"del_{row['id_evento']}"):
                         sql.borrar_evento_calendario(int(row["id_evento"]))
                         st.success(f"Evento {row['id_evento']} eliminado")
