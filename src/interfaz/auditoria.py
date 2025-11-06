@@ -191,6 +191,37 @@ def validar_atletas_duplicados():
     else:
         st.success("✅ No se detectaron duplicados por nombre, contacto o email.")
 
+def validar_usuarios_duplicados():
+    st.subheader("🧪 Detección de usuarios duplicados")
+
+    usuarios = sql.obtener_usuarios()
+    duplicados = []
+
+    # Por email
+    emails = {}
+    for u in usuarios:
+        email = u.email.strip().lower()
+        if email in emails:
+            duplicados.append(f"❌ Email duplicado: '{email}' en usuarios ID {u.id_usuario} y {emails[email]}")
+        else:
+            emails[email] = u.id_usuario
+
+    # Por nombre (no siempre crítico, pero útil si hay colisiones)
+    nombres = {}
+    for u in usuarios:
+        nombre = u.nombre.strip().lower()
+        if nombre in nombres:
+            duplicados.append(f"⚠️ Nombre duplicado: '{u.nombre}' en usuarios ID {u.id_usuario} y {nombres[nombre]}")
+        else:
+            nombres[nombre] = u.id_usuario
+
+    if duplicados:
+        st.warning("🔍 Usuarios duplicados detectados:")
+        for d in duplicados:
+            st.markdown(f"- {d}")
+    else:
+        st.success("✅ No se detectaron duplicados por email o nombre.")
+
 def mostrar_auditoria():
     st.header("🔍 Auditoría Técnica")
 
@@ -241,4 +272,5 @@ def mostrar_auditoria():
     st.subheader("📋 Validaciones cruzadas")
     validar_flujo_atleta()
     validar_atletas_duplicados()
+    validar_usuarios_duplicados()
 
