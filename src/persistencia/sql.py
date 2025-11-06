@@ -128,10 +128,12 @@ class Atleta(Base):
     propietario_id = Column(Integer, ForeignKey("usuarios.id_usuario"), nullable=True)
 
     # Usuario del propio atleta (cuenta de login del atleta)
+    atleta_usuario_id = Column(Integer, ForeignKey("usuarios.id_usuario"), nullable=True)
+
     atleta_usuario = relationship(
         "Usuario",
         back_populates="perfiles_como_atleta",
-        foreign_keys=[atleta_usuario_id]
+        foreign_keys="Atleta.atleta_usuario_id"
     )
 
     nombre = Column(String, nullable=False)
