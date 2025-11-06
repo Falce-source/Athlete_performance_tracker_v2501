@@ -140,7 +140,7 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
                 "start": e["start"],
                 "allDay": True,
                 "tipo_evento": tipo,          # 🔑 añade el tipo para que el otro módulo lo use
-                "extendedProps": valor
+                "extendedProps": {**valor, "entrenadora": nombre_entrenadora}
             }
 
             eventos_fc.append(evento_fc)
