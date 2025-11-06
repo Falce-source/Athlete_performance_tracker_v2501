@@ -11,6 +11,8 @@ import shutil
 import backup_storage
 import sqlite3
 
+from sqlalchemy import text
+
  # ─────────────────────────────────────────────
  # CONFIGURACIÓN BÁSICA
  # ─────────────────────────────────────────────
@@ -109,6 +111,9 @@ class Atleta(Base):
     id_atleta = Column(Integer, primary_key=True, autoincrement=True)
     id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario"), nullable=True)
 
+    # Usuario que creó el atleta (admin o entrenadora)
+    propietario_id = Column(Integer, ForeignKey("usuarios.id_usuario"), nullable=True)
+
     nombre = Column(String, nullable=False)
     apellidos = Column(String)
     edad = Column(Integer)
@@ -122,7 +127,11 @@ class Atleta(Base):
     consentimiento = Column(Boolean, default=False)
     creado_en = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
-    usuario = relationship("Usuario", back_populates="atletas")
+    # Entrenadora asignada
+    usuario = relationship("Usuario", back_populates="atletas", foreign_keys=[id_usuario])
+
+    # Propietario (quien creó el atleta)
+    propietario = relationship("Usuario", foreign_keys=[propietario_id])
 
   # Relación con Evento
     eventos = relationship("Evento", back_populates="atleta", cascade="all, delete-orphan")
@@ -154,6 +163,16 @@ def init_db():
 # ─────────────────────────────────────────────
 # FUNCIONES CRUD: USUARIOS
 # ─────────────────────────────────────────────
+
+def ensure_schema():
+    """Añade columna propietario_id a atletas si no existe (parche temporal)."""
+    with SessionLocal() as session:
+        result = session.execute(text("PRAGMA table_info(atletas);"))
+        columnas = [row[1] for row in result.fetchall()]
+        if "propietario_id" not in columnas:
+            session.execute(text("ALTER TABLE atletas ADD COLUMN propietario_id INTEGER;"))
+            session.commit()
+            print("✅ Columna propietario_id añadida a la tabla atletas")
 
 def crear_usuario(nombre, email, rol, password_hash: str):
     """Crea un usuario con contraseña ya hasheada"""
