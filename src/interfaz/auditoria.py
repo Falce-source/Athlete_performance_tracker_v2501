@@ -159,6 +159,38 @@ def validar_flujo_atleta():
     else:
         st.success("✅ Todos los atletas están correctamente vinculados con usuario, entrenadora y propietario.")
 
+def validar_atletas_duplicados():
+    st.subheader("🧪 Detección de atletas duplicados")
+
+    atletas = sql.obtener_atletas()
+    duplicados = []
+
+    # Por nombre + apellidos + contacto
+    vistos = {}
+    for a in atletas:
+        clave = (a.nombre.strip().lower(), (a.apellidos or "").strip().lower(), (a.contacto or "").strip().lower())
+        if clave in vistos:
+            duplicados.append(f"❌ Duplicado por nombre/apellidos/contacto: '{a.nombre} {a.apellidos}' (ID {a.id_atleta}) y (ID {vistos[clave]})")
+        else:
+            vistos[clave] = a.id_atleta
+
+    # Por email compartido entre perfiles
+    emails = {}
+    for a in atletas:
+        email = (a.contacto or "").strip().lower()
+        if email:
+            if email in emails:
+                duplicados.append(f"❌ Email compartido: '{email}' en atletas ID {a.id_atleta} y {emails[email]}")
+            else:
+                emails[email] = a.id_atleta
+
+    if duplicados:
+        st.warning("🔍 Atletas duplicados detectados:")
+        for d in duplicados:
+            st.markdown(f"- {d}")
+    else:
+        st.success("✅ No se detectaron duplicados por nombre, contacto o email.")
+
 def mostrar_auditoria():
     st.header("🔍 Auditoría Técnica")
 
@@ -208,3 +240,5 @@ def mostrar_auditoria():
     
     st.subheader("📋 Validaciones cruzadas")
     validar_flujo_atleta()
+    validar_atletas_duplicados()
+
