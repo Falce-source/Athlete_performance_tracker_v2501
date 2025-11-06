@@ -16,9 +16,9 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
         entrenadoras = [u for u in usuarios if u.rol == "entrenadora"]
         opciones_entrenadora = {f"{e.nombre} (ID {e.id_usuario})": e.id_usuario for e in entrenadoras}
         seleccion_entrenadora = st.selectbox("Asignar atleta a entrenadora", list(opciones_entrenadora.keys()))
-        id_entrenadora = opciones_entrenadora[seleccion_entrenadora]
+        id_usuario_asignado = opciones_entrenadora[seleccion_entrenadora]
     else:
-        id_entrenadora = usuario_id
+        id_usuario_asignado = usuario_id  # 🔑 entrenadora crea sus propios atletas
 
     # ───────────────────────────────
     # Información de depuración extendida
