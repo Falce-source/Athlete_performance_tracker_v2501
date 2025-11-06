@@ -70,13 +70,6 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
             # 🔔 Aviso visual si ya tiene perfil
             st.info("Ya tienes un perfil creado. No puedes crear más atletas.")
 
-
-    # Caso especial: atleta puede crear solo su propio perfil si aún no existe
-    if rol_actual == "atleta":
-        atletas_propios = sql.obtener_atletas_por_usuario(usuario_id)
-        if not atletas_propios:   # 🔑 solo si no tiene ninguno
-            puede_crear = True
-
     if puede_crear:
         with st.form("form_crear_atleta", clear_on_submit=True):
             st.subheader("➕ Crear nuevo atleta")
@@ -111,7 +104,7 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
                         equipo=equipo,
                         alergias=alergias,
                         consentimiento=consentimiento,
-                        id_usuario=id_usuario_asignado  # 🔑 asignar propietario
+                        id_usuario=id_usuario_asignado  # 🔑 admin → entrenadora seleccionada, entrenadora → ella misma, atleta → su propio usuario
                     )
                     st.success(f"✅ Atleta '{atleta.nombre}' creado correctamente")
     else:
