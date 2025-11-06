@@ -133,7 +133,8 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
         opciones_entrenadora = {f"{e.nombre} (ID {e.id_usuario})": e.id_usuario for e in entrenadoras}
         seleccion_entrenadora = st.selectbox("Filtrar atletas por entrenadora", list(opciones_entrenadora.keys()))
         id_entrenadora = opciones_entrenadora[seleccion_entrenadora]
-        atletas = [a for a in sql.obtener_atletas() if a.id_usuario == id_entrenadora]
+        # 🔑 obtenemos atletas directamente con relación usuario precargada
+        atletas = sql.obtener_atletas_por_usuario(id_entrenadora)
 
     else:
         atletas = sql.obtener_atletas()
