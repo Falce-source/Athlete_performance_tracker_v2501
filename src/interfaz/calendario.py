@@ -109,7 +109,8 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
             "id_evento": e["id"],
             "Fecha": e["start"],  # string ISO
             "Tipo": e["tipo_evento"],
-            "Notas": e.get("notas", "")
+            "Notas": e.get("notas", ""),
+            "Entrenadora": nombre_entrenadora
         }
 
         # Normalizamos el tipo de evento para evitar inconsistencias
