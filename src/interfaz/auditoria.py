@@ -231,15 +231,21 @@ def validar_desvinculados():
     errores = []
 
     # Atletas sin usuario vinculado
+    ids_reportados = set()  # ← nuevo
+
     sin_usuario = [a for a in atletas if not getattr(a, "atleta_usuario_id", None)]
     for a in sin_usuario:
         errores.append(f"❌ Atleta '{a.nombre}' (ID {a.id_atleta}) sin usuario vinculado")
+        ids_reportados.add(a.id_atleta)
 
     # Usuarios con rol atleta sin perfil asociado
     ids_vinculados = {a.atleta_usuario_id for a in atletas if a.atleta_usuario_id}
     atletas_huerfanos = [u for u in usuarios if u.rol == "atleta" and u.id_usuario not in ids_vinculados]
     for u in atletas_huerfanos:
         errores.append(f"❌ Usuario atleta '{u.nombre}' (ID {u.id_usuario}) no está vinculado a ningún perfil")
+
+    # Eliminar errores duplicados ya reportados
+    errores = list({e for e in errores if not any(f"(ID {id})" in e for id in ids_reportados)})
 
     if errores:
         st.warning("🔍 Desvinculaciones detectadas:")
