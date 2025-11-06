@@ -88,38 +88,41 @@ def probar_visibilidad_por_rol():
     try:
         roles = ["admin", "entrenadora", "atleta"]
         for rol in roles:
-            atleta = sql.crear_atleta(nombre=f"Test {rol}", edad=25, deporte="Test", consentimiento=True)
+            comentarios, eventos = [], []
+            try:
+                atleta = sql.crear_atleta(nombre=f"Test {rol}", edad=25, deporte="Test", consentimiento=True)
 
-            sql.crear_evento_calendario(
-                id_atleta=atleta.id_atleta,
-                fecha=datetime.now(),
-                tipo_evento="Comentario",
-                valor={"detalle": f"Evento privado para {rol}"},
-                notas=f"Nota privada {rol}"
-            )
+                sql.crear_evento_calendario(
+                    id_atleta=atleta.id_atleta,
+                    fecha=datetime.now(),
+                    tipo_evento="Comentario",
+                    valor={"detalle": f"Evento privado para {rol}"},
+                    notas=f"Nota privada {rol}"
+                )
 
-            sql.crear_comentario(
-                id_atleta=atleta.id_atleta,
-                texto=f"Comentario visible solo para {rol}",
-                visible_para=rol,
-                id_autor=None  # ← no filtra por autor, solo por visibilidad
-            )
+                sql.crear_comentario(
+                    id_atleta=atleta.id_atleta,
+                    texto=f"Comentario visible solo para {rol}",
+                    visible_para=rol,
+                    id_autor=None
+                )
 
-            eventos = sql.obtener_eventos_calendario_por_atleta(atleta.id_atleta, rol_actual=rol)
-            comentarios = sql.obtener_comentarios_por_atleta(atleta.id_atleta, rol_actual=rol)
+                eventos = sql.obtener_eventos_calendario_por_atleta(atleta.id_atleta, rol_actual=rol)
+                comentarios = sql.obtener_comentarios_por_atleta(atleta.id_atleta, rol_actual=rol)
 
-            eventos_ok = any(e.get("tipo_evento") != "Comentario" or rol == "admin" for e in eventos)
-            comentarios_ok = any(c.get("visible_para") == rol for c in comentarios)
+                eventos_ok = any(e.get("tipo_evento") != "Comentario" or rol == "admin" for e in eventos)
+                comentarios_ok = any(c.get("visible_para") == rol for c in comentarios)
 
-            if not eventos_ok or not comentarios_ok:
-                resultado["ok"] = False
-                resultado["mensaje"] += f"❌ Rol `{rol}` no accede correctamente a sus datos\n"
+                if not eventos_ok or not comentarios_ok:
+                    resultado["ok"] = False
+                    resultado["mensaje"] += f"❌ Rol `{rol}` no accede correctamente a sus datos\n"
 
-            for c in comentarios:
-                sql.borrar_comentario(c.id_comentario)
-            for e in eventos:
-                sql.borrar_evento_calendario(e["id_atleta"], e["fecha"])
-            sql.borrar_atleta(atleta.id_atleta)
+            finally:
+                for c in comentarios:
+                    sql.borrar_comentario(c["id_comentario"])
+                for e in eventos:
+                    sql.borrar_evento_calendario(e["id_atleta"], e["fecha"])
+                sql.borrar_atleta(atleta.id_atleta)
 
         if resultado["ok"]:
             resultado["mensaje"] = "✅ Filtro por visibilidad funciona correctamente para todos los roles"
