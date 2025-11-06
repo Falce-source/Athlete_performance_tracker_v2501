@@ -82,6 +82,15 @@ elif rol_actual == "atleta":
 
 else:
     usuario_id = 0  # admin
+
+# Mostrar nombre del usuario activo (entrenadora o atleta)
+if rol_actual in ["entrenadora", "atleta"]:
+    usuarios = sql.obtener_usuarios()
+    nombre_usuario = next((u.nombre for u in usuarios if u.id_usuario == usuario_id), "—")
+    st.sidebar.markdown(f"**🧑 Usuario activo:** {nombre_usuario} (ID {usuario_id})")
+elif rol_actual == "admin":
+    st.sidebar.markdown("**🧑 Usuario activo:** Administrador")
+
 # ----------------------------
 
 # Pestañas visibles según rol
