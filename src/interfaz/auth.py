@@ -30,7 +30,7 @@ def logout():
     for k in ["USUARIO_ID", "ROL_ACTUAL", "USUARIO_NOMBRE"]:
         st.session_state.pop(k, None)
     st.success("Sesión cerrada")
-    st.experimental_rerun()
+    st.rerun()
 
 def crear_usuario_admin():
     """Formulario para que el admin cree usuarios con contraseña inicial"""
