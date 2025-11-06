@@ -389,6 +389,25 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                         else:
                             st.error("❌ No se pudo identificar el evento")
                         st.rerun()
+
+                    # 🔑 Nuevo: borrado condicionado por rol
+                    if eliminar:
+                        event_id = props.get("id_base")
+                        if event_id is not None:
+                            ctx_evento = Contexto(
+                                rol_actual=st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin")),
+                                usuario_id=st.session_state.get("USUARIO_ID", 0),
+                                atleta_id=id_atleta,
+                                propietario_id=props.get("id_autor") or id_atleta
+                            )
+                            if ctx_evento.rol_actual == "admin" or puede_borrar_evento_calendario(ctx_evento):
+                                sql.borrar_evento_calendario(int(event_id))
+                                st.success(f"🗑️ Estado diario {event_id} eliminado")
+                                st.rerun()
+                            else:
+                                st.caption("⛔ No tienes permisos para borrar este estado diario")
+                        else:
+                            st.error("❌ No se pudo identificar el evento para borrar")
             editar_estado()
 
         # -------------------------
