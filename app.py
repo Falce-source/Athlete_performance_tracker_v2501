@@ -63,23 +63,25 @@ if "USUARIO_ID" not in st.session_state:
 
 usuario_id = st.session_state["USUARIO_ID"]
 
-#Prueba. 🔍 Bloque de simulación rápida de roles (para test)
-st.sidebar.markdown("### Simulación rápida")
-if st.sidebar.button("Simular Admin"):
-    st.session_state["ROL_SIMULADO"] = "admin"
-if st.sidebar.button("Simular Entrenadora"):
-    st.session_state["ROL_SIMULADO"] = "entrenadora"
-if st.sidebar.button("Simular Atleta"):
-    st.session_state["ROL_SIMULADO"] = "atleta"
+# Prueba 🔍 Simulación avanzada de roles
+st.sidebar.markdown("### Simulación avanzada")
+rol_actual = st.sidebar.selectbox("Simular como", ["admin", "entrenadora", "atleta"])
 
-# Usar el rol simulado si existe, si no el del selectbox
-rol_actual = st.session_state.get("ROL_SIMULADO", rol_actual)
+import src.persistencia.sql as sql
+if rol_actual == "entrenadora":
+    entrenadoras = [u for u in sql.obtener_usuarios() if u.rol == "entrenadora"]
+    opciones = {f"{e.nombre} (ID {e.id_usuario})": e.id_usuario for e in entrenadoras}
+    seleccion = st.sidebar.selectbox("Selecciona entrenadora", list(opciones.keys()))
+    usuario_id = opciones[seleccion]
 
-# ID de usuario actual (simulado en sesión)
-if "USUARIO_ID" not in st.session_state:
-    st.session_state["USUARIO_ID"] = 1  # ⚠️ Ajusta según tu lógica de login real
+elif rol_actual == "atleta":
+    atletas = sql.obtener_atletas()
+    opciones = {f"{a.nombre} (ID {a.id_atleta})": a.id_usuario for a in atletas if a.id_usuario}
+    seleccion = st.sidebar.selectbox("Selecciona atleta", list(opciones.keys()))
+    usuario_id = opciones[seleccion]
 
-usuario_id = st.session_state["USUARIO_ID"]
+else:
+    usuario_id = 0  # admin
 # ----------------------------
 
 # Pestañas visibles según rol
