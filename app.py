@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 import os
 import backup_storage
 from src.interfaz import auth
+from src.persistencia import sql
 
 # --- CREACIÓN ADMIN INICIAL (solo la primera vez) ---
 if not sql.obtener_usuario_por_email("admin@demo.com"):
