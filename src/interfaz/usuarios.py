@@ -155,16 +155,30 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
                 nuevo_rol = st.selectbox("Rol", ["admin", "entrenadora", "atleta"],
                                          index=["admin","entrenadora","atleta"].index(usuario.rol))
 
+                # Campo opcional para resetear contraseña
+                nueva_password = st.text_input("Nueva contraseña (dejar vacío si no quieres cambiarla)", type="password")
                 actualizar = st.form_submit_button("💾 Guardar cambios")
 
                 if actualizar:
-                    sql.actualizar_usuario(
-                        id_usuario=usuario.id_usuario,
-                        nombre=nuevo_nombre,
-                        email=nuevo_email,
-                        rol=nuevo_rol
-                    )
-                    st.success(f"✅ Usuario '{nuevo_nombre}' actualizado correctamente. 🔄 Recarga la página para ver los cambios.")
+                    if nueva_password.strip():
+                        from src.utils.seguridad import hash_password
+                        ph = hash_password(nueva_password)
+                        sql.actualizar_usuario(
+                            id_usuario=usuario.id_usuario,
+                            nombre=nuevo_nombre,
+                            email=nuevo_email,
+                            rol=nuevo_rol,
+                            password_hash=ph
+                        )
+                        st.success(f"✅ Usuario '{nuevo_nombre}' actualizado y contraseña reseteada. 🔄 Recarga la página para ver los cambios.")
+                    else:
+                        sql.actualizar_usuario(
+                            id_usuario=usuario.id_usuario,
+                            nombre=nuevo_nombre,
+                            email=nuevo_email,
+                            rol=nuevo_rol
+                        )
+                        st.success(f"✅ Usuario '{nuevo_nombre}' actualizado correctamente. 🔄 Recarga la página para ver los cambios.")
 
         if st.button(f"🗑️ Eliminar usuario '{usuario.nombre}'", type="primary"):
             sql.borrar_usuario(usuario.id_usuario)
