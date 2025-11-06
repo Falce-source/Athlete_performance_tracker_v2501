@@ -14,6 +14,14 @@ import os
 import backup_storage
 from src.interfaz import auth
 
+# --- CREACIÓN ADMIN INICIAL (solo la primera vez) ---
+if not sql.obtener_usuario_por_email("admin@demo.com"):
+    from src.utils.seguridad import hash_password
+    ph = hash_password("admin123")
+    sql.crear_usuario(nombre="Administrador", email="admin@demo.com", rol="admin", password_hash=ph)
+    print("✅ Admin inicial creado")
+# ----------------------------------------------------
+
 # Si no hay sesión, mostrar login y detener el resto
 if "USUARIO_ID" not in st.session_state or "ROL_ACTUAL" not in st.session_state:
     logged = auth.login_form()
