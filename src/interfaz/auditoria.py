@@ -76,9 +76,6 @@ def probar_flujo(modulo, rol_actual="admin"):
         resultado.get("backup_creado"),
         rol_actual
     )
-
-    return resultado
-
     return resultado
 
 def probar_visibilidad_por_rol():
