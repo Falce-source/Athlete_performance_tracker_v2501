@@ -4,6 +4,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 from datetime import datetime, date, timezone, UTC
 from sqlalchemy import JSON  # si usas SQLAlchemy 1.4+ puedes definir JSON
+from sqlalchemy.orm import declarative_base, relationship, sessionmaker, joinedload
 import json
 import os
 import shutil
@@ -185,15 +186,23 @@ from sqlalchemy.orm import joinedload
 
 def obtener_atletas():
     with SessionLocal() as session:
-        return session.query(Atleta).options(joinedload(Atleta.usuario)).all()
+        return session.query(Atleta)\
+            .options(joinedload(Atleta.usuario))\
+            .all()
 
 def obtener_atletas_por_usuario(id_usuario):
     with SessionLocal() as session:
-        return session.query(Atleta).filter_by(id_usuario=id_usuario).all()
+        return session.query(Atleta)\
+            .options(joinedload(Atleta.usuario))\
+            .filter_by(id_usuario=id_usuario)\
+            .all()
 
 def obtener_atleta_por_id(id_atleta):
     with SessionLocal() as session:
-        return session.query(Atleta).filter_by(id_atleta=id_atleta).first()
+        return session.query(Atleta)\
+            .options(joinedload(Atleta.usuario))\
+            .filter_by(id_atleta=id_atleta)\
+            .first()
 
 def actualizar_atleta(id_atleta, **kwargs):
     """

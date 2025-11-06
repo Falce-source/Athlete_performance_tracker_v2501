@@ -78,6 +78,11 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
     seleccion = st.selectbox("Selecciona un atleta", list(opciones.keys()))
     id_atleta = opciones[seleccion]
 
+    # Mostrar entrenadora asociada al atleta
+    atleta_obj = sql.obtener_atleta_por_id(id_atleta)
+    nombre_entrenadora = atleta_obj.usuario.nombre if atleta_obj and atleta_obj.usuario else "—"
+    st.caption(f"👩‍🏫 Entrenadora asignada: {nombre_entrenadora}")
+
     # Construir contexto de permisos base (propietario_id se ajusta por evento)
     ctx_base = Contexto(
         rol_actual=rol_actual,
