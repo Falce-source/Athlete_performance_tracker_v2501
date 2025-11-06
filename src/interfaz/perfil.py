@@ -74,6 +74,16 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
         with st.form("form_crear_atleta", clear_on_submit=True):
             st.subheader("➕ Crear nuevo atleta")
 
+            # 🔑 Si el rol es admin, elegir entrenadora dentro del formulario
+            if rol_actual == "admin":
+                usuarios = sql.obtener_usuarios()
+                entrenadoras = [u for u in usuarios if u.rol == "entrenadora"]
+                opciones_entrenadora = {f"{e.nombre} (ID {e.id_usuario})": e.id_usuario for e in entrenadoras}
+                seleccion_entrenadora = st.selectbox("Asignar atleta a entrenadora", list(opciones_entrenadora.keys()))
+                id_usuario_asignado = opciones_entrenadora[seleccion_entrenadora]
+            else:
+                id_usuario_asignado = usuario_id
+
             nombre = st.text_input("Nombre", "")
             apellidos = st.text_input("Apellidos", "")
             edad = st.number_input("Edad", min_value=0, max_value=120, step=1)
