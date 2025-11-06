@@ -8,6 +8,13 @@ from src.utils.roles import Contexto, puede_editar_perfil_atleta
 def mostrar_perfil(rol_actual="admin", usuario_id=None):
     st.header("👤 Perfil de Atleta")
 
+    if rol_actual in ["entrenadora", "atleta"]:
+        usuarios = sql.obtener_usuarios()
+        nombre_usuario = next((u.nombre for u in usuarios if u.id_usuario == usuario_id), "—")
+        st.caption(f"🔐 Rol activo: {rol_actual} | Usuario: {nombre_usuario} (ID {usuario_id})")
+    elif rol_actual == "admin":
+        st.caption("🔐 Rol activo: admin")
+
     # ───────────────────────────────
     # Selector de entrenadora (solo admin)
     # ───────────────────────────────
