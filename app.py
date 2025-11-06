@@ -4,11 +4,11 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-from src.interfaz import perfil
-from src.interfaz import calendario
-from src.interfaz import usuarios
-from src.interfaz import auditoria
-from src.interfaz import historial_validaciones
+import src.interfaz.perfil as perfil
+import src.interfaz.calendario as calendario
+import src.interfaz.usuarios as usuarios
+import src.interfaz.auditoria as auditoria
+import src.interfaz.historial_validaciones as historial_validaciones
 from dotenv import load_dotenv
 import os
 import backup_storage
