@@ -162,7 +162,6 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
                 if actualizar:
                     try:
                         if nueva_password.strip():
-                            from src.utils.seguridad import hash_password
                             ph = hash_password(nueva_password)
                             sql.actualizar_usuario(
                                 id_usuario=usuario.id_usuario,
