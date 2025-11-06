@@ -111,7 +111,7 @@ def probar_visibilidad_por_rol():
                 comentarios = sql.obtener_comentarios_por_atleta(atleta.id_atleta, rol_actual=rol)
 
                 eventos_ok = any(e.get("tipo_evento") != "Comentario" or rol == "admin" for e in eventos)
-                comentarios_ok = any(c.get("visible_para") == rol for c in comentarios)
+                comentarios_ok = any(c.visible_para == rol for c in comentarios)
 
                 if not eventos_ok or not comentarios_ok:
                     resultado["ok"] = False
@@ -119,7 +119,7 @@ def probar_visibilidad_por_rol():
 
             finally:
                 for c in comentarios:
-                    sql.borrar_comentario(c["id_comentario"])
+                    sql.borrar_comentario(c.id_comentario)
                 for e in eventos:
                     sql.borrar_evento_calendario(e["id_atleta"], e["fecha"])
                 sql.borrar_atleta(atleta.id_atleta)
