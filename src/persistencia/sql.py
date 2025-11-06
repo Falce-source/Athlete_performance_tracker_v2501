@@ -11,8 +11,6 @@ import shutil
 import backup_storage
 import sqlite3
 
-from sqlalchemy import text
-
  # ─────────────────────────────────────────────
  # CONFIGURACIÓN BÁSICA
  # ─────────────────────────────────────────────
@@ -167,16 +165,6 @@ def init_db():
 # ─────────────────────────────────────────────
 # FUNCIONES CRUD: USUARIOS
 # ─────────────────────────────────────────────
-
-def ensure_schema():
-    """Añade columna propietario_id a atletas si no existe (parche temporal)."""
-    with SessionLocal() as session:
-        result = session.execute(text("PRAGMA table_info(atletas);"))
-        columnas = [row[1] for row in result.fetchall()]
-        if "propietario_id" not in columnas:
-            session.execute(text("ALTER TABLE atletas ADD COLUMN propietario_id INTEGER;"))
-            session.commit()
-            print("✅ Columna propietario_id añadida a la tabla atletas")
 
 def crear_usuario(nombre, email, rol, password_hash: str):
     """Crea un usuario con contraseña ya hasheada"""

@@ -15,9 +15,6 @@ import backup_storage
 from src.interfaz import auth
 from src.persistencia import sql
 
-
-sql.ensure_schema()  # 🚨 Parche temporal para migrar la DB en Streamlit Cloud
-
 # --- RECUPERACIÓN ADMIN INICIAL ---
 from src.utils.seguridad import hash_password
 if not sql.obtener_usuario_por_email("admin@demo.com"):
