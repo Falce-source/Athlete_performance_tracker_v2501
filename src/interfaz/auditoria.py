@@ -254,20 +254,24 @@ def validar_desvinculados():
     else:
         st.success("✅ Todos los atletas y usuarios están correctamente vinculados.")
 
-def mostrar_atletas_ocultos():
-    st.subheader("🧩 Atletas no visibles en interfaz")
+def mostrar_atletas_ocultos_con_boton():
+    st.subheader("🧹 Atletas huérfanos detectados")
 
     atletas = sql.obtener_atletas()
     ocultos = [a for a in atletas if not a.atleta_usuario_id or not a.id_usuario]
 
     if ocultos:
         for a in ocultos:
-            st.markdown(f"- 🕵️‍♂️ Atleta: **{a.nombre}** (ID {a.id_atleta})")
-            st.markdown(f"  - Usuario vinculado: `{a.atleta_usuario_id}`")
-            st.markdown(f"  - Entrenadora asignada: `{a.id_usuario}`")
-            st.markdown(f"  - Propietario: `{a.propietario_id}`")
+            with st.expander(f"🕵️‍♂️ Atleta: {a.nombre} (ID {a.id_atleta})"):
+                st.markdown(f"- Usuario vinculado: `{a.atleta_usuario_id}`")
+                st.markdown(f"- Entrenadora asignada: `{a.id_usuario}`")
+                st.markdown(f"- Propietario: `{a.propietario_id}`")
+
+                if st.button(f"🗑️ Eliminar atleta '{a.nombre}'", key=f"borrar_{a.id_atleta}"):
+                    sql.borrar_atleta(a.id_atleta)
+                    st.warning(f"✅ Atleta '{a.nombre}' eliminado. 🔄 Recarga la pestaña para actualizar la lista.")
     else:
-        st.success("✅ No hay atletas ocultos por falta de vínculos.")
+        st.success("✅ No hay atletas huérfanos por falta de vínculos.")
 
 def mostrar_auditoria():
     st.header("🔍 Auditoría Técnica")
@@ -321,4 +325,4 @@ def mostrar_auditoria():
     validar_atletas_duplicados()
     validar_usuarios_duplicados()
     validar_desvinculados()
-    mostrar_atletas_ocultos()
+    mostrar_atletas_ocultos_con_boton()
