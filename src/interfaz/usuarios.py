@@ -46,6 +46,21 @@ def mostrar_usuarios():
         email = st.text_input("Email", "")
         rol = st.selectbox("Rol", ["admin", "entrenadora", "atleta"])
 
+        # 🔑 Si el rol es atleta, mostrar subformulario de perfil
+        if rol == "atleta":
+            nombre_atleta = st.text_input("Nombre atleta", "")
+            apellidos_atleta = st.text_input("Apellidos", "")
+            edad_atleta = st.number_input("Edad", min_value=0, max_value=120, step=1)
+            deporte_atleta = st.text_input("Deporte", "")
+            nivel_atleta = st.selectbox("Nivel", ["Iniciado", "Intermedio", "Avanzado", "Elite"])
+
+            # Solo admin puede asignar entrenadora
+            usuarios = sql.obtener_usuarios()
+            entrenadoras = [u for u in usuarios if u.rol == "entrenadora"]
+            opciones_entrenadora = {f"{e.nombre} (ID {e.id_usuario})": e.id_usuario for e in entrenadoras}
+            seleccion_entrenadora = st.selectbox("Asignar entrenadora", list(opciones_entrenadora.keys()))
+            id_entrenadora = opciones_entrenadora[seleccion_entrenadora]
+
         submitted = st.form_submit_button("Guardar usuario")
 
         if submitted:
@@ -54,6 +69,19 @@ def mostrar_usuarios():
             else:
                 usuario = sql.crear_usuario(nombre=nombre, email=email, rol=rol)
                 st.success(f"✅ Usuario '{usuario.nombre}' creado correctamente")
+
+                # 🔑 Si es atleta, crear también perfil vinculado
+                if rol == "atleta":
+                    atleta = sql.crear_atleta(
+                        nombre=nombre_atleta,
+                        apellidos=apellidos_atleta,
+                        edad=int(edad_atleta) if edad_atleta else None,
+                        deporte=deporte_atleta,
+                        nivel=nivel_atleta,
+                        id_usuario=id_entrenadora,       # entrenadora asignada
+                        propietario_id=usuario.id_usuario  # vínculo con usuario atleta
+                    )
+                    st.success(f"✅ Perfil de atleta '{atleta.nombre}' creado y vinculado a entrenadora.")
 
     st.markdown("---")
 
@@ -72,7 +100,12 @@ def mostrar_usuarios():
         "Nombre": u.nombre,
         "Email": u.email,
         "Rol": u.rol,
-        "Creado en": u.creado_en.strftime("%Y-%m-%d %H:%M") if isinstance(u.creado_en, datetime) else str(u.creado_en)
+        "Creado en": u.creado_en.strftime("%Y-%m-%d %H:%M") if isinstance(u.creado_en, datetime) else str(u.creado_en),
+        # 🔑 Si es atleta, buscamos su perfil y mostramos entrenadora asignada
+        "Entrenadora asignada": (
+            next((a.usuario.nombre for a in sql.obtener_atletas() if getattr(a, "propietario_id", None) == u.id_usuario and a.usuario), "—")
+            if u.rol == "atleta" else "—"
+        )
     } for u in usuarios])
 
     rol_filtro = st.selectbox("Filtrar por rol", ["Todos"] + sorted(df["Rol"].dropna().unique().tolist()))
@@ -99,6 +132,7 @@ def mostrar_usuarios():
         - **Email:** {usuario.email}
         - **Rol:** {usuario.rol}
         - **Creado en:** {usuario.creado_en}
+        {"- **Entrenadora asignada:** " + next((a.usuario.nombre for a in sql.obtener_atletas() if getattr(a, "propietario_id", None) == usuario.id_usuario and a.usuario), "—") if usuario.rol == "atleta" else ""}
         """)
 
         # ───────────────────────────────
