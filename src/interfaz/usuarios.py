@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from src.persistencia import sql
 from datetime import datetime
+from src.utils.seguridad import hash_password
 
 def mostrar_usuarios(rol_actual: str, usuario_id: int):
     st.header("👥 Gestión de Usuarios")
@@ -47,6 +48,9 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
             email = st.text_input("Email", "")
             rol = st.selectbox("Rol", ["admin", "entrenadora", "atleta"])
 
+            # Campo de contraseña inicial
+            password = st.text_input("Contraseña inicial", type="password")
+
             # 🔑 Si el rol es atleta, mostrar subformulario de perfil
             if rol == "atleta":
                 nombre_atleta = st.text_input("Nombre atleta", "")
@@ -65,11 +69,12 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
             submitted = st.form_submit_button("Guardar usuario")
 
             if submitted:
-                if nombre.strip() == "" or email.strip() == "":
-                    st.error("El nombre y el email son obligatorios")
+                if nombre.strip() == "" or email.strip() == "" or password.strip() == "":
+                    st.error("Nombre, email y contraseña son obligatorios")
                 else:
-                    usuario = sql.crear_usuario(nombre=nombre, email=email, rol=rol)
-                    st.success(f"✅ Usuario '{usuario.nombre}' creado correctamente")
+                    ph = hash_password(password)
+                    usuario = sql.crear_usuario(nombre=nombre, email=email, rol=rol, password_hash=ph)
+                    st.success(f"✅ Usuario '{usuario.nombre}' creado correctamente con contraseña inicial")
 
                     # 🔑 Si es atleta, crear también perfil vinculado
                     if rol == "atleta":
