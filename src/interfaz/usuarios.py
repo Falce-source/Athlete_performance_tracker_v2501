@@ -59,7 +59,7 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
                 deporte_atleta = st.text_input("Deporte", "")
                 nivel_atleta = st.selectbox("Nivel", ["Iniciado", "Intermedio", "Avanzado", "Elite"])
                 email_atleta = st.text_input("Email del atleta (login)", "")
-                password_atleta = st.text_input("Contraseña inicial del atleta", type="password")
+                password_inicial = st.text_input("Contraseña inicial del atleta", type="password")
 
                 # Admin asigna entrenadora
                 usuarios = sql.obtener_usuarios()
@@ -80,24 +80,24 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
 
                     # 🔑 Si es atleta, crear también perfil vinculado
                     if rol == "atleta":
-                        if email_atleta.strip() == "" or password_atleta.strip() == "":
-                            st.error("Email y contraseña del atleta son obligatorios")
+                        if email_atleta.strip() == "" or password_inicial.strip() == "":
+                            st.error("Email y contraseña inicial del atleta son obligatorios")
                         else:
-                            ph_atleta = hash_password(password_atleta)
+                            ph_atleta = hash_password(password_inicial)
                             usuario_atleta = sql.crear_usuario(
                                 nombre=nombre_atleta,
                                 email=email_atleta,
                                 rol="atleta",
-                                password_hash=ph_atleta
+                                password_hash=ph
                             )
                             atleta = sql.crear_atleta(
                                 nombre=nombre_atleta,
                                 apellidos=apellidos_atleta,
                                 edad=int(edad_atleta) if edad_atleta else None,
                                 deporte=deporte_atleta,
-                            nivel=nivel_atleta,
-                                id_usuario=id_entrenadora,
-                                propietario_id=usuario.id_usuario,  # quien lo creó (admin)
+                                nivel=nivel_atleta,
+                                id_usuario=usuario_id,      # Entrendora asignada
+                                propietario_id=usuario.id,  # quien lo creó (admin)
                                 atleta_usuario_id=usuario_atleta.id_usuario,
                                 contacto=email_atleta
                             )
