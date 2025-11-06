@@ -112,8 +112,11 @@ class Usuario(Base):
     atletas_creados = relationship("Atleta", back_populates="propietario", foreign_keys="Atleta.propietario_id")
 
     # (Opcional) relación inversa a perfiles que tienen esta cuenta como 'atleta_usuario'
-    perfiles_como_atleta = relationship("Atleta", foreign_keys="Atleta.atleta_usuario_id")
-
+    perfiles_como_atleta = relationship(
+        "Atleta",
+        back_populates="atleta_usuario",
+        foreign_keys="Atleta.atleta_usuario_id"
+    )
 
 class Atleta(Base):
     __tablename__ = "atletas"
@@ -125,7 +128,11 @@ class Atleta(Base):
     propietario_id = Column(Integer, ForeignKey("usuarios.id_usuario"), nullable=True)
 
     # Usuario del propio atleta (cuenta de login del atleta)
-    atleta_usuario_id = Column(Integer, ForeignKey("usuarios.id_usuario"), nullable=True)
+    atleta_usuario = relationship(
+        "Usuario",
+        back_populates="perfiles_como_atleta",
+        foreign_keys=[atleta_usuario_id]
+    )
 
     nombre = Column(String, nullable=False)
     apellidos = Column(String)
@@ -151,6 +158,9 @@ class Atleta(Base):
 
   # Relación con Evento
     eventos = relationship("Evento", back_populates="atleta", cascade="all, delete-orphan")
+
+    metricas = relationship("Metrica", back_populates="atleta", cascade="all, delete-orphan")
+    comentarios = relationship("Comentario", back_populates="atleta", cascade="all, delete-orphan")
 
 class Evento(Base):
     __tablename__ = "eventos"
@@ -405,6 +415,9 @@ class Metrica(Base):
     valor = Column(String)
     unidad = Column(String)
 
+    atleta = relationship("Atleta", back_populates="metricas")
+
+
 class Comentario(Base):
     __tablename__ = "comentarios"
 
@@ -414,6 +427,8 @@ class Comentario(Base):
     texto = Column(Text, nullable=False)
     visible_para = Column(String, default="staff")
     fecha = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
+
+    atleta = relationship("Atleta", back_populates="comentarios")
 
 # ─────────────────────────────────────────────
 # CRUD: CALENDARIO
