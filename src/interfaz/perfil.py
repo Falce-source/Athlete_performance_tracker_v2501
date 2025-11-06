@@ -16,18 +16,6 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
         st.caption("🔐 Rol activo: admin")
 
     # ───────────────────────────────
-    # Selector de entrenadora (solo admin)
-    # ───────────────────────────────
-    if rol_actual == "admin":
-        usuarios = sql.obtener_usuarios()
-        entrenadoras = [u for u in usuarios if u.rol == "entrenadora"]
-        opciones_entrenadora = {f"{e.nombre} (ID {e.id_usuario})": e.id_usuario for e in entrenadoras}
-        seleccion_entrenadora = st.selectbox("Asignar atleta a entrenadora", list(opciones_entrenadora.keys()))
-        id_usuario_asignado = opciones_entrenadora[seleccion_entrenadora]
-    else:
-        id_usuario_asignado = usuario_id  # 🔑 entrenadora crea sus propios atletas
-
-    # ───────────────────────────────
     # Información de depuración extendida
     # ───────────────────────────────
     import os
@@ -136,7 +124,7 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
         opciones_entrenadora = {f"{e.nombre} (ID {e.id_usuario})": e.id_usuario for e in entrenadoras}
         seleccion_entrenadora = st.selectbox("Filtrar atletas por entrenadora", list(opciones_entrenadora.keys()))
         id_entrenadora = opciones_entrenadora[seleccion_entrenadora]
-        # 🔑 obtenemos atletas directamente con relación usuario precargada
+        # 🔑 obtenemos atletas directamente vinculados a la entrenadora seleccionada
         atletas = sql.obtener_atletas_por_usuario(id_entrenadora)
 
     else:
@@ -202,6 +190,7 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
         - **Equipo:** {atleta.equipo or "—"}
         - **Alergias:** {atleta.alergias or "—"}
         - **Consentimiento:** {"✅ Sí" if atleta.consentimiento else "❌ No"}
+        - **Entrenadora asignada:** {atleta.usuario.nombre if atleta.usuario else "—"}
         - **Creado en:** {str(atleta.creado_en)}
         """)
 
