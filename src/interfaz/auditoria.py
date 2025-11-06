@@ -129,6 +129,36 @@ def probar_visibilidad_por_rol():
     historial_validaciones.registrar_validacion("Comentarios", resultado["mensaje"], resultado["backup_creado"], rol_actual=rol_actual)
     return resultado
 
+def validar_flujo_atleta():
+    st.subheader("🧪 Validación de trazabilidad de atletas")
+
+    usuarios = sql.obtener_usuarios()
+    atletas = sql.obtener_atletas()
+    errores = []
+
+    for atleta in atletas:
+        if not atleta.atleta_usuario_id:
+            errores.append(f"❌ Atleta '{atleta.nombre}' sin usuario vinculado")
+        else:
+            usuario_atleta = next((u for u in usuarios if u.id_usuario == atleta.atleta_usuario_id), None)
+            if not usuario_atleta:
+                errores.append(f"❌ Usuario vinculado al atleta '{atleta.nombre}' no existe")
+            elif usuario_atleta.rol != "atleta":
+                errores.append(f"❌ Usuario '{usuario_atleta.nombre}' tiene rol '{usuario_atleta.rol}' pero está vinculado como atleta")
+
+        if not atleta.id_usuario:
+            errores.append(f"❌ Atleta '{atleta.nombre}' sin entrenadora asignada")
+
+        if not atleta.propietario_id:
+            errores.append(f"❌ Atleta '{atleta.nombre}' sin propietario registrado")
+
+    if errores:
+        st.warning("🔍 Errores detectados en la trazabilidad:")
+        for e in errores:
+            st.markdown(f"- {e}")
+    else:
+        st.success("✅ Todos los atletas están correctamente vinculados con usuario, entrenadora y propietario.")
+
 def mostrar_auditoria():
     st.header("🔍 Auditoría Técnica")
 
@@ -175,3 +205,6 @@ def mostrar_auditoria():
                     st.caption(f"📦 Último backup: {ultimo['name']} ({ultimo['createdTime']})")
                 else:
                     st.caption("⚠️ No hay backups disponibles")
+    
+    st.subheader("📋 Validaciones cruzadas")
+    validar_flujo_atleta()

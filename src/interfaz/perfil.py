@@ -52,7 +52,7 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
 
     # Caso especial: atleta puede crear solo su propio perfil si aún no existe
     if rol_actual == "atleta":
-        atletas_propios = sql.obtener_atletas_por_usuario(usuario_id)
+        atletas_propios = [a for a in sql.obtener_atletas() if a.atleta_usuario_id == usuario_id]
         if not atletas_propios:   # 🔑 solo si no tiene ninguno
             puede_crear = True
         else:
