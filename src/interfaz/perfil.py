@@ -57,44 +57,65 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
         st.warning(f"No se pudo obtener información de depuración: {e}")
 
     # ───────────────────────────────
-    # Formulario para crear atleta
+    # Formulario para crear atleta (condicionado por rol)
     # ───────────────────────────────
-    with st.form("form_crear_atleta", clear_on_submit=True):
-        st.subheader("➕ Crear nuevo atleta")
+    puede_crear = rol_actual in ["admin", "entrenadora"]
 
-        nombre = st.text_input("Nombre", "")
-        apellidos = st.text_input("Apellidos", "")
-        edad = st.number_input("Edad", min_value=0, max_value=120, step=1)
-        talla = st.number_input("Talla (cm)", min_value=100, max_value=250, step=1)
-        contacto = st.text_input("Contacto (email/teléfono)", "")
-        deporte = st.text_input("Deporte", "")
-        modalidad = st.text_input("Modalidad", "")
-        nivel = st.selectbox("Nivel", ["Iniciado", "Intermedio", "Avanzado", "Elite"])
-        equipo = st.text_input("Equipo", "")
-        alergias = st.text_area("Alergias", "")
-        consentimiento = st.checkbox("Consentimiento informado")
+    # Caso especial: atleta puede crear solo su propio perfil si aún no existe
+    if rol_actual == "atleta":
+        atletas_propios = sql.obtener_atletas_por_usuario(usuario_id)
+        if not atletas_propios:   # 🔑 solo si no tiene ninguno
+            puede_crear = True
+        else:
+            # 🔔 Aviso visual si ya tiene perfil
+            st.info("Ya tienes un perfil creado. No puedes crear más atletas.")
 
-        submitted = st.form_submit_button("Guardar atleta")
 
-        if submitted:
-            if nombre.strip() == "":
-                st.error("El nombre es obligatorio")
-            else:
-                atleta = sql.crear_atleta(
-                    nombre=nombre,
-                    apellidos=apellidos,
-                    edad=int(edad) if edad else None,
-                    talla=int(talla) if talla else None,
-                    contacto=contacto,
-                    deporte=deporte,
-                    modalidad=modalidad,
-                    nivel=nivel,
-                    equipo=equipo,
-                    alergias=alergias,
-                    consentimiento=consentimiento,
-                    id_usuario=id_usuario_asignado  # 🔑 asignar propietario
-                )
-                st.success(f"✅ Atleta '{atleta.nombre}' creado correctamente")
+    # Caso especial: atleta puede crear solo su propio perfil si aún no existe
+    if rol_actual == "atleta":
+        atletas_propios = sql.obtener_atletas_por_usuario(usuario_id)
+        if not atletas_propios:   # 🔑 solo si no tiene ninguno
+            puede_crear = True
+
+    if puede_crear:
+        with st.form("form_crear_atleta", clear_on_submit=True):
+            st.subheader("➕ Crear nuevo atleta")
+
+            nombre = st.text_input("Nombre", "")
+            apellidos = st.text_input("Apellidos", "")
+            edad = st.number_input("Edad", min_value=0, max_value=120, step=1)
+            talla = st.number_input("Talla (cm)", min_value=100, max_value=250, step=1)
+            contacto = st.text_input("Contacto (email/teléfono)", "")
+            deporte = st.text_input("Deporte", "")
+            modalidad = st.text_input("Modalidad", "")
+            nivel = st.selectbox("Nivel", ["Iniciado", "Intermedio", "Avanzado", "Elite"])
+            equipo = st.text_input("Equipo", "")
+            alergias = st.text_area("Alergias", "")
+            consentimiento = st.checkbox("Consentimiento informado")
+
+            submitted = st.form_submit_button("Guardar atleta")
+
+            if submitted:
+                if nombre.strip() == "":
+                    st.error("El nombre es obligatorio")
+                else:
+                    atleta = sql.crear_atleta(
+                        nombre=nombre,
+                        apellidos=apellidos,
+                        edad=int(edad) if edad else None,
+                        talla=int(talla) if talla else None,
+                        contacto=contacto,
+                        deporte=deporte,
+                        modalidad=modalidad,
+                        nivel=nivel,
+                        equipo=equipo,
+                        alergias=alergias,
+                        consentimiento=consentimiento,
+                        id_usuario=id_usuario_asignado  # 🔑 asignar propietario
+                    )
+                    st.success(f"✅ Atleta '{atleta.nombre}' creado correctamente")
+    else:
+        st.caption("⛔ No tienes permisos para crear atletas")
 
     st.markdown("---")
 
