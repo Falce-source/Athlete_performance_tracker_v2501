@@ -85,7 +85,7 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
                     equipo=equipo,
                     alergias=alergias,
                     consentimiento=consentimiento,
-                    id_usuario=id_entrenadora  # 🔑 asignar propietario
+                    id_usuario=id_usuario_asignado  # 🔑 asignar propietario
                 )
                 st.success(f"✅ Atleta '{atleta.nombre}' creado correctamente")
 
