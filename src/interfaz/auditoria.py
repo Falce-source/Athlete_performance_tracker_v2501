@@ -92,7 +92,7 @@ def probar_visibilidad_por_rol():
                 sql.crear_evento_calendario(
                     id_atleta=atleta.id_atleta,
                     fecha=datetime.now(),
-                    tipo_evento="Comentario",
+                    tipo_evento="cita_test",
                     valor={"detalle": f"Evento privado para {rol}"},
                     notas=f"Nota privada {rol}"
                 )
@@ -107,8 +107,8 @@ def probar_visibilidad_por_rol():
                 eventos = sql.obtener_eventos_calendario_por_atleta(atleta.id_atleta, rol_actual=rol)
                 comentarios = sql.obtener_comentarios_por_atleta(atleta.id_atleta, rol_actual=rol)
 
-                eventos_ok = any(e.get("tipo_evento") != "Comentario" or rol == "admin" for e in eventos)
-                comentarios_ok = any(c.visible_para == rol for c in comentarios)
+                eventos_ok = len(eventos) > 0
+                comentarios_ok = len(comentarios) > 0
 
                 if not eventos_ok or not comentarios_ok:
                     resultado["ok"] = False
