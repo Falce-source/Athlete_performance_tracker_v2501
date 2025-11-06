@@ -147,7 +147,7 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
     # ───────────────────────────────
     # Formulario de edición y eliminación (solo admin)
     # ───────────────────────────────
-    if rol_actual == "admin" and opciones:
+    if rol_actual == "admin" and opciones and seleccion:
         with st.expander("✏️ Editar usuario"):
             with st.form(f"form_editar_{id_usuario}"):
                 nuevo_nombre = st.text_input("Nombre", usuario.nombre)
