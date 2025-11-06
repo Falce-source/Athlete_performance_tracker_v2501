@@ -119,21 +119,24 @@ def mostrar_usuarios():
     # Selector de usuario individual + edición/eliminación
     # ───────────────────────────────
     opciones = {f"{u.nombre} ({u.email}) - {u.rol} (ID {u.id_usuario})": u.id_usuario for u in usuarios}
-    seleccion = st.selectbox("Selecciona un usuario para ver detalles", list(opciones.keys()))
+    if opciones:
+        seleccion = st.selectbox("Selecciona un usuario para ver detalles", list(opciones.keys()))
+        if seleccion:
+            id_usuario = opciones.get(seleccion)  # 🔑 usar .get() evita KeyError
+            if id_usuario is not None:
+                usuario = next(u for u in usuarios if u.id_usuario == id_usuario)
 
-    if seleccion:
-        id_usuario = opciones[seleccion]
-        usuario = next(u for u in usuarios if u.id_usuario == id_usuario)
-
-        st.markdown(f"""
-        ### 📝 Detalles del usuario
-        - **ID:** {usuario.id_usuario}
-        - **Nombre:** {usuario.nombre}
-        - **Email:** {usuario.email}
-        - **Rol:** {usuario.rol}
-        - **Creado en:** {usuario.creado_en}
-        {"- **Entrenadora asignada:** " + next((a.usuario.nombre for a in sql.obtener_atletas() if getattr(a, "propietario_id", None) == usuario.id_usuario and a.usuario), "—") if usuario.rol == "atleta" else ""}
-        """)
+                st.markdown(f"""
+                ### 📝 Detalles del usuario
+                - **ID:** {usuario.id_usuario}
+                - **Nombre:** {usuario.nombre}
+                - **Email:** {usuario.email}
+                - **Rol:** {usuario.rol}
+                - **Creado en:** {usuario.creado_en}
+                {"- **Entrenadora asignada:** " + next((a.usuario.nombre for a in sql.obtener_atletas() if getattr(a, "propietario_id", None) == usuario.id_usuario and a.usuario), "—") if usuario.rol == "atleta" else ""}
+                """)
+    else:
+        st.info("No hay usuarios disponibles para seleccionar.")
 
         # ───────────────────────────────
         # Formulario de edición
