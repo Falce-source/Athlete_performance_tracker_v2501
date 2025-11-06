@@ -144,29 +144,29 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
     else:
         st.info("No hay usuarios disponibles para seleccionar.")
 
-        # ───────────────────────────────
-        # Formulario de edición y eliminación (solo admin)
-        # ───────────────────────────────
-        if rol_actual == "admin":
-            with st.expander("✏️ Editar usuario"):
-                with st.form(f"form_editar_{id_usuario}"):
-                    nuevo_nombre = st.text_input("Nombre", usuario.nombre)
-                    nuevo_email = st.text_input("Email", usuario.email)
-                    nuevo_rol = st.selectbox("Rol", ["admin", "entrenadora", "atleta"],
-                                             index=["admin","entrenadora","atleta"].index(usuario.rol))
+    # ───────────────────────────────
+    # Formulario de edición y eliminación (solo admin)
+    # ───────────────────────────────
+    if rol_actual == "admin" and opciones:
+        with st.expander("✏️ Editar usuario"):
+            with st.form(f"form_editar_{id_usuario}"):
+                nuevo_nombre = st.text_input("Nombre", usuario.nombre)
+                nuevo_email = st.text_input("Email", usuario.email)
+                nuevo_rol = st.selectbox("Rol", ["admin", "entrenadora", "atleta"],
+                                         index=["admin","entrenadora","atleta"].index(usuario.rol))
 
-                    actualizar = st.form_submit_button("💾 Guardar cambios")
+                actualizar = st.form_submit_button("💾 Guardar cambios")
 
-                    if actualizar:
-                        sql.actualizar_usuario(
-                            id_usuario=usuario.id_usuario,
-                            nombre=nuevo_nombre,
-                            email=nuevo_email,
-                            rol=nuevo_rol
-                        )
-                        st.success(f"✅ Usuario '{nuevo_nombre}' actualizado correctamente. 🔄 Recarga la página para ver los cambios.")
+                if actualizar:
+                    sql.actualizar_usuario(
+                        id_usuario=usuario.id_usuario,
+                        nombre=nuevo_nombre,
+                        email=nuevo_email,
+                        rol=nuevo_rol
+                    )
+                    st.success(f"✅ Usuario '{nuevo_nombre}' actualizado correctamente. 🔄 Recarga la página para ver los cambios.")
 
-            if st.button(f"🗑️ Eliminar usuario '{usuario.nombre}'", type="primary"):
-                sql.borrar_usuario(usuario.id_usuario)
-                st.warning(f"Usuario '{usuario.nombre}' eliminado correctamente. 🔄 Recarga la página para actualizar la lista.")
+        if st.button(f"🗑️ Eliminar usuario '{usuario.nombre}'", type="primary"):
+            sql.borrar_usuario(usuario.id_usuario)
+            st.warning(f"Usuario '{usuario.nombre}' eliminado correctamente. 🔄 Recarga la página para actualizar la lista.")
         
