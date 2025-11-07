@@ -100,7 +100,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
             if datos_relevantes:
                 out_events.append({
                     "id": f"{ev.get('id')}-0",
-                    "title": "🧍 Evento diario",
+                    "title": "🧍 Estado diario",
                     "start": fecha,
                     "allDay": True,
                     "backgroundColor": EVENT_STYLES["estado"]["bg"],
