@@ -793,6 +793,36 @@ def crear_metrica(id_atleta, tipo_metrica, valor, unidad, fecha=None):
             _sync_backup()
             return metrica
 
+def borrar_metricas_por_fecha(id_atleta, fecha):
+    """
+    Elimina todas las métricas rápidas de un atleta en una fecha concreta.
+    Se usa al borrar un evento de calendario para que las gráficas se actualicen.
+    """
+    # 🔒 Normalizamos fecha a objeto date
+    if isinstance(fecha, datetime):
+        fecha = fecha.date()
+    elif isinstance(fecha, str):
+        fecha = datetime.strptime(fecha, "%Y-%m-%d").date()
+
+    inicio = datetime.combine(fecha, datetime.min.time(), timezone.utc)
+    fin = datetime.combine(fecha, datetime.max.time(), timezone.utc)
+
+    tipos = ["hrv", "wellness", "rpe", "peso", "fc_reposo", "deficit_calorico", "sueno"]
+
+    with SessionLocal() as session:
+        metricas = session.query(Metrica).filter(
+            Metrica.id_atleta == id_atleta,
+            Metrica.tipo_metrica.in_(tipos),
+            Metrica.fecha >= inicio,
+            Metrica.fecha <= fin
+        ).all()
+        for m in metricas:
+            session.delete(m)
+
+        session.commit()
+        _sync_backup()
+        return len(metricas)
+
 def obtener_metricas_por_tipo(id_atleta, tipo_metrica):
     with SessionLocal() as session:
         return session.query(Metrica).filter_by(id_atleta=id_atleta, tipo_metrica=tipo_metrica).order_by(Metrica.fecha).all()
