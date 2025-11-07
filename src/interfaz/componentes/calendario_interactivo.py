@@ -508,7 +508,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                                 rol_actual=st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin")),
                                 usuario_id=st.session_state.get("USUARIO_ID", 0),
                                 atleta_id=id_atleta,
-                                propietario_id=props.get("id_autor") or id_atleta
+                                propietario_id=id_atleta
                             )
                             if ctx_evento.rol_actual == "admin" or puede_borrar_evento_calendario(ctx_evento):
                                 sql.borrar_evento_calendario(int(event_id))
@@ -564,7 +564,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                                 rol_actual=st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin")),
                                 usuario_id=st.session_state.get("USUARIO_ID", 0),
                                 atleta_id=id_atleta,
-                                propietario_id=props.get("id_autor") or id_atleta
+                                propietario_id=id_atleta
                             )
                             if ctx_evento.rol_actual == "admin" or puede_borrar_evento_calendario(ctx_evento):
                                 sql.borrar_evento_calendario(int(event_id))
@@ -618,7 +618,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                                 rol_actual=st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin")),
                                 usuario_id=st.session_state.get("USUARIO_ID", 0),
                                 atleta_id=id_atleta,
-                                propietario_id=props.get("id_autor") or id_atleta
+                                propietario_id=id_atleta
                             )
                             if ctx_evento.rol_actual == "admin" or puede_borrar_evento_calendario(ctx_evento):
                                 sql.borrar_evento_calendario(int(event_id))
@@ -709,7 +709,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                                 rol_actual=st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin")),
                                 usuario_id=st.session_state.get("USUARIO_ID", 0),
                                 atleta_id=id_atleta,
-                                propietario_id=props.get("id_autor") or id_atleta
+                                propietario_id=id_atleta
                             )
                             if ctx_evento.rol_actual == "admin" or puede_borrar_evento_calendario(ctx_evento):
                                 eliminado = sql.borrar_evento_calendario(int(event_id))

@@ -871,6 +871,19 @@ def obtener_metricas_rapidas(id_atleta):
         return list(unicas.values())
 
 # ─────────────────────────────────────────────
+# HELPERS: VÍNCULO USUARIO ↔ ATLETA
+# ─────────────────────────────────────────────
+def obtener_id_atleta_por_usuario(usuario_id: int) -> int | None:
+    with SessionLocal() as session:
+        u = session.query(Usuario).filter(Usuario.id_usuario == usuario_id).first()
+        return u.id_atleta if u and u.id_atleta else None
+
+def obtener_usuario_por_atleta(id_atleta: int) -> int | None:
+    with SessionLocal() as session:
+        a = session.query(Atleta).filter(Atleta.id_atleta == id_atleta).first()
+        return a.usuario_id if a and a.usuario_id else None
+
+# ─────────────────────────────────────────────
 # CRUD: COMENTARIOS
 # ─────────────────────────────────────────────
 def crear_comentario(id_atleta, texto, visible_para="staff", id_autor=None):

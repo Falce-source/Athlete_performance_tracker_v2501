@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Dict, List
+import src.persistencia.sql as sql
 
 # Pestañas disponibles (normaliza nombres)
 TABS = [
@@ -96,10 +97,9 @@ def puede_crear_evento_calendario(ctx: Contexto) -> bool:
         # Aquí podrías validar la asignación entrenadora-atleta en SQL.
         return True
     if ctx.rol_actual == "atleta":
-        # 🔒 Atleta solo puede crear eventos en su propio calendario
-        return ctx.atleta_id == ctx.usuario_id and ctx.atleta_id == (ctx.propietario_id or ctx.atleta_id)
+        atleta_vinculado = sql.obtener_id_atleta_por_usuario(ctx.usuario_id)
+        return atleta_vinculado == (ctx.propietario_id or ctx.atleta_id)
     return False
-
 
 def puede_editar_evento_calendario(ctx: Contexto) -> bool:
     """Editar evento en calendario: misma política que crear, con control de propietario."""
@@ -108,10 +108,9 @@ def puede_editar_evento_calendario(ctx: Contexto) -> bool:
     if ctx.rol_actual == "entrenadora":
         return True
     if ctx.rol_actual == "atleta":
-        # 🔒 Atleta solo puede editar sus propios eventos
-        return ctx.atleta_id == ctx.usuario_id and ctx.usuario_id == (ctx.propietario_id or ctx.usuario_id)
+        atleta_vinculado = sql.obtener_id_atleta_por_usuario(ctx.usuario_id)
+        return atleta_vinculado == (ctx.propietario_id or ctx.atleta_id)
     return False
-
 
 def puede_borrar_evento_calendario(ctx: Contexto) -> bool:
     """Borrar evento en calendario: más restrictivo para atleta (solo lo propio)."""
@@ -120,8 +119,8 @@ def puede_borrar_evento_calendario(ctx: Contexto) -> bool:
     if ctx.rol_actual == "entrenadora":
         return True
     if ctx.rol_actual == "atleta":
-        # 🔒 Atleta solo puede borrar sus propios eventos
-        return ctx.atleta_id == ctx.usuario_id and ctx.usuario_id == (ctx.propietario_id or ctx.usuario_id)
+        atleta_vinculado = sql.obtener_id_atleta_por_usuario(ctx.usuario_id)
+        return atleta_vinculado == (ctx.propietario_id or ctx.atleta_id)
     return False
 
 
@@ -136,5 +135,6 @@ def puede_editar_perfil_atleta(ctx: Contexto) -> bool:
     if ctx.rol_actual == "entrenadora":
         return True
     if ctx.rol_actual == "atleta":
-        return ctx.atleta_id == ctx.usuario_id
+        atleta_vinculado = sql.obtener_id_atleta_por_usuario(ctx.usuario_id)
+        return atleta_vinculado == (ctx.propietario_id or ctx.atleta_id)
     return False
