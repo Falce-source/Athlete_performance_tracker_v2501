@@ -355,14 +355,13 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
             chart = alt.Chart(df_t).mark_line(point=True).encode(
                 x=alt.X("fecha:T",
                         title="Día",
-                        axis=alt.Axis(format="%d %b")),  # ej. 06 Nov
+                        axis=alt.Axis(format="%d %b", tickCount="day")),
                 y=alt.Y("valor:Q", title=f"{t.upper()}"),
-                tooltip=[alt.Tooltip("fecha:T", title="Día"),
-                        "valor:Q", "unidad:N"]
+                tooltip=[alt.Tooltip("fecha:T", title="Día"), "valor:Q", "unidad:N"]
             ).properties(
-               title=f"{t.upper()} ({df_t['unidad'].iloc[0]})",
-               width="container",
-               height=200
+                title=f"{t.upper()} ({df_t['unidad'].iloc[0]})",
+                width="container",
+                height=200
             )
             st.altair_chart(chart, use_container_width=True)
 
