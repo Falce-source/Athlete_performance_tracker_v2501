@@ -271,3 +271,4 @@ elif opcion == "🔍 Auditoría":
 
 elif opcion == "📈 Historial de Validaciones":
     historial_validaciones.mostrar_historial()
+

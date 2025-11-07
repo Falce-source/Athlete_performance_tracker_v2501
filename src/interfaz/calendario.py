@@ -405,3 +405,11 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
         if st.button("Listar eventos actuales"):
             eventos = sql.obtener_eventos_calendario_por_atleta(id_atleta, rol_actual="admin")
             st.json(eventos)
+
+    # Prueba
+    st.subheader("🗑️ Reset total de métricas rápidas (uso único)")
+    if st.button("Eliminar TODO lo de métricas rápidas"):
+        sql.reset_metricas_rapidas(id_atleta)
+        st.success("✅ Reset completado. Se han eliminado todas las métricas rápidas y sus eventos de calendario.")
+        st.rerun()
+    # ----

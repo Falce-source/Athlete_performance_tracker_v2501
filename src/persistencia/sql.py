@@ -852,3 +852,27 @@ try:
         print("✅ Esquema creado y primer backup generado")
 except Exception as e:
     print(f"⚠️ Error al crear esquema inicial: {e}")
+
+# Prueba
+def reset_metricas_rapidas(id_atleta: int):
+    """
+    Borra todas las métricas rápidas y sus eventos de calendario para un atleta.
+    Uso puntual de reset.
+    """
+    tipos = ["hrv", "wellness", "rpe", "peso", "fc_reposo"]
+    with SessionLocal() as session:
+        # 1. Borrar métricas rápidas del histórico
+        session.query(Metrica).filter(
+            Metrica.id_atleta == id_atleta,
+            Metrica.tipo_metrica.in_(tipos)
+        ).delete(synchronize_session=False)
+
+        # 2. Borrar eventos de calendario de métricas rápidas
+        session.query(CalendarioEvento).filter(
+            CalendarioEvento.id_atleta == id_atleta,
+            CalendarioEvento.tipo_evento == "metricas_rapidas"
+        ).delete(synchronize_session=False)
+
+        session.commit()
+        _sync_backup()
+# -----
