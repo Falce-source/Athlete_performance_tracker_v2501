@@ -65,78 +65,80 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
         details = ev.get("extendedProps", {})
 
         if tipo == "estado_diario":
-            # Agrupamos iconos por filas
-            fila2, fila3 = [], []
-            if details.get("sintomas") not in [None, "", "No", "Ninguno", "-"]:
-                fila2.append(EVENT_STYLES["sintomas"]["icon"])
-            if details.get("menstruacion") not in [None, "", "No", "-"]:
-                fila2.append(EVENT_STYLES["menstruacion"]["icon"])
-            if details.get("ovulacion") not in [None, "", "No", "-"]:
-                fila2.append(EVENT_STYLES["ovulacion"]["icon"])
-            if details.get("lesion"): fila2.append(EVENT_STYLES["lesion"]["icon"])
-            if details.get("comentario_extra"): fila2.append(EVENT_STYLES["nota"]["icon"])
-
-            if details.get("altitud"): fila3.append(EVENT_STYLES["altitud"]["icon"])
-            if details.get("respiratorio"): fila3.append(EVENT_STYLES["respiratorio"]["icon"])
-            if details.get("calor"): fila3.append(EVENT_STYLES["calor"]["icon"])
-
             safe_details = normalize_details(details)
-
-            # 🔑 ExtendedProps común con id_base
             extended = {**safe_details, "tipo_evento": tipo, "id_base": ev.get("id")}
 
-            # Fila 1: título principal (verde)
-            # Solo creamos el título verde si hay algún dato realmente relevante
-            claves_relevantes = [
-                "sintomas", "menstruacion", "ovulacion",
-                "altitud", "respiratorio", "calor",
-                "lesion", "comentario_extra"
-            ]
             valores_neutros = [None, "", "No", "Ninguno", "-", False]
-            datos_relevantes = any(
-                details.get(k) not in valores_neutros
-                for k in claves_relevantes
-            )
-            if datos_relevantes:
-                out_events.append({
-                    "id": f"{ev.get('id')}-0",
-                    "title": "🧍 Estado diario",
-                    "start": fecha,
-                    "allDay": True,
-                    "backgroundColor": EVENT_STYLES["estado"]["bg"],
-                    "borderColor": EVENT_STYLES["estado"]["border"],
-                    "textColor": EVENT_STYLES["estado"]["text"],
-                    "tipo_evento": tipo,
-                    "extendedProps": {**extended, "displayOrder": 0}
-                })
 
-            # Fila 2: ciclo/estado corporal (neutro)
-            if fila2:
-                out_events.append({
-                    "id": f"{ev.get('id')}-1",
-                    "title": " ".join(fila2),
-                    "start": fecha,
-                    "allDay": True,
-                    "backgroundColor": "#FFFFFF",   # fondo blanco
-                    "borderColor": "#FFFFFF",       # sin borde
-                    "textColor": "#000000",         # texto negro
-                    "tipo_evento": tipo,
-                    "extendedProps": {**extended, "displayOrder": 1}
-                })
+            # Bloque 1: ciclo
+            fila_ciclo = []
+            if details.get("sintomas") not in valores_neutros: fila_ciclo.append("🩸")
+            if details.get("menstruacion") not in valores_neutros: fila_ciclo.append("🩸")
+            if details.get("ovulacion") not in valores_neutros: fila_ciclo.append("🔄")
+            if fila_ciclo:
+                out_events.append({"id": f"{ev.get('id')}-ciclo", "title": " ".join(fila_ciclo),
+                    "start": fecha, "allDay": True, "backgroundColor": "#FFFFFF",
+                    "borderColor": "#FFFFFF", "textColor": "#000000",
+                    "tipo_evento": tipo, "extendedProps": {**extended, "displayOrder": 0}})
 
-            # Fila 3: condiciones externas (neutro)
-            if fila3:
-                out_events.append({
-                    "id": f"{ev.get('id')}-2",
-                    "title": " ".join(fila3),
-                    "start": fecha,
-                    "allDay": True,
-                    "backgroundColor": "#FFFFFF",   # fondo blanco
-                    "borderColor": "#FFFFFF",       # sin borde
-                    "textColor": "#000000",         # texto negro
-                    "tipo_evento": tipo,
-                    "extendedProps": {**extended, "displayOrder": 2}
-                })
+            # Bloque 2: condiciones externas
+            fila_cond = []
+            if details.get("altitud"): fila_cond.append("⛰️")
+            if details.get("calor"): fila_cond.append("🔥")
+            if details.get("respiratorio"): fila_cond.append("🌬️")
+            if fila_cond:
+                out_events.append({"id": f"{ev.get('id')}-cond", "title": " ".join(fila_cond),
+                    "start": fecha, "allDay": True, "backgroundColor": "#FFFFFF",
+                    "borderColor": "#FFFFFF", "textColor": "#000000",
+                    "tipo_evento": tipo, "extendedProps": {**extended, "displayOrder": 1}})
+
+            # Bloque 3: lesiones/baja
+            fila_lesion = []
+            if details.get("lesion"): fila_lesion.append("🤕")
+            if details.get("baja"): fila_lesion.append("⛔")
+            if fila_lesion:
+                out_events.append({"id": f"{ev.get('id')}-lesion", "title": " ".join(fila_lesion),
+                    "start": fecha, "allDay": True, "backgroundColor": "#FFFFFF",
+                    "borderColor": "#FFFFFF", "textColor": "#000000",
+                    "tipo_evento": tipo, "extendedProps": {**extended, "displayOrder": 2}})
+
+            # Bloque 4: peso/déficit
+            fila_peso = []
+            if details.get("peso"): fila_peso.append(f"⚖️ {details['peso']}")
+            if details.get("deficit_calorico"): fila_peso.append("🍽️")
+            if fila_peso:
+                out_events.append({"id": f"{ev.get('id')}-peso", "title": " ".join(fila_peso),
+                    "start": fecha, "allDay": True, "backgroundColor": "#FFFFFF",
+                    "borderColor": "#FFFFFF", "textColor": "#000000",
+                    "tipo_evento": tipo, "extendedProps": {**extended, "displayOrder": 3}})
+
+            # Bloque 5: HRV / FC reposo
+            fila_hrv = []
+            if details.get("hrv"): fila_hrv.append(f"💓 {details['hrv']}")
+            if details.get("fc_reposo"): fila_hrv.append(f"❤️ {details['fc_reposo']}")
+            if fila_hrv:
+                out_events.append({"id": f"{ev.get('id')}-hrv", "title": " ".join(fila_hrv),
+                    "start": fecha, "allDay": True, "backgroundColor": "#FFFFFF",
+                    "borderColor": "#FFFFFF", "textColor": "#000000",
+                    "tipo_evento": tipo, "extendedProps": {**extended, "displayOrder": 4}})
+
+            # Bloque 6: sueño / wellness / RPE
+            fila_sueno = []
+            if details.get("sueno"): fila_sueno.append(f"😴 {details['sueno']}h")
+            if details.get("wellness"): fila_sueno.append(f"🌟 {details['wellness']}")
+            if details.get("rpe"): fila_sueno.append(f"💪 {details['rpe']}")
+            if fila_sueno:
+                out_events.append({"id": f"{ev.get('id')}-sueno", "title": " ".join(fila_sueno),
+                    "start": fecha, "allDay": True, "backgroundColor": "#FFFFFF",
+                    "borderColor": "#FFFFFF", "textColor": "#000000",
+                    "tipo_evento": tipo, "extendedProps": {**extended, "displayOrder": 5}})
+
+            # Bloque 7: notas
+            if details.get("comentario_extra"):
+                out_events.append({"id": f"{ev.get('id')}-nota", "title": "📝",
+                    "start": fecha, "allDay": True, "backgroundColor": "#FFFFFF",
+                    "borderColor": "#FFFFFF", "textColor": "#000000",
+                    "tipo_evento": tipo, "extendedProps": {**extended, "displayOrder": 6}})
 
         elif tipo == "competicion":
             # Solo icono 🏆, detalles en extendedProps
