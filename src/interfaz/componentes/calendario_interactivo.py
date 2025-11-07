@@ -95,7 +95,8 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
             # Bloque 3: lesiones/baja
             fila_lesion = []
             if details.get("lesion"): fila_lesion.append("🤕")
-            if details.get("baja"): fila_lesion.append("⛔")
+            if details.get("baja") and details.get("baja") != "No":
+                fila_lesion.append("⛔")
             if fila_lesion:
                 out_events.append({"id": f"{ev.get('id')}-lesion", "title": " ".join(fila_lesion),
                     "start": fecha, "allDay": True, "backgroundColor": "#FFFFFF",
@@ -171,27 +172,39 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
             })
 
         elif tipo == "metricas_rapidas":
-            # Mostrar iconos + valores numéricos en la casilla
             safe_details = normalize_details(details)
-            fila_metricas = []
-            if safe_details.get("hrv"): fila_metricas.append(f"💓 {safe_details['hrv']}")
-            if safe_details.get("wellness"): fila_metricas.append(f"🌟 {safe_details['wellness']}")
-            if safe_details.get("rpe"): fila_metricas.append(f"💪 {safe_details['rpe']}")
-            if safe_details.get("peso"): fila_metricas.append(f"⚖️ {safe_details['peso']}")
-            if safe_details.get("fc_reposo"): fila_metricas.append(f"❤️ {safe_details['fc_reposo']}")
+            extended = {**safe_details, "tipo_evento": tipo, "id_base": ev.get("id")}
 
-            if fila_metricas:
-                out_events.append({
-                    "id": str(ev.get("id")),
-                    "title": " ".join(fila_metricas),
-                    "start": fecha,
-                    "allDay": True,
-                    "backgroundColor": "#F9FAFB",
-                    "borderColor": "#6B7280",
-                    "textColor": "#374151",
-                    "tipo_evento": tipo,
-                    "extendedProps": {**safe_details, "displayOrder": 4, "tipo_evento": tipo, "id_base": ev.get("id")}
-                })
+            # Bloque A: peso / déficit
+            fila_peso = []
+            if safe_details.get("peso"): fila_peso.append(f"⚖️ {safe_details['peso']}kg")
+            if safe_details.get("deficit_calorico"): fila_peso.append("🍽️")
+            if fila_peso:
+                out_events.append({"id": f"{ev.get('id')}-peso", "title": " ".join(fila_peso),
+                    "start": fecha, "allDay": True, "backgroundColor": "#F9FAFB",
+                    "borderColor": "#6B7280", "textColor": "#374151",
+                    "tipo_evento": tipo, "extendedProps": {**extended, "displayOrder": 3}})
+
+            # Bloque B: HRV / FC reposo
+            fila_hrv = []
+            if safe_details.get("hrv"): fila_hrv.append(f"💓 {safe_details['hrv']}")
+            if safe_details.get("fc_reposo"): fila_hrv.append(f"❤️ {safe_details['fc_reposo']}")
+            if fila_hrv:
+                out_events.append({"id": f"{ev.get('id')}-hrv", "title": " ".join(fila_hrv),
+                    "start": fecha, "allDay": True, "backgroundColor": "#F9FAFB",
+                    "borderColor": "#6B7280", "textColor": "#374151",
+                    "tipo_evento": tipo, "extendedProps": {**extended, "displayOrder": 4}})
+
+            # Bloque C: sueño / wellness / RPE
+            fila_sueno = []
+            if safe_details.get("sueno"): fila_sueno.append(f"😴 {safe_details['sueno']}h")
+            if safe_details.get("wellness"): fila_sueno.append(f"🌟 {safe_details['wellness']}")
+            if safe_details.get("rpe"): fila_sueno.append(f"💪 {safe_details['rpe']}")
+            if fila_sueno:
+                out_events.append({"id": f"{ev.get('id')}-sueno", "title": " ".join(fila_sueno),
+                    "start": fecha, "allDay": True, "backgroundColor": "#F9FAFB",
+                    "borderColor": "#6B7280", "textColor": "#374151",
+                    "tipo_evento": tipo, "extendedProps": {**extended, "displayOrder": 5}})
 
     # Configuración del calendario (sin eventContent, usamos saltos de línea en title)
     calendar_options = {
@@ -271,6 +284,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     respiratorio = st.checkbox("🌬️ Entrenamiento respiratorio")
                     calor = st.checkbox("🔥 Entrenamiento en calor")
                     lesion = st.text_input("🤕 Lesión")
+                    baja = st.selectbox("⛔ Baja", ["No", "No entrena", "No compite"])
                     comentario_extra = st.text_area("📝 Notas adicionales")
 
                     if st.form_submit_button("Guardar estado"):
@@ -282,6 +296,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                             "respiratorio": respiratorio,
                             "calor": calor,
                             "lesion": lesion,
+                            "baja": baja,
                             "comentario_extra": comentario_extra
                         })
                         # Detectar si hay algún dato realmente significativo
@@ -419,6 +434,11 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     calor = st.checkbox("🔥 Entrenamiento en calor", value=bool(props.get("calor")))
 
                     lesion = st.text_input("🤕 Lesión", value=props.get("lesion",""))
+                    baja = st.selectbox(
+                        "⛔ Baja",
+                        ["No","No entrena","No compite"],
+                        index=["No","No entrena","No compite"].index(props.get("baja","No"))
+                    )
                     comentario_extra = st.text_area("📝 Notas adicionales", value=props.get("comentario_extra",""))
 
                     col1, col2 = st.columns(2)
@@ -438,16 +458,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                                 "respiratorio": respiratorio,
                                 "calor": calor,
                                 "lesion": lesion,
-                                "comentario_extra": comentario_extra
-                            })
-                            valores = normalize_details({
-                                "sintomas": sintomas,
-                                "menstruacion": menstruacion,
-                                "ovulacion": ovulacion,
-                                "altitud": altitud,
-                                "respiratorio": respiratorio,
-                                "calor": calor,
-                                "lesion": lesion,
+                                "baja": baja,
                                 "comentario_extra": comentario_extra
                             })
                             valores_neutros = [None, "", "No", "Ninguno", "-", False]
@@ -590,16 +601,22 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
             @st.dialog("📊 Editar métricas rápidas")
             def editar_metricas_rapidas():
                 with st.form("form_editar_metricas_rapidas", clear_on_submit=True):
-                    hrv = st.number_input("HRV (ms)", min_value=0, step=1,
-                        value=int(props.get("hrv", 0)) if props.get("hrv") else 0)
-                    wellness = st.slider("Wellness (1-10)", 1, 10,
-                        int(props.get("wellness", 5)) if props.get("wellness") else 5)
-                    rpe = st.slider("RPE (1-10)", 1, 10,
-                        int(props.get("rpe", 5)) if props.get("rpe") else 5)
-                    peso = st.number_input("Peso (kg)", min_value=0.0, step=0.1,
-                        value=float(props.get("peso", 0)) if props.get("peso") else 0.0)
-                    fc_reposo = st.number_input("FC reposo (lpm)", min_value=0, step=1,
-                        value=int(props.get("fc_reposo", 0)) if props.get("fc_reposo") else 0)
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        peso = st.number_input("⚖️ Peso (kg)", min_value=0.0, step=0.1,
+                            value=float(props.get("peso", 0)) if props.get("peso") else 0.0)
+                        deficit_calorico = st.text_input("🍽️ Déficit calórico", value=props.get("deficit_calorico",""))
+                        hrv = st.number_input("💓 HRV (ms)", min_value=0, step=1,
+                            value=int(props.get("hrv", 0)) if props.get("hrv") else 0)
+                    with col2:
+                        fc_reposo = st.number_input("❤️ FC reposo (lpm)", min_value=0, step=1,
+                            value=int(props.get("fc_reposo", 0)) if props.get("fc_reposo") else 0)
+                        sueno = st.number_input("😴 Horas de sueño", min_value=0.0, step=0.5,
+                            value=float(props.get("sueno", 0)) if props.get("sueno") else 0.0)
+                        wellness = st.slider("🌟 Wellness (1-10)", 1, 10,
+                            int(props.get("wellness", 5)) if props.get("wellness") else 5)
+                        rpe = st.slider("💪 RPE (1-10)", 1, 10,
+                            int(props.get("rpe", 5)) if props.get("rpe") else 5)
 
                     col1, col2 = st.columns(2)
                     with col1:
@@ -609,11 +626,14 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
 
                     if submitted:
                         # Guardamos en histórico (tabla métricas)
+                        sql.crear_metrica(id_atleta, "peso", peso, "kg")
+                        if deficit_calorico:
+                            sql.crear_metrica(id_atleta, "deficit_calorico", deficit_calorico, "kcal")
                         sql.crear_metrica(id_atleta, "hrv", hrv, "ms")
+                        sql.crear_metrica(id_atleta, "fc_reposo", fc_reposo, "lpm")
+                        sql.crear_metrica(id_atleta, "sueno", sueno, "h")
                         sql.crear_metrica(id_atleta, "wellness", wellness, "score")
                         sql.crear_metrica(id_atleta, "rpe", rpe, "score")
-                        sql.crear_metrica(id_atleta, "peso", peso, "kg")
-                        sql.crear_metrica(id_atleta, "fc_reposo", fc_reposo, "lpm")
 
                         # Actualizamos el evento existente en calendario_eventos
                         event_id = props.get("id_base") or ev.get("id")
@@ -621,11 +641,13 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                            sql.actualizar_evento_calendario_por_id(
                                 int(event_id),
                                 {
-                                    "hrv": hrv,
-                                    "wellness": wellness,
-                                    "rpe": rpe,
                                     "peso": peso,
-                                    "fc_reposo": fc_reposo
+                                    "deficit_calorico": deficit_calorico,
+                                    "hrv": hrv,
+                                    "fc_reposo": fc_reposo,
+                                    "sueno": sueno,
+                                    "wellness": wellness,
+                                    "rpe": rpe
                                 },
                                 notas="Métricas rápidas actualizadas"
                             )
