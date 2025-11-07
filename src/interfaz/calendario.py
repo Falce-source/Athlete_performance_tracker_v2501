@@ -410,63 +410,29 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
 
     # Prueba 2
 
-    st.subheader("🛠️ Migración puntual de métricas rápidas antiguas")
+    st.subheader("🛠️ Migración consolidada de métricas rápidas antiguas")
 
-    if st.button("Migrar métricas antiguas a calendario"):
+    if st.button("Migrar métricas antiguas (consolidar por día)"):
         metricas = sql.obtener_metricas_rapidas(id_atleta)
         agrupadas = {}
+
+        # Agrupamos todas las métricas por fecha
         for m in metricas:
-            fecha=m.fecha.date()
+            fecha = m.fecha.date()
             if fecha not in agrupadas:
                 agrupadas[fecha] = {}
+            # siempre guardamos el último valor registrado de cada métrica en ese día
             agrupadas[fecha][m.tipo_metrica] = m.valor
 
+        # Creamos un único evento por día
         for fecha, valores in agrupadas.items():
-            st.write("Insertando evento:", fecha, valores)  # 👀 debug
-            # Creamos un evento de calendario por cada día con métricas
+            st.write("Insertando evento consolidado:", fecha, valores)  # 👀 debug
             sql.crear_evento_calendario(
                 id_atleta=id_atleta,
                 fecha=fecha,
                 tipo_evento="metricas_rapidas",
                 valor=valores,
-                notas="Migración métricas rápidas"
+                notas="Migración consolidada métricas rápidas"
             )
 
-        st.success("✅ Migración completada. Ahora las métricas antiguas aparecen en calendario y tabla.")
-    # --------
-
-    # Prueba 3
-    st.subheader("🔎 Depuración de eventos en calendario_eventos")
-
-    if st.button("Listar todos los eventos crudos"):
-        eventos_raw = sql.obtener_eventos_filtrados(
-            id_atleta=id_atleta,
-            rol_actual=rol_actual,
-            tipos=None,          # 👈 sin filtrar por tipo
-            fecha_inicio=None,
-            fecha_fin=None
-        )
-        st.write("Eventos encontrados:", len(eventos_raw))
-        for ev in eventos_raw:
-            st.json(ev)   # 👀 muestra cada evento con todos sus campos
-    
-    #---------
-
-    st.subheader("🗑️ Resetear eventos de métricas rápidas migrados")
-
-    # Lista rápida de eventos metricas_rapidas
-    eventos_raw = sql.obtener_eventos_filtrados(
-        id_atleta=id_atleta,
-        rol_actual=rol_actual,
-        tipos=["metricas_rapidas"],
-        fecha_inicio=None,
-        fecha_fin=None
-    )
-    st.write("Eventos métricas rápidas:", eventos_raw)
-
-    # Botón para borrar uno concreto
-    id_a_borrar = st.number_input("13", min_value=1, step=1)
-    if st.button("Borrar evento seleccionado"):
-        sql.borrar_evento_calendario(int(id_a_borrar))
-        st.success(f"Evento {id_a_borrar} eliminado de calendario_eventos")
-        st.rerun()
+        st.success("✅ Migración completada. Ahora cada día tiene un único evento de métricas rápidas en calendario.")
