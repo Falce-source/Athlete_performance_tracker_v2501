@@ -112,7 +112,11 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
         fecha_fin=fecha_fin
     )
 
-    vista = st.radio("", ["Calendario", "Tabla"], horizontal=True, index=0)
+    vista = st.radio(
+        " ", ["Calendario", "Tabla"],
+        horizontal=True, index=0,
+        label_visibility="collapsed"
+    )
 
     data = []
     eventos_fc = []
