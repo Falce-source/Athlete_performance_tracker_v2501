@@ -874,14 +874,22 @@ def obtener_metricas_rapidas(id_atleta):
 # HELPERS: VÍNCULO USUARIO ↔ ATLETA
 # ─────────────────────────────────────────────
 def obtener_id_atleta_por_usuario(usuario_id: int) -> int | None:
+    """
+    Devuelve el id_atleta vinculado a un usuario dado.
+    Usa la columna usuario_id en la tabla Atleta.
+    """
     with SessionLocal() as session:
         atleta = session.query(Atleta).filter(Atleta.usuario_id == usuario_id).first()
         return atleta.id_atleta if atleta else None
 
 def obtener_usuario_por_atleta(id_atleta: int) -> int | None:
+    """
+    Devuelve el usuario_id vinculado a un atleta dado.
+    Usa la columna usuario_id en la tabla Atleta.
+    """
     with SessionLocal() as session:
-        a = session.query(Atleta).filter(Atleta.id_atleta == id_atleta).first()
-        return a.usuario_id if a and a.usuario_id else None
+        atleta = session.query(Atleta).filter(Atleta.id_atleta == id_atleta).first()
+        return atleta.usuario_id if atleta else None
 
 # ─────────────────────────────────────────────
 # CRUD: COMENTARIOS
