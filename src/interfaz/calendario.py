@@ -353,14 +353,16 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
         for t in tipos:
             df_t = df_metricas[df_metricas["tipo"] == t]
             chart = alt.Chart(df_t).mark_line(point=True).encode(
-                # 👇 forzamos que Altair use solo el componente de día
-                x=alt.X("yearmonthdate(fecha):T", title="Día", axis=alt.Axis(format="%Y-%m-%d")),
+                x=alt.X("fecha:T",
+                        title="Día",
+                        axis=alt.Axis(format="%d %b")),  # ej. 06 Nov
                 y=alt.Y("valor:Q", title=f"{t.upper()}"),
-                tooltip=[alt.Tooltip("fecha:T", title="Día"), "valor:Q", "unidad:N"]
+                tooltip=[alt.Tooltip("fecha:T", title="Día"),
+                        "valor:Q", "unidad:N"]
             ).properties(
-                title=f"{t.upper()} ({df_t['unidad'].iloc[0]})",
-                width="container",
-                height=200
+               title=f"{t.upper()} ({df_t['unidad'].iloc[0]})",
+               width="container",
+               height=200
             )
             st.altair_chart(chart, use_container_width=True)
 
