@@ -363,7 +363,7 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
                 width="container",
                 height=200
             )
-            st.altair_chart(chart, use_container_width=True)
+            st.altair_chart(chart, width='stretch')
 
     st.markdown("---")
 
