@@ -181,8 +181,8 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
             if safe_details.get("deficit_calorico"): fila_peso.append("🍽️")
             if fila_peso:
                 out_events.append({"id": f"{ev.get('id')}-peso", "title": " ".join(fila_peso),
-                    "start": fecha, "allDay": True, "backgroundColor": "#F9FAFB",
-                    "borderColor": "#6B7280", "textColor": "#374151",
+                    "start": fecha, "allDay": True, "backgroundColor": "#FFFFFF",
+                    "borderColor": "#FFFFFF", "textColor": "#000000",
                     "tipo_evento": tipo, "extendedProps": {**extended, "displayOrder": 3}})
 
             # Bloque B: HRV / FC reposo
@@ -202,8 +202,8 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
             if safe_details.get("rpe"): fila_sueno.append(f"💪 {safe_details['rpe']}")
             if fila_sueno:
                 out_events.append({"id": f"{ev.get('id')}-sueno", "title": " ".join(fila_sueno),
-                    "start": fecha, "allDay": True, "backgroundColor": "#F9FAFB",
-                    "borderColor": "#6B7280", "textColor": "#374151",
+                    "start": fecha, "allDay": True, "backgroundColor": "#FFFFFF",
+                    "borderColor": "#FFFFFF", "textColor": "#000000",
                     "tipo_evento": tipo, "extendedProps": {**extended, "displayOrder": 5}})
 
     # Configuración del calendario (sin eventContent, usamos saltos de línea en title)
