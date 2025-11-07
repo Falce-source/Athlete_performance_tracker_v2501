@@ -368,12 +368,12 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                         fc_reposo = st.number_input("FC reposo (lpm)", min_value=0, step=1)
 
                     if st.form_submit_button("Guardar métricas"):
-                        # Guardamos en tabla métricas (histórico)
-                        sql.crear_metrica(id_atleta, "hrv", hrv, "ms")
-                        sql.crear_metrica(id_atleta, "wellness", wellness, "score")
-                        sql.crear_metrica(id_atleta, "rpe", rpe, "score")
-                        sql.crear_metrica(id_atleta, "peso", peso, "kg")
-                        sql.crear_metrica(id_atleta, "fc_reposo", fc_reposo, "lpm")
+                        # Guardamos en tabla métricas (histórico) con la fecha del evento
+                        sql.crear_metrica(id_atleta, "hrv", hrv, "ms", fecha=fecha_local)
+                        sql.crear_metrica(id_atleta, "wellness", wellness, "score", fecha=fecha_local)
+                        sql.crear_metrica(id_atleta, "rpe", rpe, "score", fecha=fecha_local)
+                        sql.crear_metrica(id_atleta, "peso", peso, "kg", fecha=fecha_local)
+                        sql.crear_metrica(id_atleta, "fc_reposo", fc_reposo, "lpm", fecha=fecha_local)
 
                         # Creamos también un evento de calendario para que aparezca en la cuadrícula
                         sql.crear_evento_calendario(
@@ -620,15 +620,16 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                         eliminar = st.form_submit_button("🗑️ Eliminar")
 
                     if submitted:
-                        # Guardamos en histórico (tabla métricas)
-                        sql.crear_metrica(id_atleta, "peso", peso, "kg")
+                        # Guardamos en histórico (tabla métricas) con la fecha del evento
+                        fecha_evento = ev.get("start") or fecha_local
+                        sql.crear_metrica(id_atleta, "peso", peso, "kg", fecha=fecha_evento)
                         if deficit_calorico:
-                            sql.crear_metrica(id_atleta, "deficit_calorico", deficit_calorico, "kcal")
-                        sql.crear_metrica(id_atleta, "hrv", hrv, "ms")
-                        sql.crear_metrica(id_atleta, "fc_reposo", fc_reposo, "lpm")
-                        sql.crear_metrica(id_atleta, "sueno", sueno, "h")
-                        sql.crear_metrica(id_atleta, "wellness", wellness, "score")
-                        sql.crear_metrica(id_atleta, "rpe", rpe, "score")
+                            sql.crear_metrica(id_atleta, "deficit_calorico", deficit_calorico, "kcal", fecha=fecha_evento)
+                        sql.crear_metrica(id_atleta, "hrv", hrv, "ms", fecha=fecha_evento)
+                        sql.crear_metrica(id_atleta, "fc_reposo", fc_reposo, "lpm", fecha=fecha_evento)
+                        sql.crear_metrica(id_atleta, "sueno", sueno, "h", fecha=fecha_evento)
+                        sql.crear_metrica(id_atleta, "wellness", wellness, "score", fecha=fecha_evento)
+                        sql.crear_metrica(id_atleta, "rpe", rpe, "score", fecha=fecha_evento)
 
                         # Actualizamos el evento existente en calendario_eventos
                         event_id = props.get("id_base") or ev.get("id")
