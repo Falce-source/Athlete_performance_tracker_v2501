@@ -406,27 +406,23 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
             eventos = sql.obtener_eventos_calendario_por_atleta(id_atleta, rol_actual="admin")
             st.json(eventos)
 
-    # --------
+    # Prueba
+        st.subheader("🗑️ Reset total de métricas rápidas (uso único)")
 
-    # Prueba 2
-
-    st.subheader("🗑️ Resetear métricas rápidas y eventos")
-
-    if st.button("Eliminar TODO lo de métricas rápidas"):
+    if st.button("Eliminar TODO lo de métricas rápidas (histórico + calendario)"):
         # 1. Borrar métricas rápidas del histórico
-        sql.borrar_metricas_por_tipo(id_atleta, tipo="metricas_rapidas")
+        conn = sql.get_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM metricas WHERE id_atleta = %s AND tipo_metrica IN ('hrv','wellness','rpe','peso','fc_reposo')", (id_atleta,))
+        conn.commit()
 
         # 2. Borrar eventos de calendario de métricas rápidas
-        eventos = sql.obtener_eventos_filtrados(
-            id_atleta=id_atleta,
-            rol_actual=rol_actual,
-            tipos=["metricas_rapidas"],
-            fecha_inicio=None,
-            fecha_fin=None
-        )
-        for ev in eventos:
-            sql.borrar_evento_calendario(ev["id"])
+        cur.execute("DELETE FROM calendario_eventos WHERE id_atleta = %s AND tipo_evento = 'metricas_rapidas'", (id_atleta,))
+        conn.commit()
 
-        st.success("✅ Se han eliminado todas las métricas rápidas y sus eventos de calendario.")
+        cur.close()
+        conn.close()
+
+        st.success("✅ Reset completado. Se han eliminado todas las métricas rápidas y sus eventos de calendario.")
         st.rerun()
-
+    #   ------
