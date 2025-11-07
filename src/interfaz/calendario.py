@@ -299,6 +299,39 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
     st.markdown("---")
 
     # ───────────────────────────────
+    # Métricas rápidas (gráficas históricas)
+    # ───────────────────────────────
+    st.subheader("📊 Métricas rápidas")
+
+    import altair as alt
+    metricas = sql.obtener_metricas_rapidas(id_atleta)
+    if not metricas:
+        st.info("No hay métricas rápidas registradas todavía")
+    else:
+        df_metricas = pd.DataFrame([{
+            "fecha": m.fecha,
+            "tipo": m.tipo_metrica,
+            "valor": float(m.valor) if m.valor.replace('.','',1).isdigit() else None,
+            "unidad": m.unidad
+        } for m in metricas if m.valor is not None])
+
+        tipos = df_metricas["tipo"].unique()
+        for t in tipos:
+            df_t = df_metricas[df_metricas["tipo"] == t]
+            chart = alt.Chart(df_t).mark_line(point=True).encode(
+                x="fecha:T",
+                y="valor:Q",
+                tooltip=["fecha:T", "valor:Q", "unidad:N"]
+            ).properties(
+                title=f"{t.upper()} ({df_t['unidad'].iloc[0]})",
+                width="container",
+                height=200
+            )
+            st.altair_chart(chart, use_container_width=True)
+
+    st.markdown("---")
+
+    # ───────────────────────────────
     # Notas privadas (comentarios)
     # ───────────────────────────────
     st.subheader("💬 Notas privadas (staff)")
