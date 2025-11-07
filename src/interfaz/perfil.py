@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from src.persistencia import sql
+from ..persistencia import sql
 
 # Importar control de roles
 from src.utils.roles import Contexto, puede_editar_perfil_atleta
