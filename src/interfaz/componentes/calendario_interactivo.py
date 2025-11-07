@@ -357,7 +357,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                         # Creamos también un evento de calendario para que aparezca en la cuadrícula
                         sql.crear_evento_calendario(
                             id_atleta=id_atleta,
-                            fecha=date.today(),
+                            fecha=str(fecha_local),
                             tipo_evento="metricas_rapidas",
                             valor={
                                 "hrv": hrv,

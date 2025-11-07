@@ -97,7 +97,7 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
     # ───────────────────────────────
     # Controles de filtrado dinámico
     # ───────────────────────────────
-    tipos = st.multiselect("Filtrar por tipo de evento", ["estado_diario", "competicion", "cita_test"])
+    tipos = st.multiselect("Filtrar por tipo de evento", ["estado_diario", "competicion", "cita_test", "metricas_rapidas"])
     col1, col2 = st.columns(2)
     with col1:
         fecha_inicio = st.date_input("Fecha inicio", value=None)
@@ -189,6 +189,23 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
                 "extendedProps": valor
             }
             eventos_fc.append(evento_fc)
+        # Métricas rápidas
+        elif tipo == "metricas_rapidas":
+            # Añadimos iconos y valores a la fila de tabla
+            if valor.get("hrv"): fila["HRV"] = f"💓 {valor['hrv']}"
+            if valor.get("wellness"): fila["Wellness"] = f"🌟 {valor['wellness']}"
+            if valor.get("rpe"): fila["RPE"] = f"💪 {valor['rpe']}"
+            if valor.get("peso"): fila["Peso"] = f"⚖️ {valor['peso']}"
+            if valor.get("fc_reposo"): fila["FC reposo"] = f"❤️ {valor['fc_reposo']}"
+
+            evento_fc = {
+                "id": e["id"],
+                "start": e["start"],
+                "allDay": True,
+                "tipo_evento": tipo,
+                "extendedProps": valor
+            }
+            eventos_fc.append(evento_fc)
 
         data.append(fila)
 
@@ -224,6 +241,17 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
                 return f"<span style='background-color:#FFF4D6; color:#7A4B00; padding:2px 6px; border-radius:8px;'>🤕 {val}</span>"
             if col == "Comentario" and val not in ["-", ""]:
                 return f"<span style='background-color:#F9FAFB; color:#374151; padding:2px 6px; border-radius:8px;'>📝 {val}</span>"
+            if col == "HRV" and val not in ["-", ""]:
+                return f"<span style='background-color:#E6F0FF; color:#0B3A82; padding:2px 6px; border-radius:8px;'>{val}</span>"
+            if col == "Wellness" and val not in ["-", ""]:
+                return f"<span style='background-color:#E0F7FA; color:#065F46; padding:2px 6px; border-radius:8px;'>{val}</span>"
+            if col == "RPE" and val not in ["-", ""]:
+                return f"<span style='background-color:#FFF4E5; color:#7C2D12; padding:2px 6px; border-radius:8px;'>{val}</span>"
+            if col == "Peso" and val not in ["-", ""]:
+                return f"<span style='background-color:#F3F4F6; color:#374151; padding:2px 6px; border-radius:8px;'>{val}</span>"
+            if col == "FC reposo" and val not in ["-", ""]:
+                return f"<span style='background-color:#FEE2E2; color:#7A1D1D; padding:2px 6px; border-radius:8px;'>{val}</span>"
+            return val if val != "nan" else "-"
             return val if val != "nan" else "-"
 
         # Renderizado fila a fila con botón de borrado
