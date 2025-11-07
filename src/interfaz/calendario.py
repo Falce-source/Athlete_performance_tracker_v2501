@@ -406,4 +406,30 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
             eventos = sql.obtener_eventos_calendario_por_atleta(id_atleta, rol_actual="admin")
             st.json(eventos)
 
-# --------
+    # --------
+
+    # Prueba 2
+
+    st.subheader("🛠️ Migración puntual de métricas rápidas antiguas")
+
+    if st.button("Migrar métricas antiguas a calendario"):
+        metricas = sql.obtener_metricas_rapidas(id_atleta)
+        agrupadas = {}
+        for m in metricas:
+            fecha = m.fecha.date()
+            if fecha not in agrupadas:
+                agrupadas[fecha] = {}
+            agrupadas[fecha][m.tipo_metrica] = m.valor
+
+        for fecha, valores in agrupadas.items():
+            # Creamos un evento de calendario por cada día con métricas
+            sql.crear_evento_calendario(
+                id_atleta=id_atleta,
+                fecha=fecha,
+                tipo_evento="metricas_rapidas",
+                valor=valores,
+                notas="Migración métricas rápidas"
+            )
+
+        st.success("✅ Migración completada. Ahora las métricas antiguas aparecen en calendario y tabla.")
+    # --------
