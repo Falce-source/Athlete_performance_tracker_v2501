@@ -168,6 +168,29 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                 "extendedProps": {**safe_details, "displayOrder": 3, "tipo_evento": tipo, "id_base": ev.get("id")}
             })
 
+        elif tipo == "metricas_rapidas":
+            # Mostrar iconos + valores numéricos en la casilla
+            safe_details = normalize_details(details)
+            fila_metricas = []
+            if safe_details.get("hrv"): fila_metricas.append(f"💓 {safe_details['hrv']}")
+            if safe_details.get("wellness"): fila_metricas.append(f"🌟 {safe_details['wellness']}")
+            if safe_details.get("rpe"): fila_metricas.append(f"💪 {safe_details['rpe']}")
+            if safe_details.get("peso"): fila_metricas.append(f"⚖️ {safe_details['peso']}")
+            if safe_details.get("fc_reposo"): fila_metricas.append(f"❤️ {safe_details['fc_reposo']}")
+
+            if fila_metricas:
+                out_events.append({
+                    "id": str(ev.get("id")),
+                    "title": " ".join(fila_metricas),
+                    "start": fecha,
+                    "allDay": True,
+                    "backgroundColor": "#F9FAFB",
+                    "borderColor": "#6B7280",
+                    "textColor": "#374151",
+                    "tipo_evento": tipo,
+                    "extendedProps": {**safe_details, "displayOrder": 4, "tipo_evento": tipo, "id_base": ev.get("id")}
+                })
+
     # Configuración del calendario (sin eventContent, usamos saltos de línea en title)
     calendar_options = {
         "initialView": "dayGridMonth",
@@ -531,3 +554,54 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                             else:
                                 st.caption("⛔ No tienes permisos para borrar esta cita/test")
             editar_cita_test()
+
+        # -------------------------
+        # Métricas rápidas
+        # -------------------------
+        if tipo_ev == "metricas_rapidas":
+            @st.dialog("📊 Editar métricas rápidas")
+            def editar_metricas_rapidas():
+                with st.form("form_editar_metricas_rapidas", clear_on_submit=True):
+                    hrv = st.number_input("HRV (ms)", min_value=0, step=1,
+                        value=int(props.get("hrv", 0)) if props.get("hrv") else 0)
+                    wellness = st.slider("Wellness (1-10)", 1, 10,
+                        int(props.get("wellness", 5)) if props.get("wellness") else 5)
+                    rpe = st.slider("RPE (1-10)", 1, 10,
+                        int(props.get("rpe", 5)) if props.get("rpe") else 5)
+                    peso = st.number_input("Peso (kg)", min_value=0.0, step=0.1,
+                        value=float(props.get("peso", 0)) if props.get("peso") else 0.0)
+                    fc_reposo = st.number_input("FC reposo (lpm)", min_value=0, step=1,
+                        value=int(props.get("fc_reposo", 0)) if props.get("fc_reposo") else 0)
+
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        submitted = st.form_submit_button("💾 Guardar")
+                    with col2:
+                        eliminar = st.form_submit_button("🗑️ Eliminar")
+
+                    if submitted:
+                        # Guardamos cada métrica como registro independiente
+                        sql.crear_metrica(id_atleta, "hrv", hrv, "ms")
+                        sql.crear_metrica(id_atleta, "wellness", wellness, "score")
+                        sql.crear_metrica(id_atleta, "rpe", rpe, "score")
+                        sql.crear_metrica(id_atleta, "peso", peso, "kg")
+                        sql.crear_metrica(id_atleta, "fc_reposo", fc_reposo, "lpm")
+                        st.success("✅ Métricas rápidas actualizadas")
+                        st.rerun()
+
+                    if eliminar:
+                        event_id = props.get("id_base") or ev.get("id")
+                        if event_id:
+                            ctx_evento = Contexto(
+                                rol_actual=st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin")),
+                                usuario_id=st.session_state.get("USUARIO_ID", 0),
+                                atleta_id=id_atleta,
+                                propietario_id=props.get("id_autor") or id_atleta
+                            )
+                            if ctx_evento.rol_actual == "admin" or puede_borrar_evento_calendario(ctx_evento):
+                                sql.borrar_evento_calendario(int(event_id))
+                                st.success("🗑️ Métricas rápidas eliminadas")
+                                st.rerun()
+                            else:
+                                st.caption("⛔ No tienes permisos para borrar estas métricas rápidas")
+            editar_metricas_rapidas()
