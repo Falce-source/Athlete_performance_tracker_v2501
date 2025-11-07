@@ -3,7 +3,7 @@ import pandas as pd
 import os
 import time
 from datetime import datetime
-from ..persistencia import sql
+from src.persistencia import sql
 import backup_storage
 
 def probar_flujo(modulo, rol_actual="admin"):
@@ -79,7 +79,6 @@ def probar_flujo(modulo, rol_actual="admin"):
     return resultado
 
 def probar_visibilidad_por_rol():
-    from datetime import datetime
     resultado = {"ok": True, "mensaje": "", "backup_creado": None}
     try:
         roles = ["admin", "entrenadora", "atleta"]

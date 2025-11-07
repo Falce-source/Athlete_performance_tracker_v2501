@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime, UTC, date
-from ..persistencia import sql
+import src.persistencia.sql as sql
 import json
 
 # Importar control de roles
