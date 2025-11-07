@@ -740,7 +740,24 @@ def borrar_sesion(id_sesion):
 # CRUD: MÉTRICAS
 # ─────────────────────────────────────────────
 def crear_metrica(id_atleta, tipo_metrica, valor, unidad):
+    """
+    Inserta una métrica, garantizando que solo exista un registro por día y tipo.
+    Si ya había una métrica rápida de ese tipo en la misma fecha, se reemplaza.
+    """
+    fecha_hoy = datetime.now(timezone.utc).date()
+    inicio = datetime.combine(fecha_hoy, datetime.min.time(), tzinfo=timezone.utc)
+    fin = datetime.combine(fecha_hoy, datetime.max.time(), tzinfo=timezone.utc)
+
     with SessionLocal() as session:
+        # Borrar cualquier métrica previa de ese tipo en el mismo día
+        session.query(Metrica).filter(
+            Metrica.id_atleta == id_atleta,
+            Metrica.tipo_metrica == tipo_metrica,
+            Metrica.fecha >= inicio,
+            Metrica.fecha <= fin
+        ).delete(synchronize_session=False)
+
+        # Insertar nueva métrica
         metrica = Metrica(
             id_atleta=id_atleta,
             fecha=datetime.now(timezone.utc),
@@ -783,13 +800,23 @@ def borrar_metrica(id_metrica):
 # HELPERS: MÉTRICAS RÁPIDAS
 # ─────────────────────────────────────────────
 def obtener_metricas_rapidas(id_atleta):
-    """Devuelve todas las métricas rápidas (HRV, Wellness, RPE, Peso, FC reposo)"""
+    """
+    Devuelve las métricas rápidas únicas por día (HRV, Wellness, RPE, Peso, FC reposo).
+    Si hubo varias inserciones en el mismo día, se conserva solo la última.
+    """
     tipos = ["hrv", "wellness", "rpe", "peso", "fc_reposo"]
     with SessionLocal() as session:
         metricas = session.query(Metrica)\
             .filter(Metrica.id_atleta == id_atleta, Metrica.tipo_metrica.in_(tipos))\
             .order_by(Metrica.fecha).all()
-        return metricas
+
+        # Agrupar por fecha y tipo, quedándose con la última
+        unicas = {}
+        for m in metricas:
+            clave = (m.tipo_metrica, m.fecha.date())
+            unicas[clave] = m
+
+        return list(unicas.values())
 
 # ─────────────────────────────────────────────
 # CRUD: COMENTARIOS

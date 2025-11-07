@@ -234,17 +234,26 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
             fecha_local = datetime.date.today()
 
         # Verificamos si ya hay un estado_diario en esa fecha
-        ya_existe = any(
+        ya_existe_estado = any(
             ev.get("tipo_evento") == "estado_diario"
+            and ev.get("start", "").startswith(str(fecha_local))
+            for ev in src_events
+        )
+
+        # Verificamos si ya hay métricas rápidas en esa fecha
+        ya_existe_metricas = any(
+            ev.get("tipo_evento") == "metricas_rapidas"
             and ev.get("start", "").startswith(str(fecha_local))
             for ev in src_events
         )
 
         @st.dialog(f"➕ Registrar evento para {fecha_local.strftime('%Y-%m-%d')}")
         def registrar_evento():
-            opciones = ["Competición", "Cita/Test", "Métricas rápidas"]
-            if not ya_existe:
+            opciones = ["Competición", "Cita/Test"]
+            if not ya_existe_estado:
                 opciones.insert(0, "Estado diario")
+            if not ya_existe_metricas:
+                opciones.append("Métricas rápidas")
             tipo_evento = st.radio("Selecciona el tipo de evento", opciones)
 
             # -------------------------
@@ -631,9 +640,12 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                                 propietario_id=props.get("id_autor") or id_atleta
                             )
                             if ctx_evento.rol_actual == "admin" or puede_borrar_evento_calendario(ctx_evento):
-                                sql.borrar_evento_calendario(int(event_id))
-                                st.success("🗑️ Métricas rápidas eliminadas")
-                                st.rerun()
+                                eliminado = sql.borrar_evento_calendario(int(event_id))
+                                if eliminado:
+                                    st.success("🗑️ Métricas rápidas eliminadas")
+                                    st.rerun()
+                                else:
+                                    st.warning("⚠️ Este evento de métricas rápidas ya no existe (posiblemente fue borrado).")
                             else:
                                 st.caption("⛔ No tienes permisos para borrar estas métricas rápidas")
             editar_metricas_rapidas()
