@@ -742,8 +742,8 @@ def crear_metrica(id_atleta, tipo_metrica, valor, unidad, fecha=None):
     un registro por día y tipo para cada atleta.
     """
     fecha = fecha or datetime.now(timezone.utc).date()
-    inicio = datetime.combine(fecha, datetime.min.time(), tzinfo=timezone.utc)
-    fin = datetime.combine(fecha, datetime.max.time(), tzinfo=timezone.utc)
+    inicio = datetime.combine(fecha, datetime.min.time(), timezone.utc)
+    fin = datetime.combine(fecha, datetime.max.time(), timezone.utc)
 
     with SessionLocal() as session:
         existente = session.query(Metrica).filter(
@@ -758,7 +758,7 @@ def crear_metrica(id_atleta, tipo_metrica, valor, unidad, fecha=None):
             existente.valor = str(valor)
             existente.unidad = unidad
             # Guardamos con la fecha del evento, no con "ahora"
-            existente.fecha = datetime.combine(fecha, datetime.min.time(), tzinfo=timezone.utc)
+            existente.fecha = datetime.combine(fecha, datetime.min.time(), timezone.utc)
             session.commit()
             session.refresh(existente)
             _sync_backup()
@@ -767,7 +767,7 @@ def crear_metrica(id_atleta, tipo_metrica, valor, unidad, fecha=None):
             # Insertar nueva métrica
             metrica = Metrica(
                 id_atleta=id_atleta,
-                fecha=datetime.combine(fecha, datetime.min.time(), tzinfo=timezone.utc),
+                fecha=datetime.combine(fecha, datetime.min.time(), timezone.utc),
                 tipo_metrica=tipo_metrica,
                 valor=str(valor),
                 unidad=unidad
