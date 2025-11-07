@@ -92,13 +92,14 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     "borderColor": "#FFFFFF", "textColor": "#000000",
                     "tipo_evento": tipo, "extendedProps": {**extended, "displayOrder": 1}})
 
-            # Bloque 3: lesiones/baja
-            fila_lesion = []
-            if details.get("lesion"): fila_lesion.append("🤕")
+            # Bloque 3: lesiones / baja / notas
+            fila_extra = []
+            if details.get("lesion"): fila_extra.append("🤕")
             if details.get("baja") and details.get("baja") != "No":
-                fila_lesion.append("⛔")
-            if fila_lesion:
-                out_events.append({"id": f"{ev.get('id')}-lesion", "title": " ".join(fila_lesion),
+                fila_extra.append("⛔")
+            if details.get("comentario_extra"): fila_extra.append("📝")
+            if fila_extra:
+                out_events.append({"id": f"{ev.get('id')}-extra", "title": " ".join(fila_extra),
                     "start": fecha, "allDay": True, "backgroundColor": "#FFFFFF",
                     "borderColor": "#FFFFFF", "textColor": "#000000",
                     "tipo_evento": tipo, "extendedProps": {**extended, "displayOrder": 2}})
@@ -133,13 +134,6 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     "start": fecha, "allDay": True, "backgroundColor": "#FFFFFF",
                     "borderColor": "#FFFFFF", "textColor": "#000000",
                     "tipo_evento": tipo, "extendedProps": {**extended, "displayOrder": 5}})
-
-            # Bloque 7: notas
-            if details.get("comentario_extra"):
-                out_events.append({"id": f"{ev.get('id')}-nota", "title": "📝",
-                    "start": fecha, "allDay": True, "backgroundColor": "#FFFFFF",
-                    "borderColor": "#FFFFFF", "textColor": "#000000",
-                    "tipo_evento": tipo, "extendedProps": {**extended, "displayOrder": 6}})
 
         elif tipo == "competicion":
             # Solo icono 🏆, detalles en extendedProps
