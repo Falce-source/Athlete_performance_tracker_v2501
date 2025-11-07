@@ -410,29 +410,23 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
 
     # Prueba 2
 
-    st.subheader("🛠️ Migración consolidada de métricas rápidas antiguas")
+    st.subheader("🗑️ Resetear métricas rápidas y eventos")
 
-    if st.button("Migrar métricas antiguas (consolidar por día)"):
-        metricas = sql.obtener_metricas_rapidas(id_atleta)
-        agrupadas = {}
+    if st.button("Eliminar TODO lo de métricas rápidas"):
+        # 1. Borrar métricas rápidas del histórico
+        sql.borrar_metricas_por_tipo(id_atleta, tipo="metricas_rapidas")
 
-        # Agrupamos todas las métricas por fecha
-        for m in metricas:
-            fecha = m.fecha.date()
-            if fecha not in agrupadas:
-                agrupadas[fecha] = {}
-            # siempre guardamos el último valor registrado de cada métrica en ese día
-            agrupadas[fecha][m.tipo_metrica] = m.valor
+        # 2. Borrar eventos de calendario de métricas rápidas
+        eventos = sql.obtener_eventos_filtrados(
+            id_atleta=id_atleta,
+            rol_actual=rol_actual,
+            tipos=["metricas_rapidas"],
+            fecha_inicio=None,
+            fecha_fin=None
+        )
+        for ev in eventos:
+            sql.borrar_evento_calendario(ev["id"])
 
-        # Creamos un único evento por día
-        for fecha, valores in agrupadas.items():
-            st.write("Insertando evento consolidado:", fecha, valores)  # 👀 debug
-            sql.crear_evento_calendario(
-                id_atleta=id_atleta,
-                fecha=fecha,
-                tipo_evento="metricas_rapidas",
-                valor=valores,
-                notas="Migración consolidada métricas rápidas"
-            )
+        st.success("✅ Se han eliminado todas las métricas rápidas y sus eventos de calendario.")
+        st.rerun()
 
-        st.success("✅ Migración completada. Ahora cada día tiene un único evento de métricas rápidas en calendario.")

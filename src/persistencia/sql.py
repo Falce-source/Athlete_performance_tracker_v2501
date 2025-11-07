@@ -852,4 +852,3 @@ try:
         print("✅ Esquema creado y primer backup generado")
 except Exception as e:
     print(f"⚠️ Error al crear esquema inicial: {e}")
-
