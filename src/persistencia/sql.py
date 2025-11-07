@@ -742,9 +742,12 @@ def crear_metrica(id_atleta, tipo_metrica, valor, unidad, fecha=None):
     un registro por día y tipo para cada atleta.
     """
     fecha = fecha or datetime.now(timezone.utc).date()
-    # 🔒 Aseguramos que fecha sea siempre un objeto date
+    # 🔒 Normalizamos fecha para que siempre sea un objeto date
     if isinstance(fecha, datetime):
         fecha = fecha.date()
+    elif isinstance(fecha, str):
+        # Ajusta el formato según cómo venga desde el calendario (ej. "2025-11-07")
+        fecha = datetime.strptime(fecha, "%Y-%m-%d").date()
     inicio = datetime.combine(fecha, datetime.min.time(), timezone.utc)
     fin = datetime.combine(fecha, datetime.max.time(), timezone.utc)
 
@@ -763,7 +766,10 @@ def crear_metrica(id_atleta, tipo_metrica, valor, unidad, fecha=None):
             # Guardamos con la fecha del evento, no con "ahora"
             if isinstance(fecha, datetime):
                 fecha = fecha.date()
+            elif isinstance(fecha, str):
+                fecha = datetime.strptime(fecha, "%Y-%m-%d").date()
             existente.fecha = datetime.combine(fecha, datetime.min.time(), timezone.utc)
+            session.commit()
             session.commit()
             session.refresh(existente)
             _sync_backup()
@@ -772,6 +778,8 @@ def crear_metrica(id_atleta, tipo_metrica, valor, unidad, fecha=None):
             # Insertar nueva métrica
             if isinstance(fecha, datetime):
                 fecha = fecha.date()
+            elif isinstance(fecha, str):
+                fecha = datetime.strptime(fecha, "%Y-%m-%d").date()
             metrica = Metrica(
                 id_atleta=id_atleta,
                 fecha=datetime.combine(fecha, datetime.min.time(), timezone.utc),
