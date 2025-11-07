@@ -149,7 +149,7 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
     if rol_filtro != "Todos":
         df_filtrado = df_filtrado[df_filtrado["Rol"] == rol_filtro]
 
-    st.dataframe(df_filtrado, use_container_width=True)
+    st.dataframe(df_filtrado, width="stretch")
 
     # ───────────────────────────────
     # Selector de usuario individual + edición/eliminación

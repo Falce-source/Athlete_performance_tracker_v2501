@@ -69,7 +69,7 @@ def mostrar_historial():
         df["fecha"] = pd.to_datetime(df["fecha"], errors="coerce")
         df = df.sort_values("fecha", ascending=False)
 
-        st.dataframe(df[["fecha", "modulo", "resultado", "backup", "rol"]], use_container_width=True)
+        st.dataframe(df[["fecha", "modulo", "resultado", "backup", "rol"]], width="stretch")
 
         # ───────────────────────────────
         # Filtros interactivos
@@ -92,7 +92,7 @@ def mostrar_historial():
         if rol_sel != "Todos":
             df_filtrado = df_filtrado[df_filtrado["rol"] == rol_sel]
 
-        st.dataframe(df_filtrado[["fecha", "modulo", "resultado", "backup", "rol"]], use_container_width=True)
+        st.dataframe(df_filtrado[["fecha", "modulo", "resultado", "backup", "rol"]], width="stretch")
 
     except Exception as e:
         st.error(f"❌ Error al cargar historial: {e}")

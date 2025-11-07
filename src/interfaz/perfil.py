@@ -185,7 +185,7 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
     if nivel_filtro != "Todos":
         df_filtrado = df_filtrado[df_filtrado["Nivel"] == nivel_filtro]
 
-    st.dataframe(df_filtrado, use_container_width=True)
+    st.dataframe(df_filtrado, width="stretch")
 
     # ───────────────────────────────
     # Selector de atleta individual + edición/eliminación

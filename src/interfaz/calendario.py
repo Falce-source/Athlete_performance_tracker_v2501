@@ -294,7 +294,7 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
             "Planificado": s.planificado_json,
             "Realizado": s.realizado_json
         } for s in sesiones])
-        st.dataframe(df_sesiones, use_container_width=True)
+        st.dataframe(df_sesiones, width="stretch")
 
     st.markdown("---")
 
