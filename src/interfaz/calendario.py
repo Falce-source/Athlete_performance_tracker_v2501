@@ -299,28 +299,6 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
     st.markdown("---")
 
     # ───────────────────────────────
-    # Métricas rápidas (entrada + gráficas placeholder)
-    # ───────────────────────────────
-    st.subheader("📊 Métricas rápidas")
-
-    col1, col2 = st.columns(2)
-    with col1:
-        hrv = st.number_input("HRV (ms)", min_value=0, step=1)
-        wellness = st.slider("Wellness (1-10)", 1, 10, 5)
-    with col2:
-        rpe = st.slider("RPE (1-10)", 1, 10, 5)
-
-    if st.button("Guardar métricas rápidas"):
-        sql.crear_metrica(id_atleta, "hrv", hrv, "ms")
-        sql.crear_metrica(id_atleta, "wellness", wellness, "score")
-        sql.crear_metrica(id_atleta, "rpe", rpe, "score")
-        st.success("✅ Métricas guardadas")
-
-    st.info("📈 Aquí se mostrarán las gráficas históricas de HRV, Wellness, RPE, Peso y FC reposo")
-
-    st.markdown("---")
-
-    # ───────────────────────────────
     # Notas privadas (comentarios)
     # ───────────────────────────────
     st.subheader("💬 Notas privadas (staff)")

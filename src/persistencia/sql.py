@@ -780,6 +780,18 @@ def borrar_metrica(id_metrica):
             _sync_backup()
 
 # ─────────────────────────────────────────────
+# HELPERS: MÉTRICAS RÁPIDAS
+# ─────────────────────────────────────────────
+def obtener_metricas_rapidas(id_atleta):
+    """Devuelve todas las métricas rápidas (HRV, Wellness, RPE, Peso, FC reposo)"""
+    tipos = ["hrv", "wellness", "rpe", "peso", "fc_reposo"]
+    with SessionLocal() as session:
+        metricas = session.query(Metrica)\
+            .filter(Metrica.id_atleta == id_atleta, Metrica.tipo_metrica.in_(tipos))\
+            .order_by(Metrica.fecha).all()
+        return metricas
+
+# ─────────────────────────────────────────────
 # CRUD: COMENTARIOS
 # ─────────────────────────────────────────────
 def crear_comentario(id_atleta, texto, visible_para="staff", id_autor=None):

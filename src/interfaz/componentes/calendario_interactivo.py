@@ -219,7 +219,7 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
 
         @st.dialog(f"➕ Registrar evento para {fecha_local.strftime('%Y-%m-%d')}")
         def registrar_evento():
-            opciones = ["Competición", "Cita/Test"]
+            opciones = ["Competición", "Cita/Test", "Métricas rápidas"]
             if not ya_existe:
                 opciones.insert(0, "Estado diario")
             tipo_evento = st.radio("Selecciona el tipo de evento", opciones)
@@ -307,6 +307,29 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                             notas=notas
                         )
                         st.success("✅ Cita/Test registrada")
+                        st.rerun()
+    
+            # -------------------------
+            # Métricas rápidas
+            # -------------------------
+            elif tipo_evento == "Métricas rápidas":
+                with st.form("form_metricas_rapidas", clear_on_submit=True):
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        hrv = st.number_input("HRV (ms)", min_value=0, step=1)
+                        wellness = st.slider("Wellness (1-10)", 1, 10, 5)
+                        peso = st.number_input("Peso (kg)", min_value=0.0, step=0.1)
+                    with col2:
+                        rpe = st.slider("RPE (1-10)", 1, 10, 5)
+                        fc_reposo = st.number_input("FC reposo (lpm)", min_value=0, step=1)
+
+                    if st.form_submit_button("Guardar métricas"):
+                        sql.crear_metrica(id_atleta, "hrv", hrv, "ms")
+                        sql.crear_metrica(id_atleta, "wellness", wellness, "score")
+                        sql.crear_metrica(id_atleta, "rpe", rpe, "score")
+                        sql.crear_metrica(id_atleta, "peso", peso, "kg")
+                        sql.crear_metrica(id_atleta, "fc_reposo", fc_reposo, "lpm")
+                        st.success("✅ Métricas rápidas registradas")
                         st.rerun()
 
         registrar_evento()
