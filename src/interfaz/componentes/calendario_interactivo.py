@@ -347,11 +347,28 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                         fc_reposo = st.number_input("FC reposo (lpm)", min_value=0, step=1)
 
                     if st.form_submit_button("Guardar métricas"):
+                        # Guardamos en tabla métricas (histórico)
                         sql.crear_metrica(id_atleta, "hrv", hrv, "ms")
                         sql.crear_metrica(id_atleta, "wellness", wellness, "score")
                         sql.crear_metrica(id_atleta, "rpe", rpe, "score")
                         sql.crear_metrica(id_atleta, "peso", peso, "kg")
                         sql.crear_metrica(id_atleta, "fc_reposo", fc_reposo, "lpm")
+
+                        # Creamos también un evento de calendario para que aparezca en la cuadrícula
+                        sql.crear_evento_calendario(
+                            id_atleta=id_atleta,
+                            fecha=date.today(),
+                            tipo_evento="metricas_rapidas",
+                            valor={
+                                "hrv": hrv,
+                                "wellness": wellness,
+                                "rpe": rpe,
+                                "peso": peso,
+                                "fc_reposo": fc_reposo
+                            },
+                            notas="Métricas rápidas registradas"
+                        )
+
                         st.success("✅ Métricas rápidas registradas")
                         st.rerun()
 
