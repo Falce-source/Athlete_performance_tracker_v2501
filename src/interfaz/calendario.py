@@ -337,7 +337,7 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
         st.info("No hay métricas rápidas registradas todavía")
     else:
         df_metricas = pd.DataFrame([{
-            "fecha": m.fecha.date(),   # solo el día (sin horas)
+            "fecha": m.fecha.date().strftime("%Y-%m-%d"),   # string YYYY-MM-DD
             "tipo": m.tipo_metrica,
             "valor": float(m.valor) if str(m.valor).replace('.','',1).isdigit() else None,
             "unidad": m.unidad
@@ -350,7 +350,7 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
         for t in tipos:
             df_t = df_metricas[df_metricas["tipo"] == t]
             chart = alt.Chart(df_t).mark_line(point=True).encode(
-                x=alt.X("fecha:T", title="Día"),
+                x=alt.X("fecha:N", title="Día"),
                 y=alt.Y("valor:Q", title=f"{t.upper()}"),
                 tooltip=["fecha:T", "valor:Q", "unidad:N"]
             ).properties(
