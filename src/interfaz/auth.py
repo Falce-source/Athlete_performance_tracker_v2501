@@ -1,5 +1,5 @@
 import streamlit as st
-from src.persistencia import sql
+import src.persistencia.sql as sql
 from src.utils.seguridad import check_password, hash_password
 
 def login_form():

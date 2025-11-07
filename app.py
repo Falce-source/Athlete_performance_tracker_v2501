@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 import os
 import src.persistencia.backup_storage as backup_storage
 from src.interfaz import auth
-from src.persistencia import sql
+import src.persistencia.sql as sql
 
 sql.ensure_schema()  # Parche temporal para columnas propietario_id y atleta_usuario_id
 

@@ -2,7 +2,7 @@ import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import pytest
-from src.persistencia import sql
+import src.persistencia.sql as sql
 from seed_data import run_seed
 
 @pytest.fixture(scope="module", autouse=True)

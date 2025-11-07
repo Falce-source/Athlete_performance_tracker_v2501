@@ -4,7 +4,7 @@ Ejecutar con:  python seed_data.py
 """
 
 from datetime import datetime, timedelta, UTC
-from src.persistencia import sql
+import src.persistencia.sql as sql
 
 def reset_db():
     # Borra y recrea todas las tablas

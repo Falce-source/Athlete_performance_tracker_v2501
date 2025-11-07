@@ -2,7 +2,7 @@ import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import pytest
 from datetime import datetime, timezone
-from src.persistencia import sql
+import src.persistencia.sql as sql
 
 @pytest.fixture(scope="module", autouse=True)
 def setup_db():

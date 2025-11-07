@@ -3,7 +3,7 @@ import pandas as pd
 import os
 import time
 from datetime import datetime
-from src.persistencia import sql
+import src.persistencia.sql as sql
 import src.persistencia.backup_storage as backup_storage
 
 def probar_flujo(modulo, rol_actual="admin"):

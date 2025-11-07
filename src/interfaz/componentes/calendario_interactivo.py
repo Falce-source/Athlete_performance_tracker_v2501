@@ -1,7 +1,7 @@
 import streamlit as st
 from streamlit_calendar import calendar
 import datetime
-from src.persistencia import sql
+import src.persistencia.sql as sql
 
 # Importar control de roles
 from src.utils.roles import Contexto, puede_borrar_evento_calendario

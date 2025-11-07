@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from src.persistencia import sql
+import src.persistencia.sql as sql
 from datetime import datetime
 from src.utils.seguridad import hash_password
 

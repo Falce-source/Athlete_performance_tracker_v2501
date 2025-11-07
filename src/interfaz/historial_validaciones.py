@@ -7,7 +7,7 @@ import os
 RUTA_LOG = "/tmp/validaciones_log.json"  # ← compatible con Cloud
 
 def registrar_validacion(modulo, resultado, backup_generado=None, rol_actual=None):
-    from src.persistencia import sql
+    import src.persistencia.sql as sql
     texto = f"{resultado}"
     if backup_generado:
         texto += f" | Backup: {backup_generado}"

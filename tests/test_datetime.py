@@ -4,7 +4,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import pytest
 import uuid
 from datetime import datetime, UTC
-from src.persistencia import sql
+import src.persistencia.sql as sql
 
 @pytest.fixture(scope="module", autouse=True)
 def setup_db():
