@@ -742,6 +742,9 @@ def crear_metrica(id_atleta, tipo_metrica, valor, unidad, fecha=None):
     un registro por día y tipo para cada atleta.
     """
     fecha = fecha or datetime.now(timezone.utc).date()
+    # 🔒 Aseguramos que fecha sea siempre un objeto date
+    if isinstance(fecha, datetime):
+        fecha = fecha.date()
     inicio = datetime.combine(fecha, datetime.min.time(), timezone.utc)
     fin = datetime.combine(fecha, datetime.max.time(), timezone.utc)
 
