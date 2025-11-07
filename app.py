@@ -76,8 +76,6 @@ if missing:
 # ─────────────────────────────────────────────
 st.sidebar.title("🏋️ Athlete Performance Tracker")
 
-import src.persistencia.sql as sql
-
 # Rol actual y usuario_id obtenidos de sesión/login real
 rol_actual = st.session_state.get("ROL_ACTUAL", "admin")
 usuario_id = st.session_state.get("USUARIO_ID", 0)
