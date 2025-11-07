@@ -761,6 +761,8 @@ def crear_metrica(id_atleta, tipo_metrica, valor, unidad, fecha=None):
             existente.valor = str(valor)
             existente.unidad = unidad
             # Guardamos con la fecha del evento, no con "ahora"
+            if isinstance(fecha, datetime):
+                fecha = fecha.date()
             existente.fecha = datetime.combine(fecha, datetime.min.time(), timezone.utc)
             session.commit()
             session.refresh(existente)
@@ -768,6 +770,8 @@ def crear_metrica(id_atleta, tipo_metrica, valor, unidad, fecha=None):
             return existente
         else:
             # Insertar nueva métrica
+            if isinstance(fecha, datetime):
+                fecha = fecha.date()
             metrica = Metrica(
                 id_atleta=id_atleta,
                 fecha=datetime.combine(fecha, datetime.min.time(), timezone.utc),
