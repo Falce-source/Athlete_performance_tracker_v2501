@@ -88,7 +88,7 @@ def puede_crear_evento_calendario(ctx: Contexto) -> bool:
     """Crear evento en calendario:
     - admin: siempre
     - entrenadora: sobre atletas que gestiona (asumimos validación previa)
-    - atleta: solo sobre sí mismo (atleta_id == propietario_id o == usuario_id si mapean)
+    - atleta: solo sobre sí mismo (ctx.atleta_id == ctx.usuario_id o propietario_id)
     """
     if ctx.rol_actual == "admin":
         return True
@@ -96,8 +96,8 @@ def puede_crear_evento_calendario(ctx: Contexto) -> bool:
         # Aquí podrías validar la asignación entrenadora-atleta en SQL.
         return True
     if ctx.rol_actual == "atleta":
-        # Si el atleta crea eventos solo para su propio id_atleta
-        return ctx.atleta_id == (ctx.propietario_id or ctx.atleta_id)
+        # 🔒 Atleta solo puede crear eventos en su propio calendario
+        return ctx.atleta_id == ctx.usuario_id and ctx.atleta_id == (ctx.propietario_id or ctx.atleta_id)
     return False
 
 
@@ -108,7 +108,8 @@ def puede_editar_evento_calendario(ctx: Contexto) -> bool:
     if ctx.rol_actual == "entrenadora":
         return True
     if ctx.rol_actual == "atleta":
-        return ctx.usuario_id == (ctx.propietario_id or ctx.usuario_id)
+        # 🔒 Atleta solo puede editar sus propios eventos
+        return ctx.atleta_id == ctx.usuario_id and ctx.usuario_id == (ctx.propietario_id or ctx.usuario_id)
     return False
 
 
@@ -119,7 +120,8 @@ def puede_borrar_evento_calendario(ctx: Contexto) -> bool:
     if ctx.rol_actual == "entrenadora":
         return True
     if ctx.rol_actual == "atleta":
-        return ctx.usuario_id == (ctx.propietario_id or ctx.usuario_id)
+        # 🔒 Atleta solo puede borrar sus propios eventos
+        return ctx.atleta_id == ctx.usuario_id and ctx.usuario_id == (ctx.propietario_id or ctx.usuario_id)
     return False
 
 
@@ -127,12 +129,12 @@ def puede_editar_perfil_atleta(ctx: Contexto) -> bool:
     """Editar perfil:
     - admin: cualquiera
     - entrenadora: atletas que gestiona (validar en SQL)
-    - atleta: solo su propio perfil (atleta_id vinculado a usuario_id)
+    - atleta: solo su propio perfil (ctx.atleta_id == ctx.usuario_id)
     """
     if ctx.rol_actual == "admin":
         return True
     if ctx.rol_actual == "entrenadora":
         return True
     if ctx.rol_actual == "atleta":
-        return ctx.usuario_id == (ctx.propietario_id or ctx.usuario_id)
+        return ctx.atleta_id == ctx.usuario_id
     return False

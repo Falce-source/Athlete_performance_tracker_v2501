@@ -4,7 +4,12 @@ import datetime
 import src.persistencia.sql as sql
 
 # Importar control de roles
-from src.utils.roles import Contexto, puede_borrar_evento_calendario
+from src.utils.roles import (
+    Contexto,
+    puede_crear_evento_calendario,
+    puede_editar_evento_calendario,
+    puede_borrar_evento_calendario,
+)
 
 # Estilos por tipo de evento
 EVENT_STYLES = {
@@ -266,6 +271,17 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                 opciones.append("Métricas rápidas")
             tipo_evento = st.radio("Selecciona el tipo de evento", opciones)
 
+            # 🔒 Validación de permisos antes de permitir creación
+            ctx_evento = Contexto(
+                rol_actual=st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin")),
+                usuario_id=st.session_state.get("USUARIO_ID", 0),
+                atleta_id=id_atleta,
+                propietario_id=id_atleta
+            )
+            if not puede_crear_evento_calendario(ctx_evento):
+                st.warning("⛔ No tienes permisos para crear eventos en el calendario de otro atleta")
+                return
+
             # -------------------------
             # Estado diario
             # -------------------------
@@ -450,6 +466,9 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     if submitted:
                         event_id = props.get("id_base")
                         if event_id is not None:
+                            if not puede_editar_evento_calendario(ctx_evento):
+                                st.warning("⛔ No tienes permisos para editar este evento")
+                                return
                             valores = normalize_details({
                                 "sintomas": sintomas,
                                 "menstruacion": menstruacion,
@@ -482,6 +501,9 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     if eliminar:
                         event_id = props.get("id_base")
                         if event_id is not None:
+                            if not puede_borrar_evento_calendario(ctx_evento):
+                                st.warning("⛔ No tienes permisos para editar este evento")
+                                return
                             ctx_evento = Contexto(
                                 rol_actual=st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin")),
                                 usuario_id=st.session_state.get("USUARIO_ID", 0),
@@ -518,6 +540,9 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     if submitted:
                         event_id = props.get("id_base") or ev.get("id")
                         if event_id:
+                            if not puede_editar_evento_calendario(ctx_evento):
+                                st.warning("⛔ No tienes permisos para editar este evento")
+                                return
                             valores = normalize_details({
                                 "nombre": nombre,
                                 "lugar": lugar
@@ -532,6 +557,9 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     if eliminar:
                         event_id = props.get("id_base") or ev.get("id")
                         if event_id:
+                            if not puede_borrar_evento_calendario(ctx_evento):
+                                st.warning("⛔ No tienes permisos para editar este evento")
+                                return
                             ctx_evento = Contexto(
                                 rol_actual=st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin")),
                                 usuario_id=st.session_state.get("USUARIO_ID", 0),
@@ -566,6 +594,9 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     if submitted:
                         event_id = props.get("id_base") or ev.get("id")
                         if event_id:
+                            if not puede_editar_evento_calendario(ctx_evento):
+                                st.warning("⛔ No tienes permisos para editar este evento")
+                                return
                             valores = normalize_details({
                                 "tipo": tipo,
                                 "lugar": lugar
@@ -580,6 +611,9 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     if eliminar:
                         event_id = props.get("id_base") or ev.get("id")
                         if event_id:
+                            if not puede_borrar_evento_calendario(ctx_evento):
+                                st.warning("⛔ No tienes permisos para editar este evento")
+                                return
                             ctx_evento = Contexto(
                                 rol_actual=st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin")),
                                 usuario_id=st.session_state.get("USUARIO_ID", 0),
@@ -645,7 +679,11 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                         # Actualizamos el evento existente en calendario_eventos
                         event_id = props.get("id_base") or ev.get("id")
                         if event_id:
-                           sql.actualizar_evento_calendario_por_id(
+                            if not puede_editar_evento_calendario(ctx_evento):
+                                st.warning("⛔ No tienes permisos para editar este evento")
+                                return
+
+                            sql.actualizar_evento_calendario_por_id(
                                 int(event_id),
                                 {
                                     "peso": peso,
@@ -664,6 +702,9 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     if eliminar:
                         event_id = props.get("id_base") or ev.get("id")
                         if event_id:
+                            if not puede_borrar_evento_calendario(ctx_evento):
+                                st.warning("⛔ No tienes permisos para editar este evento")
+                                return
                             ctx_evento = Contexto(
                                 rol_actual=st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin")),
                                 usuario_id=st.session_state.get("USUARIO_ID", 0),
