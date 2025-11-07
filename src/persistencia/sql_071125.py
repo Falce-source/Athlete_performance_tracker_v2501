@@ -620,6 +620,33 @@ def obtener_eventos_calendario_por_atleta(id_atleta, rol_actual="admin"):
         # 🔑 Transformamos cada evento a dict con valor deserializado
         return [evento_to_dict(ev) for ev in eventos]
 
+# ─────────────────────────────────────────────
+# NUEVO: obtener_eventos_filtrados
+# ─────────────────────────────────────────────
+def obtener_eventos_filtrados(id_atleta, rol_actual="admin", tipos=None, fecha_inicio=None, fecha_fin=None):
+    """Obtiene eventos filtrados dinámicamente por rol, tipo y rango de fechas."""
+    with SessionLocal() as session:
+        query = session.query(CalendarioEvento).filter_by(id_atleta=id_atleta)
+
+        # Filtro por rol
+        if rol_actual == "entrenadora":
+            query = query.filter(CalendarioEvento.tipo_evento.notin_(["PrivadoAtleta"]))
+        elif rol_actual == "atleta":
+            query = query.filter(CalendarioEvento.tipo_evento.notin_(["PrivadoStaff"]))
+
+        # Filtro por tipo de evento
+        if tipos:
+            query = query.filter(CalendarioEvento.tipo_evento.in_(tipos))
+
+        # Filtro por rango de fechas
+        if fecha_inicio:
+            query = query.filter(CalendarioEvento.fecha >= fecha_inicio)
+        if fecha_fin:
+            query = query.filter(CalendarioEvento.fecha <= fecha_fin)
+
+        eventos = query.order_by(CalendarioEvento.fecha.desc()).all()
+        return [evento_to_dict(ev) for ev in eventos]
+
 def borrar_evento_calendario(id_evento: int) -> bool:
     """
     Elimina un evento de calendario por su id_evento único.

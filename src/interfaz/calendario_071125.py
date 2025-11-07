@@ -22,6 +22,35 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
         st.caption("🔐 Rol activo: admin")
 
     # ───────────────────────────────
+    # Información de depuración extendida (solo admin)
+    # ───────────────────────────────
+    if rol_actual == "admin":
+        import os
+        import backup_storage
+
+        try:
+            ruta_db = os.path.abspath(sql.engine.url.database)
+            num_usuarios = len(sql.obtener_usuarios())
+            num_atletas = len(sql.obtener_atletas())
+            num_eventos = len(sql.obtener_eventos())
+
+            backups = backup_storage.listar_backups()
+            if backups:
+                ultimo = sorted(backups, key=lambda b: b["createdTime"], reverse=True)[0]
+                fecha_backup = ultimo["createdTime"]
+                nombre_backup = ultimo["name"]
+                backup_info = f"📦 Último backup: {nombre_backup} ({fecha_backup})"
+            else:
+                backup_info = "⚠️ No hay backups en Drive"
+
+            st.info(f"🛠️ Base de datos activa: {ruta_db}")
+            st.info(f"👥 Usuarios: {num_usuarios} | 🏃‍♂️ Atletas: {num_atletas} | 📅 Eventos: {num_eventos}")
+            st.info(backup_info)
+
+        except Exception as e:
+            st.warning(f"No se pudo obtener información de depuración: {e}")
+
+    # ───────────────────────────────
     # Selector de entrenadora (solo admin)
     # ───────────────────────────────
     if rol_actual == "admin":
@@ -32,38 +61,6 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
         id_entrenadora = opciones_entrenadora[seleccion_entrenadora]
     else:
         id_entrenadora = usuario_id
-
-    # ───────────────────────────────
-    # Información de depuración extendida
-    # ───────────────────────────────
-    import os
-    import backup_storage
-
-    try:
-        ruta_db = os.path.abspath(sql.engine.url.database)
-        num_usuarios = len(sql.obtener_usuarios())
-        num_atletas = len(sql.obtener_atletas())
-        num_eventos = len(sql.obtener_eventos())
-
-        backups = backup_storage.listar_backups()
-        if backups:
-            ultimo = sorted(backups, key=lambda b: b["createdTime"], reverse=True)[0]
-            fecha_backup = ultimo["createdTime"]
-            nombre_backup = ultimo["name"]
-            backup_info = f"📦 Último backup: {nombre_backup} ({fecha_backup})"
-        else:
-            backup_info = "⚠️ No hay backups en Drive"
-
-        st.info(f"🛠️ Base de datos activa: {ruta_db}")
-        st.info(f"👥 Usuarios: {num_usuarios} | 🏃‍♂️ Atletas: {num_atletas} | 📅 Eventos: {num_eventos}")
-        st.info(backup_info)
-
-    except Exception as e:
-        st.warning(f"No se pudo obtener información de depuración: {e}")
-
-    # ───────────────────────────────
-    # Selector de atleta
-    # ───────────────────────────────
     if rol_actual == "entrenadora":
         atletas = sql.obtener_atletas_por_usuario(usuario_id)
     elif rol_actual == "admin":
@@ -97,7 +94,24 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
     # ───────────────────────────────
     st.subheader("🗓️ Calendario")
 
-    eventos = sql.obtener_eventos_calendario_por_atleta(id_atleta, rol_actual=rol_actual)
+    # ───────────────────────────────
+    # Controles de filtrado dinámico
+    # ───────────────────────────────
+    tipos = st.multiselect("Filtrar por tipo de evento", ["estado_diario", "competicion", "cita_test"])
+    col1, col2 = st.columns(2)
+    with col1:
+        fecha_inicio = st.date_input("Fecha inicio", value=None)
+    with col2:
+        fecha_fin = st.date_input("Fecha fin", value=None)
+
+    eventos = sql.obtener_eventos_filtrados(
+        id_atleta=id_atleta,
+        rol_actual=rol_actual,
+        tipos=tipos,
+        fecha_inicio=fecha_inicio,
+        fecha_fin=fecha_fin
+    )
+
     vista = st.radio("", ["Calendario", "Tabla"], horizontal=True, index=0)
 
     data = []
@@ -280,7 +294,7 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
             "Planificado": s.planificado_json,
             "Realizado": s.realizado_json
         } for s in sesiones])
-        st.dataframe(df_sesiones, use_container_width=True)
+        st.dataframe(df_sesiones, width="stretch")
 
     st.markdown("---")
 

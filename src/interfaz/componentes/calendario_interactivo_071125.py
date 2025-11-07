@@ -29,6 +29,9 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
     """
     import json
 
+    # 🔑 Nota: ahora fc_events puede venir ya filtrado desde calendario.py
+    # No requiere cambios internos, solo aseguramos compatibilidad.
+
     # Helper interno para normalizar extendedProps
     def normalize_details(details: dict) -> dict:
         safe = {}

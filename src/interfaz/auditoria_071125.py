@@ -79,8 +79,6 @@ def probar_flujo(modulo, rol_actual="admin"):
     return resultado
 
 def probar_visibilidad_por_rol():
-    from src.persistencia import sql
-    from datetime import datetime
     resultado = {"ok": True, "mensaje": "", "backup_creado": None}
     try:
         roles = ["admin", "entrenadora", "atleta"]
