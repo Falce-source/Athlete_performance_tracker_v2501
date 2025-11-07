@@ -339,23 +339,26 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
         df_metricas = pd.DataFrame([{
             "fecha": m.fecha.date(),   # solo el día
             "tipo": m.tipo_metrica,
-            "valor": float(m.valor) if m.valor.replace('.','',1).isdigit() else None,
+            "valor": float(m.valor) if str(m.valor).replace('.','',1).isdigit() else None,
             "unidad": m.unidad
         } for m in metricas if m.valor is not None])
+
+        # 🔑 Ordenar cronológicamente (ya no hace falta agrupar porque sql.py garantiza unicidad)
+        df_metricas = df_metricas.sort_values("fecha")
 
         tipos = df_metricas["tipo"].unique()
         for t in tipos:
             df_t = df_metricas[df_metricas["tipo"] == t]
             chart = alt.Chart(df_t).mark_line(point=True).encode(
-                x="fecha:T",
-                y="valor:Q",
+                x=alt.X("fecha:T", title="Día"),
+                y=alt.Y("valor:Q", title=f"{t.upper()}"),
                 tooltip=["fecha:T", "valor:Q", "unidad:N"]
             ).properties(
                 title=f"{t.upper()} ({df_t['unidad'].iloc[0]})",
                 width="container",
                 height=200
             )
-            st.altair_chart(chart, width='stretch')
+            st.altair_chart(chart, use_container_width=True)
 
     st.markdown("---")
 

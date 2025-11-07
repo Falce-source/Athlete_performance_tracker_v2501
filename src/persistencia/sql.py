@@ -739,37 +739,46 @@ def borrar_sesion(id_sesion):
 # ─────────────────────────────────────────────
 # CRUD: MÉTRICAS
 # ─────────────────────────────────────────────
-def crear_metrica(id_atleta, tipo_metrica, valor, unidad):
+def crear_metrica(id_atleta, tipo_metrica, valor, unidad, fecha=None):
     """
-    Inserta una métrica, garantizando que solo exista un registro por día y tipo.
-    Si ya había una métrica rápida de ese tipo en la misma fecha, se reemplaza.
+    Inserta o actualiza una métrica rápida, garantizando que solo exista
+    un registro por día y tipo para cada atleta.
     """
-    fecha_hoy = datetime.now(timezone.utc).date()
-    inicio = datetime.combine(fecha_hoy, datetime.min.time(), tzinfo=timezone.utc)
-    fin = datetime.combine(fecha_hoy, datetime.max.time(), tzinfo=timezone.utc)
+    fecha = fecha or datetime.now(timezone.utc).date()
+    inicio = datetime.combine(fecha, datetime.min.time(), tzinfo=timezone.utc)
+    fin = datetime.combine(fecha, datetime.max.time(), tzinfo=timezone.utc)
 
     with SessionLocal() as session:
-        # Borrar cualquier métrica previa de ese tipo en el mismo día
-        session.query(Metrica).filter(
+        existente = session.query(Metrica).filter(
             Metrica.id_atleta == id_atleta,
             Metrica.tipo_metrica == tipo_metrica,
             Metrica.fecha >= inicio,
             Metrica.fecha <= fin
-        ).delete(synchronize_session=False)
+        ).first()
 
-        # Insertar nueva métrica
-        metrica = Metrica(
-            id_atleta=id_atleta,
-            fecha=datetime.now(timezone.utc),
-            tipo_metrica=tipo_metrica,
-            valor=str(valor),
-            unidad=unidad
-        )
-        session.add(metrica)
-        session.commit()
-        session.refresh(metrica)
-        _sync_backup()
-        return metrica
+        if existente:
+            # 🔑 Actualizamos en vez de duplicar
+            existente.valor = str(valor)
+            existente.unidad = unidad
+            existente.fecha = datetime.now(timezone.utc)
+            session.commit()
+            session.refresh(existente)
+            _sync_backup()
+            return existente
+        else:
+            # Insertar nueva métrica
+            metrica = Metrica(
+                id_atleta=id_atleta,
+                fecha=datetime.now(timezone.utc),
+                tipo_metrica=tipo_metrica,
+                valor=str(valor),
+                unidad=unidad
+            )
+            session.add(metrica)
+            session.commit()
+            session.refresh(metrica)
+            _sync_backup()
+            return metrica
 
 def obtener_metricas_por_tipo(id_atleta, tipo_metrica):
     with SessionLocal() as session:
