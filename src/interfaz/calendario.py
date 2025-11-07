@@ -97,7 +97,24 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
     # ───────────────────────────────
     st.subheader("🗓️ Calendario")
 
-    eventos = sql.obtener_eventos_calendario_por_atleta(id_atleta, rol_actual=rol_actual)
+    # ───────────────────────────────
+    # Controles de filtrado dinámico
+    # ───────────────────────────────
+    tipos = st.multiselect("Filtrar por tipo de evento", ["estado_diario", "competicion", "cita_test"])
+    col1, col2 = st.columns(2)
+    with col1:
+        fecha_inicio = st.date_input("Fecha inicio", value=None)
+    with col2:
+        fecha_fin = st.date_input("Fecha fin", value=None)
+
+    eventos = sql.obtener_eventos_filtrados(
+        id_atleta=id_atleta,
+        rol_actual=rol_actual,
+        tipos=tipos,
+        fecha_inicio=fecha_inicio,
+        fecha_fin=fecha_fin
+    )
+
     vista = st.radio("", ["Calendario", "Tabla"], horizontal=True, index=0)
 
     data = []
