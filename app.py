@@ -1,3 +1,5 @@
+import sys, os
+sys.path.append(os.path.dirname(__file__))
 import streamlit as st
 st.set_page_config(
     page_title="Athlete Performance Tracker v2501",

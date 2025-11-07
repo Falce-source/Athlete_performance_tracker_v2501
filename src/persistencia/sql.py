@@ -280,8 +280,6 @@ def crear_atleta(**kwargs):
         _sync_backup()
         return atleta
 
-from sqlalchemy.orm import joinedload
-
 def obtener_atletas():
     with SessionLocal() as session:
         return session.query(Atleta)\
@@ -467,7 +465,6 @@ def crear_evento_calendario(id_atleta, fecha, tipo_evento, valor, notas=None):
 # ─────────────────────────────────────────────
 # HELPERS DE TRANSFORMACIÓN
 # ─────────────────────────────────────────────
-import json
 
 def evento_to_dict(evento):
     """Convierte un objeto CalendarioEvento en un dict listo para el calendario."""
