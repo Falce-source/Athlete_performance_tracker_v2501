@@ -422,6 +422,7 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
             agrupadas[fecha][m.tipo_metrica] = m.valor
 
         for fecha, valores in agrupadas.items():
+            st.write("Insertando evento:", fecha, valores)  # 👀 debug
             # Creamos un evento de calendario por cada día con métricas
             sql.crear_evento_calendario(
                 id_atleta=id_atleta,
