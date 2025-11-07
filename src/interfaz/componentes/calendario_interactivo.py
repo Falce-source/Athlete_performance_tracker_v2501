@@ -149,9 +149,9 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                 "title": "🏆",
                 "start": fecha,
                 "allDay": True,
-                "backgroundColor": "#FFF4E5",
-                "borderColor": "#F97316",
-                "textColor": "#7C2D12",
+                "backgroundColor": "#FFFFFF",
+                "borderColor": "#FFFFFF",
+                "textColor": "#000000",
                 "tipo_evento": tipo,
                 "extendedProps": {**safe_details, "displayOrder": 3, "tipo_evento": tipo, "id_base": ev.get("id")}
             })
