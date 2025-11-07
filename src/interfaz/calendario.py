@@ -416,7 +416,7 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
         metricas = sql.obtener_metricas_rapidas(id_atleta)
         agrupadas = {}
         for m in metricas:
-            fecha = m.fecha.date()
+            fecha=m.fecha.date()
             if fecha not in agrupadas:
                 agrupadas[fecha] = {}
             agrupadas[fecha][m.tipo_metrica] = m.valor
@@ -434,3 +434,20 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
 
         st.success("✅ Migración completada. Ahora las métricas antiguas aparecen en calendario y tabla.")
     # --------
+
+    # Prueba 3
+    st.subheader("🔎 Depuración de eventos en calendario_eventos")
+
+    if st.button("Listar todos los eventos crudos"):
+        eventos_raw = sql.obtener_eventos_filtrados(
+            id_atleta=id_atleta,
+            rol_actual=rol_actual,
+            tipos=None,          # 👈 sin filtrar por tipo
+            fecha_inicio=None,
+            fecha_fin=None
+        )
+        st.write("Eventos encontrados:", len(eventos_raw))
+        for ev in eventos_raw:
+            st.json(ev)   # 👀 muestra cada evento con todos sus campos
+    
+    #---------
