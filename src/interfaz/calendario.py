@@ -451,3 +451,22 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
             st.json(ev)   # 👀 muestra cada evento con todos sus campos
     
     #---------
+
+    st.subheader("🗑️ Resetear eventos de métricas rápidas migrados")
+
+    # Lista rápida de eventos metricas_rapidas
+    eventos_raw = sql.obtener_eventos_filtrados(
+        id_atleta=id_atleta,
+        rol_actual=rol_actual,
+        tipos=["metricas_rapidas"],
+        fecha_inicio=None,
+        fecha_fin=None
+    )
+    st.write("Eventos métricas rápidas:", eventos_raw)
+
+    # Botón para borrar uno concreto
+    id_a_borrar = st.number_input("13", min_value=1, step=1)
+    if st.button("Borrar evento seleccionado"):
+        sql.borrar_evento_calendario(int(id_a_borrar))
+        st.success(f"Evento {id_a_borrar} eliminado de calendario_eventos")
+        st.rerun()
