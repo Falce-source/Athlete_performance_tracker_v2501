@@ -405,24 +405,3 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
         if st.button("Listar eventos actuales"):
             eventos = sql.obtener_eventos_calendario_por_atleta(id_atleta, rol_actual="admin")
             st.json(eventos)
-
-    # Prueba
-        st.subheader("🗑️ Reset total de métricas rápidas (uso único)")
-
-    if st.button("Eliminar TODO lo de métricas rápidas (histórico + calendario)"):
-        # 1. Borrar métricas rápidas del histórico
-        conn = sql.get_connection()
-        cur = conn.cursor()
-        cur.execute("DELETE FROM metricas WHERE id_atleta = %s AND tipo_metrica IN ('hrv','wellness','rpe','peso','fc_reposo')", (id_atleta,))
-        conn.commit()
-
-        # 2. Borrar eventos de calendario de métricas rápidas
-        cur.execute("DELETE FROM calendario_eventos WHERE id_atleta = %s AND tipo_evento = 'metricas_rapidas'", (id_atleta,))
-        conn.commit()
-
-        cur.close()
-        conn.close()
-
-        st.success("✅ Reset completado. Se han eliminado todas las métricas rápidas y sus eventos de calendario.")
-        st.rerun()
-    #   ------
