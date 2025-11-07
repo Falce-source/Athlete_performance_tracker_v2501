@@ -337,11 +337,14 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
         st.info("No hay métricas rápidas registradas todavía")
     else:
         df_metricas = pd.DataFrame([{
-            "fecha": m.fecha.date().strftime("%Y-%m-%d"),   # string YYYY-MM-DD
+            "fecha": m.fecha,  # dejamos datetime completo aquí
             "tipo": m.tipo_metrica,
             "valor": float(m.valor) if str(m.valor).replace('.','',1).isdigit() else None,
             "unidad": m.unidad
         } for m in metricas if m.valor is not None])
+        # 🔧 Normalizar a inicio de día y asegurar dtype datetime64[ns]
+        df_metricas["fecha"] = pd.to_datetime(df_metricas["fecha"]).dt.floor("D")
+        df_metricas = df_metricas.sort_values("fecha")
 
         # 🔑 Ordenar cronológicamente (ya no hace falta agrupar porque sql.py garantiza unicidad)
         df_metricas = df_metricas.sort_values("fecha")
@@ -350,9 +353,11 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
         for t in tipos:
             df_t = df_metricas[df_metricas["tipo"] == t]
             chart = alt.Chart(df_t).mark_line(point=True).encode(
-                x=alt.X("fecha:T", title="Día"),
+                # 👇 forzamos que Altair use solo el componente de día
+                x=alt.X("yearmonthdate(fecha):T", title="Día", axis=alt.Axis(format="%Y-%m-%d")),
+                y="valor:Q",
                 y=alt.Y("valor:Q", title=f"{t.upper()}"),
-                tooltip=["fecha:T", "valor:Q", "unidad:N"]
+                tooltip=[alt.Tooltip("fecha:T", title="Día"), "valor:Q", "unidad:N"]
             ).properties(
                 title=f"{t.upper()} ({df_t['unidad'].iloc[0]})",
                 width="container",
