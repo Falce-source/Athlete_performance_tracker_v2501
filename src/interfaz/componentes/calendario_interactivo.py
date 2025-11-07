@@ -607,10 +607,9 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                         # Actualizamos el evento existente en calendario_eventos
                         event_id = props.get("id_base") or ev.get("id")
                         if event_id:
-                            sql.actualizar_evento_calendario(
+                           sql.actualizar_evento_calendario_por_id(
                                 int(event_id),
-                                tipo_evento="metricas_rapidas",
-                                valor={
+                                {
                                     "hrv": hrv,
                                     "wellness": wellness,
                                     "rpe": rpe,
