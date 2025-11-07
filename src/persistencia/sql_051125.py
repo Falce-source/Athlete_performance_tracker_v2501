@@ -7,7 +7,7 @@ from sqlalchemy import JSON  # si usas SQLAlchemy 1.4+ puedes definir JSON
 import json
 import os
 import shutil
-import backup_storage
+import src.persistencia.backup_storage as backup_storage
 
  # ─────────────────────────────────────────────
  # CONFIGURACIÓN BÁSICA

@@ -10,7 +10,7 @@ def mostrar_perfil():
     # ───────────────────────────────
     import os
     from src.persistencia import sql
-    import backup_storage
+    import src.persistencia.backup_storage as backup_storage
 
     try:
         ruta_db = os.path.abspath(sql.engine.url.database)

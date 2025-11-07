@@ -11,7 +11,7 @@ from src.interfaz import auditoria
 from src.interfaz import historial_validaciones
 from dotenv import load_dotenv
 import os
-import backup_storage
+import src.persistencia.backup_storage as backup_storage
 
 # Cargar variables desde .env (local) o st.secrets (Cloud)
 load_dotenv()

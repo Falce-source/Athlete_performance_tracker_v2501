@@ -8,7 +8,7 @@ from src.interfaz import perfil
 from src.interfaz import calendario   # ← nuevo
 from dotenv import load_dotenv
 import os
-import backup_storage
+import src.persistencia.backup_storage as backup_storage
 
 # Cargar variables desde .env (local) o st.secrets (Cloud)
 load_dotenv()

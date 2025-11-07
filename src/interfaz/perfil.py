@@ -21,7 +21,7 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
     # ───────────────────────────────
     if rol_actual == "admin":
         import os
-        import backup_storage
+        import src.persistencia.backup_storage as backup_storage
 
         try:
             ruta_db = os.path.abspath(sql.engine.url.database)

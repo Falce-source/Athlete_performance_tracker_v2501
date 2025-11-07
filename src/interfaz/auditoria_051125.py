@@ -4,7 +4,7 @@ import os
 import time
 from datetime import datetime
 from src.persistencia import sql
-import backup_storage
+import src.persistencia.backup_storage as backup_storage
 
 def probar_flujo(modulo, rol_actual="admin"):
     resultado = {"ok": False, "mensaje": "", "backup_creado": None}

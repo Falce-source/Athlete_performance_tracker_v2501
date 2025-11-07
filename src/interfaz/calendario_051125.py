@@ -15,7 +15,7 @@ def mostrar_calendario(rol_actual="admin"):
     # Información de depuración extendida
     # ───────────────────────────────
     import os
-    import backup_storage
+    import src.persistencia.backup_storage as backup_storage
 
     try:
         ruta_db = os.path.abspath(sql.engine.url.database)
