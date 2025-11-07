@@ -337,7 +337,7 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
         st.info("No hay métricas rápidas registradas todavía")
     else:
         df_metricas = pd.DataFrame([{
-            "fecha": m.fecha,
+            "fecha": m.fecha.date(),   # solo el día
             "tipo": m.tipo_metrica,
             "valor": float(m.valor) if m.valor.replace('.','',1).isdigit() else None,
             "unidad": m.unidad
