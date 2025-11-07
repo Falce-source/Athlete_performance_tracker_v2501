@@ -875,8 +875,8 @@ def obtener_metricas_rapidas(id_atleta):
 # ─────────────────────────────────────────────
 def obtener_id_atleta_por_usuario(usuario_id: int) -> int | None:
     with SessionLocal() as session:
-        u = session.query(Usuario).filter(Usuario.id_usuario == usuario_id).first()
-        return u.id_atleta if u and u.id_atleta else None
+        atleta = session.query(Atleta).filter(Atleta.usuario_id == usuario_id).first()
+        return atleta.id_atleta if atleta else None
 
 def obtener_usuario_por_atleta(id_atleta: int) -> int | None:
     with SessionLocal() as session:
