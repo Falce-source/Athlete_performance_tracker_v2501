@@ -172,7 +172,8 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
             # Bloque A: peso / déficit
             fila_peso = []
             if safe_details.get("peso"): fila_peso.append(f"⚖️ {safe_details['peso']}kg")
-            if safe_details.get("deficit_calorico"): fila_peso.append("🍽️")
+            if safe_details.get("deficit_calorico"):
+                fila_peso.append(f"🍽️ {safe_details['deficit_calorico']}")
             if fila_peso:
                 out_events.append({"id": f"{ev.get('id')}-peso", "title": " ".join(fila_peso),
                     "start": fecha, "allDay": True, "backgroundColor": "#FFFFFF",
