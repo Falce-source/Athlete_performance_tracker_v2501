@@ -22,19 +22,7 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
         st.caption("🔐 Rol activo: admin")
 
     # ───────────────────────────────
-    # Selector de entrenadora (solo admin)
-    # ───────────────────────────────
-    if rol_actual == "admin":
-        usuarios = sql.obtener_usuarios()
-        entrenadoras = [u for u in usuarios if u.rol == "entrenadora"]
-        opciones_entrenadora = {f"{e.nombre} (ID {e.id_usuario})": e.id_usuario for e in entrenadoras}
-        seleccion_entrenadora = st.selectbox("Filtrar atletas por entrenadora", list(opciones_entrenadora.keys()))
-        id_entrenadora = opciones_entrenadora[seleccion_entrenadora]
-    else:
-        id_entrenadora = usuario_id
-
-    # ───────────────────────────────
-    # Información de depuración extendida
+    # Información de depuración extendida (ahora al inicio)
     # ───────────────────────────────
     import os
     import backup_storage
@@ -62,8 +50,16 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
         st.warning(f"No se pudo obtener información de depuración: {e}")
 
     # ───────────────────────────────
-    # Selector de atleta
+    # Selector de entrenadora (solo admin)
     # ───────────────────────────────
+    if rol_actual == "admin":
+        usuarios = sql.obtener_usuarios()
+        entrenadoras = [u for u in usuarios if u.rol == "entrenadora"]
+        opciones_entrenadora = {f"{e.nombre} (ID {e.id_usuario})": e.id_usuario for e in entrenadoras}
+        seleccion_entrenadora = st.selectbox("Filtrar atletas por entrenadora", list(opciones_entrenadora.keys()))
+        id_entrenadora = opciones_entrenadora[seleccion_entrenadora]
+    else:
+        id_entrenadora = usuario_id
     if rol_actual == "entrenadora":
         atletas = sql.obtener_atletas_por_usuario(usuario_id)
     elif rol_actual == "admin":
