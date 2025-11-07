@@ -597,12 +597,28 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                         eliminar = st.form_submit_button("🗑️ Eliminar")
 
                     if submitted:
-                        # Guardamos cada métrica como registro independiente
+                        # Guardamos en histórico (tabla métricas)
                         sql.crear_metrica(id_atleta, "hrv", hrv, "ms")
                         sql.crear_metrica(id_atleta, "wellness", wellness, "score")
                         sql.crear_metrica(id_atleta, "rpe", rpe, "score")
                         sql.crear_metrica(id_atleta, "peso", peso, "kg")
                         sql.crear_metrica(id_atleta, "fc_reposo", fc_reposo, "lpm")
+
+                        # Actualizamos el evento existente en calendario_eventos
+                        event_id = props.get("id_base") or ev.get("id")
+                        if event_id:
+                            sql.actualizar_evento_calendario(
+                                int(event_id),
+                                tipo_evento="metricas_rapidas",
+                                valor={
+                                    "hrv": hrv,
+                                    "wellness": wellness,
+                                    "rpe": rpe,
+                                    "peso": peso,
+                                    "fc_reposo": fc_reposo
+                                },
+                                notas="Métricas rápidas actualizadas"
+                            )
                         st.success("✅ Métricas rápidas actualizadas")
                         st.rerun()
 
