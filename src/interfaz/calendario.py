@@ -350,7 +350,7 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
         for t in tipos:
             df_t = df_metricas[df_metricas["tipo"] == t]
             chart = alt.Chart(df_t).mark_line(point=True).encode(
-                x=alt.X("fecha:N", title="Día"),
+                x=alt.X("fecha:T", title="Día"),
                 y=alt.Y("valor:Q", title=f"{t.upper()}"),
                 tooltip=["fecha:T", "valor:Q", "unidad:N"]
             ).properties(
