@@ -185,8 +185,8 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
             if safe_details.get("fc_reposo"): fila_hrv.append(f"❤️ {safe_details['fc_reposo']}")
             if fila_hrv:
                 out_events.append({"id": f"{ev.get('id')}-hrv", "title": " ".join(fila_hrv),
-                    "start": fecha, "allDay": True, "backgroundColor": "#F9FAFB",
-                    "borderColor": "#6B7280", "textColor": "#374151",
+                    "start": fecha, "allDay": True, "backgroundColor": "#FFFFFF",
+                    "borderColor": "#FFFFFF", "textColor": "#000000",
                     "tipo_evento": tipo, "extendedProps": {**extended, "displayOrder": 4}})
 
             # Bloque C: sueño / wellness / RPE
