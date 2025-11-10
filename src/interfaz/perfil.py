@@ -220,91 +220,84 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
             id_atleta_forzado = opciones[seleccion]
             atleta = sql.obtener_atleta_por_id(id_atleta_forzado)
 
-        # Construir contexto de permisos para este atleta
-        ctx = Contexto(
-            rol_actual=rol_actual,
-            usuario_id=usuario_id or 0,
-            atleta_id=id_atleta_forzado,
-            propietario_id=atleta.id_usuario if hasattr(atleta, "id_usuario") else None
-        )
+    # Construir contexto de permisos para este atleta
+    ctx = Contexto(
+        rol_actual=rol_actual,
+        usuario_id=usuario_id or 0,
+        atleta_id=id_atleta_forzado,
+        propietario_id=atleta.id_usuario if hasattr(atleta, "id_usuario") else None
+    )
 
-        st.markdown(f"""
-        ### 📝 Detalles del atleta
-        - **ID:** {atleta.id_atleta}
-        - **Nombre:** {atleta.nombre} {atleta.apellidos or ""}
-        - **Edad:** {atleta.edad or "—"}
-        - **Talla:** {atleta.talla or "—"} cm
-        - **Contacto:** {atleta.contacto or "—"}
-        - **Deporte:** {atleta.deporte or "—"}
-        - **Modalidad:** {atleta.modalidad or "—"}
-        - **Nivel:** {atleta.nivel or "—"}
-        - **Equipo:** {atleta.equipo or "—"}
-        - **Alergias:** {atleta.alergias or "—"}
-        - **Consentimiento:** {"✅ Sí" if atleta.consentimiento else "❌ No"}
-        - **Entrenadora asignada:** {atleta.usuario.nombre if atleta.usuario else "—"}
-        - **Creado en:** {str(atleta.creado_en)}
-        """)
+    st.markdown(f"""
+    ### 📝 Detalles del atleta
+    - **ID:** {atleta.id_atleta}
+    - **Nombre:** {atleta.nombre} {atleta.apellidos or ""}
+    - **Edad:** {atleta.edad or "—"}
+    - **Talla:** {atleta.talla or "—"} cm
+    - **Contacto:** {atleta.contacto or "—"}
+    - **Deporte:** {atleta.deporte or "—"}
+    - **Modalidad:** {atleta.modalidad or "—"}
+    - **Nivel:** {atleta.nivel or "—"}
+    - **Equipo:** {atleta.equipo or "—"}
+    - **Alergias:** {atleta.alergias or "—"}
+    - **Consentimiento:** {"✅ Sí" if atleta.consentimiento else "❌ No"}
+    - **Entrenadora asignada:** {atleta.usuario.nombre if atleta.usuario else "—"}
+    - **Creado en:** {str(atleta.creado_en)}
+    """)
 
-        # ───────────────────────────────
-        # Formulario de edición (condicionado por permisos)
-        # ───────────────────────────────
-        # 🔒 Blindaje: si es atleta, forzar su propio id_atleta en el contexto
-        if rol_actual == "atleta":
-            id_atleta_forzado = sql.obtener_id_atleta_por_usuario(usuario_id)
-            atleta = sql.obtener_atleta_por_id(id_atleta_forzado) if id_atleta_forzado else None
-            ctx = Contexto(
-                rol_actual=rol_actual,
-                usuario_id=usuario_id or 0,
-                atleta_id=id_atleta_forzado,
-                propietario_id=atleta.id_usuario if atleta else None
-            )
-        else:
-            # Para admin/entrenadora se mantiene el id_atleta seleccionado previamente
-            ctx = Contexto(
-                rol_actual=rol_actual,
-                usuario_id=usuario_id or 0,
-                atleta_id=id_atleta_forzado,
-                propietario_id=atleta.id_usuario if atleta else None
-            )
+    # ───────────────────────────────
+    # Formulario de edición (condicionado por permisos)
+    # ───────────────────────────────
+    # 🔒 Blindaje: si es atleta, forzar su propio id_atleta en el contexto
+    if rol_actual == "atleta":
+        id_atleta_forzado = sql.obtener_id_atleta_por_usuario(usuario_id)
+        atleta = sql.obtener_atleta_por_id(id_atleta_forzado) if id_atleta_forzado else None
 
-        if puede_editar_perfil_atleta(ctx):
-            with st.expander("✏️ Editar atleta"):
-                with st.form(f"form_editar_{id_atleta_forzado}"):
-                    nuevo_nombre = st.text_input("Nombre", atleta.nombre)
-                    nuevos_apellidos = st.text_input("Apellidos", atleta.apellidos or "")
-                    nueva_edad = st.number_input("Edad", min_value=0, max_value=120, step=1, value=atleta.edad or 0)
-                    nueva_talla = st.number_input("Talla (cm)", min_value=100, max_value=250, step=1, value=atleta.talla or 170)
-                    nuevo_contacto = st.text_input("Contacto", atleta.contacto or "")
-                    nuevo_deporte = st.text_input("Deporte", atleta.deporte or "")
-                    nueva_modalidad = st.text_input("Modalidad", atleta.modalidad or "")
-                    niveles = ["Iniciado", "Intermedio", "Avanzado", "Elite"]
-                    nivel_actual = atleta.nivel if atleta.nivel in niveles else None
-                    index_nivel = niveles.index(nivel_actual) if nivel_actual else 0
-                    nuevo_nivel = st.selectbox("Nivel", niveles, index=index_nivel)
-                    nuevo_equipo = st.text_input("Equipo", atleta.equipo or "")
-                    nuevas_alergias = st.text_area("Alergias", atleta.alergias or "")
-                    nuevo_consentimiento = st.checkbox("Consentimiento informado", value=atleta.consentimiento)
+    ctx = Contexto(
+        rol_actual=rol_actual,
+        usuario_id=usuario_id or 0,
+        atleta_id=id_atleta_forzado,
+        propietario_id=atleta.id_usuario if atleta else None
+    )
 
-                    actualizar = st.form_submit_button("💾 Guardar cambios")
+    if puede_editar_perfil_atleta(ctx):
+        with st.expander("✏️ Editar atleta"):
+            with st.form(f"form_editar_{id_atleta_forzado}"):
+                nuevo_nombre = st.text_input("Nombre", atleta.nombre)
+                nuevos_apellidos = st.text_input("Apellidos", atleta.apellidos or "")
+                nueva_edad = st.number_input("Edad", min_value=0, max_value=120, step=1, value=atleta.edad or 0)
+                nueva_talla = st.number_input("Talla (cm)", min_value=100, max_value=250, step=1, value=atleta.talla or 170)
+                nuevo_contacto = st.text_input("Contacto", atleta.contacto or "")
+                nuevo_deporte = st.text_input("Deporte", atleta.deporte or "")
+                nueva_modalidad = st.text_input("Modalidad", atleta.modalidad or "")
+                niveles = ["Iniciado", "Intermedio", "Avanzado", "Elite"]
+                nivel_actual = atleta.nivel if atleta.nivel in niveles else None
+                index_nivel = niveles.index(nivel_actual) if nivel_actual else 0
+                nuevo_nivel = st.selectbox("Nivel", niveles, index=index_nivel)
+                nuevo_equipo = st.text_input("Equipo", atleta.equipo or "")
+                nuevas_alergias = st.text_area("Alergias", atleta.alergias or "")
+                nuevo_consentimiento = st.checkbox("Consentimiento informado", value=atleta.consentimiento)
 
-                    if actualizar:
-                        sql.actualizar_atleta(
-                            id_atleta=atleta.id_atleta,
-                            nombre=nuevo_nombre,
-                            apellidos=nuevos_apellidos,
-                            edad=int(nueva_edad),
-                            talla=int(nueva_talla),
-                            contacto=nuevo_contacto,
-                            deporte=nuevo_deporte,
-                            modalidad=nueva_modalidad,
-                            nivel=nuevo_nivel,
-                            equipo=nuevo_equipo,
-                            alergias=nuevas_alergias,
-                            consentimiento=nuevo_consentimiento,
-                        )
-                        st.success(f"✅ Atleta '{nuevo_nombre}' actualizado correctamente. 🔄 Recarga la página para ver los cambios.")
-        else:
-            st.caption("⛔ No tienes permisos para editar este perfil")
+                actualizar = st.form_submit_button("💾 Guardar cambios")
+
+                if actualizar:
+                    sql.actualizar_atleta(
+                        id_atleta=atleta.id_atleta,
+                        nombre=nuevo_nombre,
+                        apellidos=nuevos_apellidos,
+                        edad=int(nueva_edad),
+                        talla=int(nueva_talla),
+                        contacto=nuevo_contacto,
+                        deporte=nuevo_deporte,
+                        modalidad=nueva_modalidad,
+                        nivel=nuevo_nivel,
+                        equipo=nuevo_equipo,
+                        alergias=nuevas_alergias,
+                        consentimiento=nuevo_consentimiento,
+                    )
+                    st.success(f"✅ Atleta '{nuevo_nombre}' actualizado correctamente. 🔄 Recarga la página para ver los cambios.")
+    else:
+        st.caption("⛔ No tienes permisos para editar este perfil")
 
         # ───────────────────────────────
         # Botón de eliminación (solo admin/entrenadora)
