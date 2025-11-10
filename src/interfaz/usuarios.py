@@ -40,29 +40,27 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
     # Formulario para crear usuario (solo admin)
     # ───────────────────────────────
     if rol_actual == "admin":
+        # 🔑 Selectbox de asociación fuera del form → valor disponible en el primer intento
+        perfil_seleccionado_id = None
+        perfiles_sin_usuario = [a for a in sql.obtener_atletas() if not getattr(a, "usuario_id", None)]
+        if perfiles_sin_usuario:
+            opciones_perfil = {
+                f"{a.nombre} {a.apellidos or ''} (ID {a.id_atleta})": a.id_atleta
+                for a in perfiles_sin_usuario
+            }
+            seleccion_perfil = st.selectbox(
+                "Asociar a perfil atleta existente (opcional)",
+                ["— Ninguno —"] + list(opciones_perfil.keys())
+            )
+            if seleccion_perfil and seleccion_perfil != "— Ninguno —":
+                perfil_seleccionado_id = opciones_perfil.get(seleccion_perfil)
+
         with st.form("form_crear_usuario", clear_on_submit=True):
             st.subheader("➕ Crear nuevo usuario")
-
             nombre = st.text_input("Nombre", "")
             email = st.text_input("Email", "")
             rol = st.selectbox("Rol", ["admin", "entrenadora", "atleta"])
             password = st.text_input("Contraseña inicial", type="password")
-
-            perfil_seleccionado_id = None
-            if rol == "atleta":
-                perfiles_sin_usuario = [a for a in sql.obtener_atletas() if not getattr(a, "usuario_id", None)]
-                if perfiles_sin_usuario:
-                    opciones_perfil = {
-                        f"{a.nombre} {a.apellidos or ''} (ID {a.id_atleta})": a.id_atleta
-                        for a in perfiles_sin_usuario
-                    }
-                    seleccion_perfil = st.selectbox(
-                        "Asociar a perfil atleta existente (opcional)",
-                        ["— Ninguno —"] + list(opciones_perfil.keys())
-                    )
-                    if seleccion_perfil and seleccion_perfil != "— Ninguno —":
-                        perfil_seleccionado_id = opciones_perfil.get(seleccion_perfil)
-
             submitted = st.form_submit_button("Guardar usuario")
 
             if submitted:
@@ -130,10 +128,14 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
         "Email": u.email,
         "Rol": u.rol,
         "Creado en": u.creado_en.strftime("%Y-%m-%d %H:%M") if isinstance(u.creado_en, datetime) else str(u.creado_en),
-        # 🔑 Si es atleta, buscamos su perfil asociado y mostramos entrenadora asignada
+        # 🔑 Si es atleta, mostramos entrenadora del perfil asociado
         "Entrenadora asignada": (
             sql.obtener_atleta_por_id(u.perfil_atleta_id).usuario.nombre
-            if u.rol == "atleta" and getattr(u, "perfil_atleta_id", None) else "—"
+            if u.rol == "atleta"
+            and getattr(u, "perfil_atleta_id", None)
+            and sql.obtener_atleta_por_id(u.perfil_atleta_id)
+            and sql.obtener_atleta_por_id(u.perfil_atleta_id).usuario
+            else "—"
         )
     } for u in usuarios])
 
@@ -163,7 +165,11 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
                 - **Rol:** {usuario.rol}
                 - **Creado en:** {usuario.creado_en}
                 {"- **Entrenadora asignada:** " + sql.obtener_atleta_por_id(usuario.perfil_atleta_id).usuario.nombre
-                 if usuario.rol == "atleta" and getattr(usuario, "perfil_atleta_id", None) else ""}
+                 if usuario.rol == "atleta"
+                 and getattr(usuario, "perfil_atleta_id", None)
+                 and sql.obtener_atleta_por_id(usuario.perfil_atleta_id)
+                 and sql.obtener_atleta_por_id(usuario.perfil_atleta_id).usuario
+                 else ""}
                 """)
     else:
         st.info("No hay usuarios disponibles para seleccionar.")
