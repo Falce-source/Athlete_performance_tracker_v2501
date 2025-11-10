@@ -307,13 +307,15 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
     else:
         st.caption("⛔ No tienes permisos para editar este perfil")
 
-        # ───────────────────────────────
-        # Botón de eliminación (solo admin/entrenadora)
-        # ───────────────────────────────
-        # 🔒 Solo admin/entrenadora pueden eliminar atletas
-        if rol_actual in ["admin", "entrenadora"] and puede_editar_perfil_atleta(ctx):
-            if st.button(f"🗑️ Eliminar atleta '{atleta.nombre}'", type="primary"):
+    # ───────────────────────────────
+    # Botón de eliminación (solo admin/entrenadora)
+    # ───────────────────────────────
+    if rol_actual in ["admin", "entrenadora"] and puede_editar_perfil_atleta(ctx):
+        if st.button(f"🗑️ Eliminar atleta '{atleta.nombre}'", type="primary"):
+            try:
                 sql.borrar_atleta(id_atleta_forzado)
                 st.warning(f"Atleta '{atleta.nombre}' eliminado correctamente. 🔄 Recarga la página para actualizar la lista.")
-        else:
-            st.caption("⛔ No tienes permisos para eliminar este atleta")
+            except Exception as e:
+                st.error(f"No se pudo eliminar el atleta: {e}")
+    else:
+        st.caption("⛔ No tienes permisos para eliminar este atleta")

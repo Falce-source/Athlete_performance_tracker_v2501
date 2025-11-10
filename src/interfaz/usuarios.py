@@ -46,14 +46,17 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
             nombre = st.text_input("Nombre", "")
             email = st.text_input("Email", "")
             rol = st.selectbox("Rol", ["admin", "entrenadora", "atleta"])
-
-            # Campo de contraseña inicial
             password = st.text_input("Contraseña inicial", type="password")
 
-            # 🔑 Si el rol es atleta, solo se crea el usuario login.
-            # El perfil atleta lo crea después la entrenadora y se vincula.
+            # 🔑 Si el rol es atleta, permitir asociación opcional a un perfil existente
+            perfil_seleccionado_id = None
             if rol == "atleta":
-                st.info("ℹ️ Recuerda: el perfil atleta será creado posteriormente por la entrenadora y vinculado a este usuario.")
+                perfiles_sin_usuario = [a for a in sql.obtener_atletas() if not getattr(a, "usuario_id", None)]
+                opciones_perfil = {f"{a.nombre} {a.apellidos or ''} (ID {a.id_atleta})": a.id_atleta for a in perfiles_sin_usuario}
+                if opciones_perfil:
+                    seleccion_perfil = st.selectbox("Asociar a perfil atleta existente (opcional)", ["— Ninguno —"] + list(opciones_perfil.keys()))
+                    if seleccion_perfil and seleccion_perfil != "— Ninguno —":
+                        perfil_seleccionado_id = opciones_perfil.get(seleccion_perfil)
 
             submitted = st.form_submit_button("Guardar usuario")
 
@@ -65,10 +68,33 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
                     usuario = sql.crear_usuario(nombre=nombre, email=email, rol=rol, password_hash=ph)
                     st.success(f"✅ Usuario '{usuario.nombre}' creado correctamente con contraseña inicial")
 
-                    # 🔑 Si es atleta, no se crea perfil aquí.
-                    # El perfil será creado por la entrenadora y luego vinculado.
+                    # 🔗 Si es atleta, asociar a perfil existente (si seleccionado) o intentar autoasociación segura
                     if rol == "atleta":
-                        st.info("🔗 Usuario atleta creado. Pendiente de asociación con perfil.")
+                        asociado = False
+                        if perfil_seleccionado_id:
+                            try:
+                                sql.actualizar_usuario(id_usuario=usuario.id_usuario, perfil_atleta_id=perfil_seleccionado_id)
+                                sql.actualizar_atleta(perfil_seleccionado_id, usuario_id=usuario.id_usuario)
+                                st.info(f"🔗 Usuario atleta asociado al perfil ID {perfil_seleccionado_id}.")
+                                asociado = True
+                            except Exception as e:
+                                st.warning(f"No se pudo asociar al perfil seleccionado: {e}")
+                        if not asociado:
+                            candidatos = [a for a in sql.obtener_atletas()
+                                          if (a.nombre or "").strip().lower() == nombre.strip().lower()
+                                          and (a.apellidos or "").strip().lower() == ""]
+                            # Si hay un único candidato sin usuario, asociamos
+                            candidatos = [a for a in candidatos if not getattr(a, "usuario_id", None)]
+                            if len(candidatos) == 1:
+                                a = candidatos[0]
+                                try:
+                                    sql.actualizar_usuario(id_usuario=usuario.id_usuario, perfil_atleta_id=a.id_atleta)
+                                    sql.actualizar_atleta(a.id_atleta, usuario_id=usuario.id_usuario)
+                                    st.info(f"🔗 Usuario atleta autoasociado al perfil '{a.nombre}' (ID {a.id_atleta}).")
+                                except Exception as e:
+                                    st.warning(f"No se pudo completar la autoasociación: {e}")
+                            else:
+                                st.info("ℹ️ Usuario atleta creado. Pendiente de asociación con perfil.")
 
     st.markdown("---")
 
