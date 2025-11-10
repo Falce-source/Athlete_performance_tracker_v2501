@@ -128,6 +128,15 @@ elif opcion == "👥 Usuarios":
 elif opcion == "💾 Backups":
     st.title("Gestión de Backups")
 
+    # Bloque explícito de estado de credenciales
+    st.subheader("🔑 Estado de credenciales Google Drive")
+    service = backup_storage._get_service()
+    if service is None:
+        st.info("No hay credenciales válidas. Autoriza Google Drive con el enlace mostrado arriba.")
+        st.stop()
+    else:
+        st.success("✅ Cliente Drive activo. Puedes listar y subir backups.")
+
     # Crear / Listar / Rotar
     st.subheader("📤 Crear / Listar / Rotar")
     if st.button("📤 Crear backup de base.db"):
