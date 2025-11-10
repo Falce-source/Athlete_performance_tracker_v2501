@@ -51,27 +51,27 @@ from src.utils.roles import tabs_visibles_por_rol
 # Cargar variables desde .env (local) o st.secrets (Cloud)
 load_dotenv()
 
-def get_secret(key, default=None):
+def get_secret(section, key, default=None):
     # Prioriza st.secrets en Cloud, si no existe usa os.getenv (local)
-    if key in st.secrets:
-        return st.secrets[key]
+    if section in st.secrets and key in st.secrets[section]:
+        return st.secrets[section][key]
     return os.getenv(key, default)
 
-DRIVE_CLIENT_ID = get_secret("DRIVE_CLIENT_ID")
-DRIVE_CLIENT_SECRET = get_secret("DRIVE_CLIENT_SECRET")
-DRIVE_REFRESH_TOKEN = get_secret("DRIVE_REFRESH_TOKEN")
-DRIVE_FOLDER_ID = get_secret("DRIVE_FOLDER_ID")
-DRIVE_SCOPE = get_secret("DRIVE_SCOPE", "https://www.googleapis.com/auth/drive.file")
+CLIENT_ID = get_secret("gdrive", "client_id")
+CLIENT_SECRET = get_secret("gdrive", "client_secret")
+REFRESH_TOKEN = get_secret("gdrive", "refresh_token")
+FOLDER_ID = get_secret("gdrive", "folder_id")
+SCOPE = get_secret("gdrive", "scope", "https://www.googleapis.com/auth/drive.file")
 
-# Validación temprana de variables de entorno
+# Validación temprana de credenciales
 missing = [k for k, v in {
-    "DRIVE_CLIENT_ID": DRIVE_CLIENT_ID,
-    "DRIVE_CLIENT_SECRET": DRIVE_CLIENT_SECRET,
-    "DRIVE_REFRESH_TOKEN": DRIVE_REFRESH_TOKEN,
-    "DRIVE_FOLDER_ID": DRIVE_FOLDER_ID
+    "client_id": CLIENT_ID,
+    "client_secret": CLIENT_SECRET,
+    "refresh_token": REFRESH_TOKEN,
+    "folder_id": FOLDER_ID
 }.items() if not v]
 if missing:
-    raise RuntimeError(f"Faltan variables de entorno: {', '.join(missing)}")
+    raise RuntimeError(f"Faltan credenciales en st.secrets[gdrive]: {', '.join(missing)}")
 
 # ─────────────────────────────────────────────
 # NAVEGACIÓN LATERAL

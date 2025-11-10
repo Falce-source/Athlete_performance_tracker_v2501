@@ -5,41 +5,22 @@ Encapsula toda la lógica de autenticación y operaciones CRUD sobre backups.
 
 from datetime import datetime
 import streamlit as st
-from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 import io
 
-
-# --- Inicialización de credenciales con flujo web ---
+# --- Inicialización de credenciales con refresh token ---
 def _get_service():
-    if "credentials" not in st.session_state:
-        flow = Flow.from_client_config(
-            {
-                "web": {
-                    "client_id": st.secrets["gdrive"]["client_id"],
-                    "client_secret": st.secrets["gdrive"]["client_secret"],
-                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                    "token_uri": "https://oauth2.googleapis.com/token",
-                }
-            },
-            scopes=[st.secrets["gdrive"].get("scope", "https://www.googleapis.com/auth/drive.file")],
-        )
-        # URL de redirección: tu app en Streamlit Cloud
-        flow.redirect_uri = st.secrets.get("redirect_uri", "https://<tu-app>.streamlit.app")
-
-        auth_url, _ = flow.authorization_url(prompt="consent")
-        st.write(f"[Haz clic aquí para autorizar Google Drive]({auth_url})")
-
-        code = st.experimental_get_query_params().get("code")
-        if code:
-            flow.fetch_token(code=code[0])
-            st.session_state.credentials = flow.credentials
-
-    creds = st.session_state.credentials
+    creds = Credentials(
+        None,
+        refresh_token=st.secrets["gdrive"]["refresh_token"],
+        client_id=st.secrets["gdrive"]["client_id"],
+        client_secret=st.secrets["gdrive"]["client_secret"],
+        token_uri="https://oauth2.googleapis.com/token",
+        scopes=[st.secrets["gdrive"].get("scope", "https://www.googleapis.com/auth/drive.file")]
+    )
     return build("drive", "v3", credentials=creds)
-
 
 # --- Funciones públicas ---
 
