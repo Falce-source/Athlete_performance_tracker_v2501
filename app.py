@@ -57,11 +57,10 @@ def get_secret(section, key, default=None):
         return st.secrets[section][key]
     return os.getenv(key, default)
 
-CLIENT_ID = st.secrets["gdrive"]["client_id"]
-CLIENT_SECRET = st.secrets["gdrive"]["client_secret"]
-REFRESH_TOKEN = st.secrets["gdrive"]["refresh_token"]
-FOLDER_ID = st.secrets["gdrive"]["folder_id"]
-SCOPE = st.secrets["gdrive"].get("scope", "https://www.googleapis.com/auth/drive.file")
+# Service Account (Drive) — sin OAuth de usuario
+# Nota: la clave JSON completa debe estar en st.secrets["gdrive_sa"]["json"]
+FOLDER_ID = st.secrets["gdrive_sa"]["folder_id"]
+SCOPE = st.secrets["gdrive_sa"].get("scope", "https://www.googleapis.com/auth/drive.file")
 
 # ─────────────────────────────────────────────
 # NAVEGACIÓN LATERAL
@@ -116,7 +115,7 @@ elif opcion == "👥 Usuarios":
     # Validación explícita de credenciales Drive
     service = backup_storage._get_service()
     if service is None:
-        st.info("No hay credenciales válidas. Autoriza Google Drive con el enlace mostrado arriba.")
+        st.info("❌ Cliente Drive no inicializado (Service Account). Revisa gdrive_sa en Settings.")
         st.stop()
     # 🔑 Pasamos rol_actual y usuario_id reales para condicionar permisos
     usuarios.mostrar_usuarios(rol_actual=rol_actual, usuario_id=usuario_id)
@@ -126,11 +125,9 @@ elif opcion == "💾 Backups":
 
     # Bloque explícito de estado de credenciales
     st.subheader("🔑 Estado de credenciales Google Drive")
-    g = st.secrets.get("gdrive", {})
-    required_keys = ["client_id", "client_secret", "refresh_token", "folder_id", "redirect_uri"]
-    checklist = {}
-    for k in required_keys:
-        checklist[k] = bool(g.get(k))
+    sa = st.secrets.get("gdrive_sa", {})
+    required_keys = ["json", "folder_id", "scope"]
+    checklist = {k: bool(sa.get(k)) for k in required_keys}
 
     cols = st.columns(len(required_keys))
     for i, k in enumerate(required_keys):
@@ -142,7 +139,7 @@ elif opcion == "💾 Backups":
 
     service = backup_storage._get_service()
     if service is None:
-        st.info("❌ Cliente Drive no inicializado. Revisa credenciales arriba.")
+        st.info("❌ Cliente Drive no inicializado (Service Account). Revisa gdrive_sa.json, folder_id y scope.")
         st.stop()
     else:
         st.success("✅ Cliente Drive activo. Puedes listar y subir backups.")
@@ -238,7 +235,7 @@ elif opcion == "💾 Backups":
         try:
             service = backup_storage._get_service()
             if service is None:
-                st.info("❌ Cliente Drive no inicializado. Revisa credenciales arriba.")
+                st.info("❌ Cliente Drive no inicializado (Service Account). Revisa gdrive_sa en Settings.")
                 st.stop()
 
             backups = backup_storage.listar_backups(max_results=20)
@@ -297,7 +294,7 @@ elif opcion == "🔍 Auditoría":
     st.title("🔍 Auditoría")
     service = backup_storage._get_service()
     if service is None:
-        st.info("No hay credenciales válidas. Autoriza Google Drive con el enlace mostrado arriba.")
+        st.info("❌ Cliente Drive no inicializado (Service Account). Revisa gdrive_sa en Settings.")
         st.stop()
     auditoria.mostrar_auditoria()
 
@@ -305,7 +302,7 @@ elif opcion == "📈 Historial de Validaciones":
     st.title("📈 Historial de Validaciones")
     service = backup_storage._get_service()
     if service is None:
-        st.info("No hay credenciales válidas. Autoriza Google Drive con el enlace mostrado arriba.")
+        st.info("❌ Cliente Drive no inicializado (Service Account). Revisa gdrive_sa en Settings.")
         st.stop()
     historial_validaciones.mostrar_historial()
 
@@ -343,7 +340,7 @@ elif opcion == "📈 Historial de Validaciones":
     try:
         service = backup_storage._get_service()
         if service is None:
-            st.info("No hay credenciales válidas. Autoriza Google Drive con el enlace mostrado arriba.")
+            st.info("❌ Cliente Drive no inicializado (Service Account). Revisa gdrive_sa en Settings.")
             st.stop()
         backups = backup_storage.listar_backups()
         if backups:
@@ -374,7 +371,7 @@ elif opcion == "📈 Historial de Validaciones":
         try:
             service = backup_storage._get_service()
             if service is None:
-                st.info("No hay credenciales válidas. Autoriza Google Drive con el enlace mostrado arriba.")
+                st.info("❌ Cliente Drive no inicializado (Service Account). Revisa gdrive_sa en Settings.")
                 st.stop()
             report = []
             if not os.path.exists("base.db"):
@@ -408,7 +405,7 @@ elif opcion == "📈 Historial de Validaciones":
     try:
         service = backup_storage._get_service()
         if service is None:
-            st.info("No hay credenciales válidas. Autoriza Google Drive con el enlace mostrado arriba.")
+            st.info("❌ Cliente Drive no inicializado (Service Account). Revisa gdrive_sa en Settings.")
             st.stop()
         backups = backup_storage.listar_backups(max_results=20)
         if backups:
@@ -467,7 +464,7 @@ elif opcion == "🔍 Auditoría":
     st.title("🔍 Auditoría")
     service = backup_storage._get_service()
     if service is None:
-        st.info("❌ Cliente Drive no inicializado. Revisa credenciales en pestaña Backups.")
+        st.info("❌ Cliente Drive no inicializado (Service Account). Revisa gdrive_sa en Settings.")
         st.stop()
     else:
         auditoria.mostrar_auditoria()
@@ -476,7 +473,7 @@ elif opcion == "📈 Historial de Validaciones":
     st.title("📈 Historial de Validaciones")
     service = backup_storage._get_service()
     if service is None:
-        st.info("❌ Cliente Drive no inicializado. Revisa credenciales en pestaña Backups.")
+        st.info("❌ Cliente Drive no inicializado (Service Account). Revisa gdrive_sa en Settings.")
         st.stop()
     else:
         historial_validaciones.mostrar_historial()

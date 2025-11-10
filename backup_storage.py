@@ -1,56 +1,39 @@
 """
 Módulo de gestión de backups en Google Drive.
 Encapsula toda la lógica de autenticación y operaciones CRUD sobre backups.
+Versión Service Account (sin refresh tokens).
 """
 
 from datetime import datetime
 import streamlit as st
-from google.oauth2.credentials import Credentials
-from google.auth.exceptions import RefreshError
-from google.auth.transport.requests import Request
+from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 import io
 import os
+import json
 
 
 def _get_service():
-    """Inicializa cliente Drive usando refresh_token guardado en secrets."""
-    g = st.secrets.get("gdrive", {})
-    client_id = g.get("client_id")
-    client_secret = g.get("client_secret")
-    refresh_token = g.get("refresh_token")
-    token_uri = g.get("token_uri", "https://oauth2.googleapis.com/token")
-    scope = g.get("scope", "https://www.googleapis.com/auth/drive.file")
+    """Inicializa cliente Drive usando Service Account desde secrets."""
+    sa = st.secrets.get("gdrive_sa", {})
+    sa_json_str = sa.get("json")
+    scope = sa.get("scope", "https://www.googleapis.com/auth/drive.file")
 
-    # Validación mínima
-    if not all([client_id, client_secret, refresh_token, token_uri]):
-        st.error("❌ Faltan credenciales en st.secrets[gdrive]. "
-                 "Debes configurar client_id, client_secret, refresh_token y token_uri.")
+    if not sa_json_str:
+        st.error("❌ Falta gdrive_sa.json en secrets. Pega el JSON de la service account en gdrive_sa.json.")
         return None
-
     try:
-        creds = Credentials(
-            refresh_token=refresh_token.strip(),
-            client_id=client_id.strip(),
-            client_secret=client_secret.strip(),
-            token_uri=token_uri.strip(),
+        sa_info = json.loads(sa_json_str)
+        creds = service_account.Credentials.from_service_account_info(
+            sa_info,
             scopes=[scope],
         )
-
-        # Depuración: ver cómo quedó el objeto
-        st.code(creds.to_json())
-
-        creds.refresh(Request())  # fuerza refresh para validar
         return build("drive", "v3", credentials=creds)
-    except RefreshError as e:
-        st.error(f"❌ Refresh token inválido o caducado: {e}")
-        return None
     except Exception as e:
-        st.error(f"❌ Error al inicializar cliente Drive: {e}")
+        st.error(f"❌ Error al inicializar cliente Drive (Service Account): {e}")
         return None
-
-
+ 
 # --- Funciones públicas ---
 
 def subir_backup(local_path: str, remote_name: str = None) -> str:
@@ -62,8 +45,7 @@ def subir_backup(local_path: str, remote_name: str = None) -> str:
     if service is None:
         return ""
 
-    folder_id = st.secrets["gdrive"]["folder_id"]
-
+    folder_id = st.secrets["gdrive_sa"]["folder_id"]
     if remote_name is None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         base = os.path.basename(local_path)
@@ -91,7 +73,7 @@ def listar_backups(max_results: int = 10) -> list[dict]:
     if service is None:
         return []
 
-    folder_id = st.secrets["gdrive"]["folder_id"]
+    folder_id = st.secrets["gdrive_sa"]["folder_id"]
     query = f"'{folder_id}' in parents and trashed=false"
 
     results = service.files().list(
