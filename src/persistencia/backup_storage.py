@@ -13,6 +13,10 @@ import os
 import json
 import requests
 import time
+import shutil
+import threading
+from datetime import timedelta
+from src.persistencia import sql
 
 def _load_oauth_cfg():
     """Carga configuración OAuth desde st.secrets['google_drive']."""
@@ -194,3 +198,37 @@ def descargar_backup(file_id: str, destino: str) -> None:
     done = False
     while not done:
         status, done = downloader.next_chunk()
+
+# --- Funciones de blindaje y automatización ---
+
+def crear_backup_async():
+    """
+    Crea un backup en segundo plano:
+    - Copia temporal de la base local (.bak)
+    - Subida a Drive
+    - Rotación automática
+    - Registro en session_state
+    """
+    def tarea():
+        try:
+            tmp_path = sql.DB_PATH + ".bak"
+            shutil.copy(sql.DB_PATH, tmp_path)
+            file_id = subir_backup(tmp_path)
+            if file_id:
+                rotar_backups(max_backups=5)
+                st.session_state["LAST_BACKUP"] = datetime.now()
+                print(f"✅ Backup creado: {file_id}")
+            else:
+                print("❌ Error al crear backup")
+        except Exception as e:
+            print(f"❌ Excepción en backup: {e}")
+    threading.Thread(target=tarea, daemon=True).start()
+
+def backup_diario():
+    """
+    Dispara un backup automático si han pasado más de 24h desde el último.
+    """
+    last = st.session_state.get("LAST_BACKUP")
+    if not last or datetime.now() - last > timedelta(hours=24):
+        crear_backup_async()
+

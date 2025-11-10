@@ -16,8 +16,12 @@ import os
 import src.persistencia.backup_storage as backup_storage
 from src.interfaz import auth
 import src.persistencia.sql as sql
+from src.persistencia import backup_storage
 
 sql.ensure_schema()  # Parche temporal para columnas propietario_id y atleta_usuario_id
+
+# --- Backup automático al iniciar la app ---
+backup_storage.backup_diario()
 
 # --- RECUPERACIÓN ADMIN INICIAL ---
 from src.utils.seguridad import hash_password
@@ -120,6 +124,8 @@ elif opcion == "👥 Usuarios":
         st.stop()
     # 🔑 Pasamos rol_actual y usuario_id reales para condicionar permisos
     usuarios.mostrar_usuarios(rol_actual=rol_actual, usuario_id=usuario_id)
+    # Tras operación crítica de gestión de usuarios, dispara backup en segundo plano
+    backup_storage.crear_backup_async()
 
 elif opcion == "💾 Backups":
     st.title("Gestión de Backups")
@@ -481,3 +487,5 @@ elif opcion == "📈 Historial de Validaciones":
         st.stop()
     else:
         historial_validaciones.mostrar_historial()
+        # Tras operación crítica de validaciones, dispara backup en segundo plano
+        backup_storage.crear_backup_async()
