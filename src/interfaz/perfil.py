@@ -67,14 +67,17 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
             st.subheader("➕ Crear nuevo atleta")
 
             # 🔑 Si el rol es admin, elegir entrenadora dentro del formulario
+            id_usuario_asignado = usuario_id
             if rol_actual == "admin":
                 usuarios = sql.obtener_usuarios()
                 entrenadoras = [u for u in usuarios if u.rol == "entrenadora"]
-                opciones_entrenadora = {f"{e.nombre} (ID {e.id_usuario})": e.id_usuario for e in entrenadoras}
-                seleccion_entrenadora = st.selectbox("Asignar atleta a entrenadora", list(opciones_entrenadora.keys()))
-                id_usuario_asignado = opciones_entrenadora[seleccion_entrenadora]
-            else:
-                id_usuario_asignado = usuario_id
+                if entrenadoras:
+                    opciones_entrenadora = {f"{e.nombre} (ID {e.id_usuario})": e.id_usuario for e in entrenadoras}
+                    seleccion_entrenadora = st.selectbox("Asignar atleta a entrenadora", list(opciones_entrenadora.keys()))
+                    id_usuario_asignado = opciones_entrenadora.get(seleccion_entrenadora)
+                else:
+                    st.warning("⚠️ No hay entrenadoras registradas, no se puede asignar atleta.")
+                    id_usuario_asignado = None
 
             # 🔑 admin → entrenadora seleccionada, entrenadora → ella misma, atleta → su propio usuario
 
@@ -103,6 +106,8 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
                     st.error("El nombre es obligatorio")
                 elif rol_actual == "entrenadora" and (email_atleta.strip() == "" or password_inicial.strip() == ""):
                     st.error("Email y contraseña del atleta son obligatorios")
+                elif rol_actual == "admin" and id_usuario_asignado is None:
+                    st.error("No se puede crear atleta sin entrenadora asignada")
                 else:
                     if rol_actual == "entrenadora":
                         ph = hash_password(password_inicial)
