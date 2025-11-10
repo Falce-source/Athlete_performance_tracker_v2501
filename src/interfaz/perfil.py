@@ -73,7 +73,10 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
                 entrenadoras = [u for u in usuarios if u.rol == "entrenadora"]
                 if entrenadoras:
                     opciones_entrenadora = {f"{e.nombre} (ID {e.id_usuario})": e.id_usuario for e in entrenadoras}
-                    seleccion_entrenadora = st.selectbox("Asignar atleta a entrenadora", list(opciones_entrenadora.keys()))
+                    seleccion_entrenadora = st.selectbox(
+                        "Asignar atleta a entrenadora",
+                        list(opciones_entrenadora.keys())
+                    )
                     id_usuario_asignado = opciones_entrenadora.get(seleccion_entrenadora)
                 else:
                     st.warning("⚠️ No hay entrenadoras registradas, no se puede asignar atleta.")
@@ -164,11 +167,20 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
     elif rol_actual == "admin":
         usuarios = sql.obtener_usuarios()
         entrenadoras = [u for u in usuarios if u.rol == "entrenadora"]
-        opciones_entrenadora = {f"{e.nombre} (ID {e.id_usuario})": e.id_usuario for e in entrenadoras}
-        seleccion_entrenadora = st.selectbox("Filtrar atletas por entrenadora", list(opciones_entrenadora.keys()))
-        id_entrenadora = opciones_entrenadora[seleccion_entrenadora]
-        # 🔑 obtenemos atletas vinculados a la entrenadora seleccionada con relación usuario cargada
-        atletas = sql.obtener_atletas_por_usuario(id_entrenadora)
+        if not entrenadoras:
+            st.warning("⚠️ No hay entrenadoras registradas, no se puede filtrar atletas.")
+            atletas = []
+        else:
+            opciones_entrenadora = {f"{e.nombre} (ID {e.id_usuario})": e.id_usuario for e in entrenadoras}
+            seleccion_entrenadora = st.selectbox(
+                "Filtrar atletas por entrenadora",
+                list(opciones_entrenadora.keys())
+            )
+            if seleccion_entrenadora:
+                id_entrenadora = opciones_entrenadora.get(seleccion_entrenadora)
+                atletas = sql.obtener_atletas_por_usuario(id_entrenadora)
+            else:
+                atletas = []
 
     elif rol_actual == "atleta":
         # 🔒 Blindaje: el atleta solo puede ver su propio perfil
@@ -179,7 +191,7 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
         atletas = []
 
     if not atletas:
-        st.info("No hay atletas registrados todavía")
+        st.info("ℹ️ No hay atletas registrados todavía")
         return
 
     df = pd.DataFrame([{
