@@ -10,6 +10,7 @@ import os
 import shutil
 import src.persistencia.backup_storage as backup_storage
 import sqlite3
+import streamlit as st
 
  # ─────────────────────────────────────────────
  # CONFIGURACIÓN BÁSICA
@@ -116,6 +117,29 @@ if NEED_INIT_SCHEMA:
         # Aquí no llamamos directamente para evitar dependencia del orden: se crea en init_db().
     except Exception as e:
         print(f"⚠️ Error al inicializar esquema: {e}")
+
+# ─────────────────────────────────────────────
+# CHECK VISUAL DE BACKUPS
+# ─────────────────────────────────────────────
+def mostrar_estado_backups():
+    """Renderiza en Streamlit el estado del último backup y si toca ejecutar el diario."""
+    try:
+        backups = backup_storage.listar_backups()
+        if backups:
+            ultimo = sorted(backups, key=lambda b: b["createdTime"], reverse=True)[0]
+            fecha_ultimo = datetime.fromisoformat(
+                ultimo["createdTime"].replace("Z", "+00:00")
+            )
+            horas = (datetime.now(UTC) - fecha_ultimo).total_seconds() / 3600
+            st.success(f"📦 Último backup: {ultimo['name']} ({fecha_ultimo.isoformat()})")
+            if horas >= 24:
+                st.warning("⚠️ Han pasado más de 24h. Se recomienda ejecutar backup diario.")
+            else:
+                st.info(f"ℹ️ Último backup hace {horas:.1f}h, dentro del rango de 24h.")
+        else:
+            st.error("❌ No hay backups en Drive. Se recomienda crear el primero.")
+    except Exception as e:
+        st.error(f"⚠️ Error al consultar backups: {e}")
 
 # ─────────────────────────────────────────────
 # MODELOS

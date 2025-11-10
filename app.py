@@ -143,6 +143,9 @@ elif opcion == "💾 Backups":
         st.stop()
     else:
         st.success("✅ Cliente Drive activo. Puedes listar y subir backups.")
+    
+        st.header("Estado de Backups")
+        sql.mostrar_estado_backups()
 
         # Crear / Listar / Rotar
         st.subheader("📤 Crear / Listar / Rotar")
