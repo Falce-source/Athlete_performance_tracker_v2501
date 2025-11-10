@@ -5,24 +5,32 @@ Encapsula toda la lógica de autenticación y operaciones CRUD sobre backups.
 
 from datetime import datetime
 import os
-from google.oauth2 import Credentials
+import streamlit as st
+from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 import io
-
+import json
 
 # --- Inicialización de credenciales ---
 def _get_service():
-    creds = Credentials(
-        None,
-        refresh_token=os.getenv("DRIVE_REFRESH_TOKEN"),
-        client_id=os.getenv("DRIVE_CLIENT_ID"),
-        client_secret=os.getenv("DRIVE_CLIENT_SECRET"),
-        token_uri="https://oauth2.googleapis.com/token",
-        scopes=[os.getenv("DRIVE_SCOPE", "https://www.googleapis.com/auth/drive.file")]
-    )
-    return build("drive", "v3", credentials=creds)
+    sa = st.secrets.get("gdrive_sa", {})
+    sa_json_str = sa.get("json")
+    scope = sa.get("scope", "https://www.googleapis.com/auth/drive.file")
 
+    if not sa_json_str:
+        st.error("❌ Falta gdrive_sa.json en secrets.")
+        return None
+    try:
+        sa_info = json.loads(sa_json_str)
+        creds = service_account.Credentials.from_service_account_info(
+            sa_info,
+            scopes=[scope],
+        )
+        return build("drive", "v3", credentials=creds)
+    except Exception as e:
+        st.error(f"❌ Error al inicializar cliente Drive (Service Account): {e}")
+        return None
 
 # --- Funciones públicas ---
 
@@ -32,7 +40,10 @@ def subir_backup(local_path: str, remote_name: str = None) -> str:
     Devuelve el file_id del archivo creado.
     """
     service = _get_service()
-    folder_id = os.getenv("DRIVE_FOLDER_ID")
+    if service is None:
+        return ""
+
+    folder_id = st.secrets["gdrive_sa"]["folder_id"]
 
     if remote_name is None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -51,15 +62,19 @@ def subir_backup(local_path: str, remote_name: str = None) -> str:
 
     return file.get("id")
 
+
 def listar_backups(max_results: int = 10) -> list[dict]:
     """
     Lista los últimos backups en la carpeta de Drive.
     Devuelve una lista de diccionarios con id, nombre y fecha.
     """
     service = _get_service()
-    folder_id = os.getenv("DRIVE_FOLDER_ID")
+    if service is None:
+        return []
 
+    folder_id = st.secrets["gdrive_sa"]["folder_id"]
     query = f"'{folder_id}' in parents and trashed=false"
+
     results = service.files().list(
         q=query,
         pageSize=max_results,
@@ -76,8 +91,10 @@ def rotar_backups(max_backups: int = 5) -> None:
     Elimina los más antiguos.
     """
     service = _get_service()
-    backups = listar_backups(max_results=100)  # obtenemos todos
+    if service is None:
+        return
 
+    backups = listar_backups(max_results=100)  # obtenemos todos
     if len(backups) > max_backups:
         for old in backups[max_backups:]:
             service.files().delete(fileId=old["id"]).execute()
@@ -88,6 +105,9 @@ def descargar_backup(file_id: str, destino: str) -> None:
     Descarga un backup desde Drive y lo guarda en destino local.
     """
     service = _get_service()
+    if service is None:
+        return
+
     request = service.files().get_media(fileId=file_id)
     fh = io.FileIO(destino, "wb")
     downloader = MediaIoBaseDownload(fh, request)
