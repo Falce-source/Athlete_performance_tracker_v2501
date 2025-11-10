@@ -48,13 +48,15 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
             rol = st.selectbox("Rol", ["admin", "entrenadora", "atleta"])
             password = st.text_input("Contraseña inicial", type="password")
 
-            # 🔑 Si el rol es atleta, permitir asociación opcional a un perfil existente
             perfil_seleccionado_id = None
             if rol == "atleta":
                 perfiles_sin_usuario = [a for a in sql.obtener_atletas() if not getattr(a, "usuario_id", None)]
-                opciones_perfil = {f"{a.nombre} {a.apellidos or ''} (ID {a.id_atleta})": a.id_atleta for a in perfiles_sin_usuario}
-                if opciones_perfil:
-                    seleccion_perfil = st.selectbox("Asociar a perfil atleta existente (opcional)", ["— Ninguno —"] + list(opciones_perfil.keys()))
+                if perfiles_sin_usuario:
+                    opciones_perfil = {f"{a.nombre} {a.apellidos or ''} (ID {a.id_atleta})": a.id_atleta for a in perfiles_sin_usuario}
+                    seleccion_perfil = st.selectbox(
+                        "Asociar directamente a perfil atleta existente (opcional)",
+                        ["— Ninguno —"] + list(opciones_perfil.keys())
+                    )
                     if seleccion_perfil and seleccion_perfil != "— Ninguno —":
                         perfil_seleccionado_id = opciones_perfil.get(seleccion_perfil)
 
@@ -68,29 +70,25 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
                     usuario = sql.crear_usuario(nombre=nombre, email=email, rol=rol, password_hash=ph)
                     st.success(f"✅ Usuario '{usuario.nombre}' creado correctamente con contraseña inicial")
 
-                    # 🔗 Si es atleta, asociar a perfil existente (si seleccionado) o intentar autoasociación segura
                     if rol == "atleta":
-                        asociado = False
                         if perfil_seleccionado_id:
                             try:
                                 sql.actualizar_usuario(id_usuario=usuario.id_usuario, perfil_atleta_id=perfil_seleccionado_id)
                                 sql.actualizar_atleta(perfil_seleccionado_id, usuario_id=usuario.id_usuario)
-                                st.info(f"🔗 Usuario atleta asociado al perfil ID {perfil_seleccionado_id}.")
-                                asociado = True
+                                st.success(f"🔗 Usuario atleta asociado al perfil ID {perfil_seleccionado_id}.")
                             except Exception as e:
                                 st.warning(f"No se pudo asociar al perfil seleccionado: {e}")
-                        if not asociado:
+                        else:
+                            # Intento de autoasociación inmediata por nombre+apellidos único
                             candidatos = [a for a in sql.obtener_atletas()
                                           if (a.nombre or "").strip().lower() == nombre.strip().lower()
-                                          and (a.apellidos or "").strip().lower() == ""]
-                            # Si hay un único candidato sin usuario, asociamos
-                            candidatos = [a for a in candidatos if not getattr(a, "usuario_id", None)]
+                                          and (a.apellidos or "").strip().lower() == "" and not getattr(a, "usuario_id", None)]
                             if len(candidatos) == 1:
                                 a = candidatos[0]
                                 try:
                                     sql.actualizar_usuario(id_usuario=usuario.id_usuario, perfil_atleta_id=a.id_atleta)
                                     sql.actualizar_atleta(a.id_atleta, usuario_id=usuario.id_usuario)
-                                    st.info(f"🔗 Usuario atleta autoasociado al perfil '{a.nombre}' (ID {a.id_atleta}).")
+                                    st.success(f"🔗 Usuario atleta autoasociado al perfil '{a.nombre}' (ID {a.id_atleta}).")
                                 except Exception as e:
                                     st.warning(f"No se pudo completar la autoasociación: {e}")
                             else:
