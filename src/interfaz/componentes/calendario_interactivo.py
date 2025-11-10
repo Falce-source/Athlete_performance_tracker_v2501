@@ -34,8 +34,12 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
     """
     import json
 
-    # 🔑 Nota: ahora fc_events puede venir ya filtrado desde calendario.py
-    # No requiere cambios internos, solo aseguramos compatibilidad.
+    # 🔒 Blindaje de visibilidad: si el rol es atleta, forzamos id_atleta al suyo propio
+    rol_actual = st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin"))
+    usuario_id = st.session_state.get("USUARIO_ID", 0)
+    if rol_actual == "atleta":
+        id_atleta_vinculado = sql.obtener_id_atleta_por_usuario(usuario_id)
+        id_atleta = id_atleta_vinculado
 
     # Helper interno para normalizar extendedProps
     def normalize_details(details: dict) -> dict:
@@ -271,15 +275,22 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                 opciones.append("Métricas rápidas")
             tipo_evento = st.radio("Selecciona el tipo de evento", opciones)
 
-            # 🔒 Validación de permisos antes de permitir creación
+            # 🔒 Blindaje de visibilidad y permisos
+            rol_actual = st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin"))
+            usuario_id = st.session_state.get("USUARIO_ID", 0)
+            if rol_actual == "atleta":
+                # Forzamos que el atleta solo pueda registrar en su propio calendario
+                id_atleta_vinculado = sql.obtener_id_atleta_por_usuario(usuario_id)
+                id_atleta = id_atleta_vinculado
+
             ctx_evento = Contexto(
-                rol_actual=st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin")),
-                usuario_id=st.session_state.get("USUARIO_ID", 0),
+                rol_actual=rol_actual,
+                usuario_id=usuario_id,
                 atleta_id=id_atleta,
                 propietario_id=id_atleta
             )
             if not puede_crear_evento_calendario(ctx_evento):
-                st.warning("⛔ No tienes permisos para crear eventos en el calendario de otro atleta")
+                st.warning("⛔ No tienes permisos para crear eventos en este calendario")
                 return
 
             # -------------------------
@@ -337,6 +348,12 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     notas = st.text_area("Notas")
 
                     if st.form_submit_button("Guardar competición"):
+                        # 🔒 Forzar visibilidad si rol es atleta
+                        rol_actual = st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin"))
+                        usuario_id = st.session_state.get("USUARIO_ID", 0)
+                        if rol_actual == "atleta":
+                            id_atleta = sql.obtener_id_atleta_por_usuario(usuario_id)
+
                         valores = normalize_details({"nombre": nombre, "lugar": lugar})
                         sql.crear_evento_calendario(
                             id_atleta=id_atleta,
@@ -358,6 +375,12 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     notas = st.text_area("Notas")
 
                     if st.form_submit_button("Guardar cita/test"):
+                        # 🔒 Forzar visibilidad si rol es atleta
+                        rol_actual = st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin"))
+                        usuario_id = st.session_state.get("USUARIO_ID", 0)
+                        if rol_actual == "atleta":
+                            id_atleta = sql.obtener_id_atleta_por_usuario(usuario_id)
+
                         valores = normalize_details({"tipo": tipo, "lugar": lugar})
                         sql.crear_evento_calendario(
                             id_atleta=id_atleta,
@@ -384,6 +407,12 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                         fc_reposo = st.number_input("FC reposo (lpm)", min_value=0, step=1)
 
                     if st.form_submit_button("Guardar métricas"):
+                        # 🔒 Forzar visibilidad si rol es atleta
+                        rol_actual = st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin"))
+                        usuario_id = st.session_state.get("USUARIO_ID", 0)
+                        if rol_actual == "atleta":
+                            id_atleta = sql.obtener_id_atleta_por_usuario(usuario_id)
+
                         # Guardamos en tabla métricas (histórico) con la fecha del evento
                         if hrv != 0: 
                             sql.crear_metrica(id_atleta, "hrv", hrv, "ms", fecha=fecha_local)
@@ -466,6 +495,17 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     if submitted:
                         event_id = props.get("id_base")
                         if event_id is not None:
+                            # 🔒 Construir contexto con vínculo correcto
+                            rol_actual = st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin"))
+                            usuario_id = st.session_state.get("USUARIO_ID", 0)
+                            if rol_actual == "atleta":
+                                id_atleta = sql.obtener_id_atleta_por_usuario(usuario_id)
+                            ctx_evento = Contexto(
+                                rol_actual=rol_actual,
+                                usuario_id=usuario_id,
+                                atleta_id=id_atleta,
+                                propietario_id=id_atleta
+                            )
                             if not puede_editar_evento_calendario(ctx_evento):
                                 st.warning("⛔ No tienes permisos para editar este evento")
                                 return
@@ -501,12 +541,14 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     if eliminar:
                         event_id = props.get("id_base")
                         if event_id is not None:
-                            if not puede_borrar_evento_calendario(ctx_evento):
-                                st.warning("⛔ No tienes permisos para editar este evento")
-                                return
+                            # 🔒 Construir contexto con vínculo correcto
+                            rol_actual = st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin"))
+                            usuario_id = st.session_state.get("USUARIO_ID", 0)
+                            if rol_actual == "atleta":
+                                id_atleta = sql.obtener_id_atleta_por_usuario(usuario_id)
                             ctx_evento = Contexto(
-                                rol_actual=st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin")),
-                                usuario_id=st.session_state.get("USUARIO_ID", 0),
+                                rol_actual=rol_actual,
+                                usuario_id=usuario_id,
                                 atleta_id=id_atleta,
                                 propietario_id=id_atleta
                             )
@@ -540,6 +582,17 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     if submitted:
                         event_id = props.get("id_base") or ev.get("id")
                         if event_id:
+                            # 🔒 Construir contexto con vínculo correcto
+                            rol_actual = st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin"))
+                            usuario_id = st.session_state.get("USUARIO_ID", 0)
+                            if rol_actual == "atleta":
+                                id_atleta = sql.obtener_id_atleta_por_usuario(usuario_id)
+                            ctx_evento = Contexto(
+                                rol_actual=rol_actual,
+                                usuario_id=usuario_id,
+                                atleta_id=id_atleta,
+                                propietario_id=id_atleta
+                            )
                             if not puede_editar_evento_calendario(ctx_evento):
                                 st.warning("⛔ No tienes permisos para editar este evento")
                                 return
@@ -557,12 +610,14 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     if eliminar:
                         event_id = props.get("id_base") or ev.get("id")
                         if event_id:
-                            if not puede_borrar_evento_calendario(ctx_evento):
-                                st.warning("⛔ No tienes permisos para editar este evento")
-                                return
+                            # 🔒 Construir contexto con vínculo correcto
+                            rol_actual = st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin"))
+                            usuario_id = st.session_state.get("USUARIO_ID", 0)
+                            if rol_actual == "atleta":
+                                id_atleta = sql.obtener_id_atleta_por_usuario(usuario_id)
                             ctx_evento = Contexto(
-                                rol_actual=st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin")),
-                                usuario_id=st.session_state.get("USUARIO_ID", 0),
+                                rol_actual=rol_actual,
+                                usuario_id=usuario_id,
                                 atleta_id=id_atleta,
                                 propietario_id=id_atleta
                             )
@@ -594,6 +649,17 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     if submitted:
                         event_id = props.get("id_base") or ev.get("id")
                         if event_id:
+                            # 🔒 Construir contexto con vínculo correcto
+                            rol_actual = st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin"))
+                            usuario_id = st.session_state.get("USUARIO_ID", 0)
+                            if rol_actual == "atleta":
+                                id_atleta = sql.obtener_id_atleta_por_usuario(usuario_id)
+                            ctx_evento = Contexto(
+                                rol_actual=rol_actual,
+                                usuario_id=usuario_id,
+                                atleta_id=id_atleta,
+                                propietario_id=id_atleta
+                            )
                             if not puede_editar_evento_calendario(ctx_evento):
                                 st.warning("⛔ No tienes permisos para editar este evento")
                                 return
@@ -611,12 +677,14 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     if eliminar:
                         event_id = props.get("id_base") or ev.get("id")
                         if event_id:
-                            if not puede_borrar_evento_calendario(ctx_evento):
-                                st.warning("⛔ No tienes permisos para editar este evento")
-                                return
+                            # 🔒 Construir contexto con vínculo correcto
+                            rol_actual = st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin"))
+                            usuario_id = st.session_state.get("USUARIO_ID", 0)
+                            if rol_actual == "atleta":
+                                id_atleta = sql.obtener_id_atleta_por_usuario(usuario_id)
                             ctx_evento = Contexto(
-                                rol_actual=st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin")),
-                                usuario_id=st.session_state.get("USUARIO_ID", 0),
+                                rol_actual=rol_actual,
+                                usuario_id=usuario_id,
                                 atleta_id=id_atleta,
                                 propietario_id=id_atleta
                             )
@@ -679,6 +747,17 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                         # Actualizamos el evento existente en calendario_eventos
                         event_id = props.get("id_base") or ev.get("id")
                         if event_id:
+                            # 🔒 Construir contexto con vínculo correcto
+                            rol_actual = st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin"))
+                            usuario_id = st.session_state.get("USUARIO_ID", 0)
+                            if rol_actual == "atleta":
+                                id_atleta = sql.obtener_id_atleta_por_usuario(usuario_id)
+                            ctx_evento = Contexto(
+                                rol_actual=rol_actual,
+                                usuario_id=usuario_id,
+                                atleta_id=id_atleta,
+                                propietario_id=id_atleta
+                            )
                             if not puede_editar_evento_calendario(ctx_evento):
                                 st.warning("⛔ No tienes permisos para editar este evento")
                                 return
@@ -702,12 +781,14 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
                     if eliminar:
                         event_id = props.get("id_base") or ev.get("id")
                         if event_id:
-                            if not puede_borrar_evento_calendario(ctx_evento):
-                                st.warning("⛔ No tienes permisos para editar este evento")
-                                return
+                            # 🔒 Construir contexto con vínculo correcto
+                            rol_actual = st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin"))
+                            usuario_id = st.session_state.get("USUARIO_ID", 0)
+                            if rol_actual == "atleta":
+                                id_atleta = sql.obtener_id_atleta_por_usuario(usuario_id)
                             ctx_evento = Contexto(
-                                rol_actual=st.session_state.get("ROL_SIMULADO", st.session_state.get("ROL_ACTUAL", "admin")),
-                                usuario_id=st.session_state.get("USUARIO_ID", 0),
+                                rol_actual=rol_actual,
+                                usuario_id=usuario_id,
                                 atleta_id=id_atleta,
                                 propietario_id=id_atleta
                             )

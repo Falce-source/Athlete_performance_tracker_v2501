@@ -65,15 +65,25 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
         atletas = sql.obtener_atletas_por_usuario(usuario_id)
     elif rol_actual == "admin":
         atletas = sql.obtener_atletas_por_usuario(id_entrenadora)  # 🔍 admin filtra por entrenadora
+    elif rol_actual == "atleta":
+        # 🔒 Blindaje: el atleta solo puede ver su propio perfil
+        id_atleta_vinculado = sql.obtener_id_atleta_por_usuario(usuario_id)
+        atleta_obj = sql.obtener_atleta_por_id(id_atleta_vinculado)
+        atletas = [atleta_obj] if atleta_obj else []
     else:
-        atletas = sql.obtener_atletas()
+        atletas = []
     if not atletas:
         st.info("No hay atletas registrados todavía")
         return
 
-    opciones = {f"{a.nombre} {a.apellidos or ''} (ID {a.id_atleta})": a.id_atleta for a in atletas}
-    seleccion = st.selectbox("Selecciona un atleta", list(opciones.keys()))
-    id_atleta = opciones[seleccion]
+    if rol_actual == "atleta":
+        # 🔒 El atleta no puede elegir, se fuerza a su propio perfil
+        id_atleta = atletas[0].id_atleta if atletas else None
+        st.caption(f"👤 Perfil activo: {atletas[0].nombre} {atletas[0].apellidos or ''} (ID {id_atleta})")
+    else:
+        opciones = {f"{a.nombre} {a.apellidos or ''} (ID {a.id_atleta})": a.id_atleta for a in atletas}
+        seleccion = st.selectbox("Selecciona un atleta", list(opciones.keys()))
+        id_atleta = opciones[seleccion]
 
     # Mostrar entrenadora asociada al atleta
     atleta_obj = sql.obtener_atleta_por_id(id_atleta)
@@ -291,6 +301,11 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
                 # Determinar propietario real del evento (si está en datos)
                 propietario_evento = e.get("id_autor") or id_atleta
 
+                # 🔒 Blindaje de visibilidad: si es atleta, forzar su propio id_atleta
+                if rol_actual == "atleta":
+                    id_atleta_vinculado = sql.obtener_id_atleta_por_usuario(usuario_id)
+                    id_atleta = id_atleta_vinculado
+
                 ctx_evento = Contexto(
                     rol_actual=rol_actual,
                     usuario_id=usuario_id or 0,
@@ -316,6 +331,11 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
     # Sesiones del día (planificado vs completado)
     # ───────────────────────────────
     st.subheader("🏃 Sesiones del día")
+    # 🔒 Blindaje: si es atleta, forzar su propio id_atleta
+    if rol_actual == "atleta":
+        id_atleta_vinculado = sql.obtener_id_atleta_por_usuario(usuario_id)
+        id_atleta = id_atleta_vinculado
+
     sesiones = sql.obtener_sesiones_por_atleta(id_atleta)
     if not sesiones:
         st.info("No hay sesiones registradas todavía")
@@ -336,6 +356,11 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
     st.subheader("📊 Métricas rápidas")
 
     import altair as alt
+    # 🔒 Blindaje: si es atleta, forzar su propio id_atleta
+    if rol_actual == "atleta":
+        id_atleta_vinculado = sql.obtener_id_atleta_por_usuario(usuario_id)
+        id_atleta = id_atleta_vinculado
+
     metricas = sql.obtener_metricas_rapidas(id_atleta)
     if not metricas:
         st.info("No hay métricas rápidas registradas todavía")
@@ -380,8 +405,18 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
         texto = st.text_area("Comentario")
         submitted = st.form_submit_button("Guardar comentario")
         if submitted and texto.strip():
+            # 🔒 Blindaje: si es atleta, forzar su propio id_atleta
+            if rol_actual == "atleta":
+                id_atleta_vinculado = sql.obtener_id_atleta_por_usuario(usuario_id)
+                id_atleta = id_atleta_vinculado
+
             sql.crear_comentario(id_atleta=id_atleta, texto=texto, visible_para="staff")
             st.success("✅ Comentario guardado")
+
+    # 🔒 Blindaje: si es atleta, forzar su propio id_atleta
+    if rol_actual == "atleta":
+        id_atleta_vinculado = sql.obtener_id_atleta_por_usuario(usuario_id)
+        id_atleta = id_atleta_vinculado
 
     comentarios = sql.obtener_comentarios_por_atleta(id_atleta, rol_actual=rol_actual)
     if comentarios:
@@ -393,6 +428,11 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
 
     with st.expander("🔍 Depuración de eventos (solo pruebas)"):
         # Solo permitir crear evento de prueba si el rol tiene permiso
+        # 🔒 Blindaje: si es atleta, forzar su propio id_atleta
+        if rol_actual == "atleta":
+            id_atleta_vinculado = sql.obtener_id_atleta_por_usuario(usuario_id)
+            id_atleta = id_atleta_vinculado
+
         ctx_creacion = Contexto(
             rol_actual=rol_actual,
             usuario_id=usuario_id or 0,
@@ -415,12 +455,22 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
             st.caption("⛔ Sin permiso para crear eventos de prueba")
 
         if st.button("Listar eventos actuales"):
-            eventos = sql.obtener_eventos_calendario_por_atleta(id_atleta, rol_actual="admin")
+            # 🔒 Blindaje: si es atleta, forzar su propio id_atleta
+            if rol_actual == "atleta":
+                id_atleta_vinculado = sql.obtener_id_atleta_por_usuario(usuario_id)
+                id_atleta = id_atleta_vinculado
+
+            eventos = sql.obtener_eventos_calendario_por_atleta(id_atleta, rol_actual=rol_actual)
             st.json(eventos)
 
     # Prueba
     st.subheader("🗑️ Reset total de métricas rápidas (uso único)")
     if st.button("Eliminar TODO lo de métricas rápidas"):
+        # 🔒 Blindaje: si es atleta, forzar su propio id_atleta
+        if rol_actual == "atleta":
+            id_atleta_vinculado = sql.obtener_id_atleta_por_usuario(usuario_id)
+            id_atleta = id_atleta_vinculado
+
         sql.reset_metricas_rapidas(id_atleta)
         st.success("✅ Reset completado. Se han eliminado todas las métricas rápidas y sus eventos de calendario.")
         st.rerun()
