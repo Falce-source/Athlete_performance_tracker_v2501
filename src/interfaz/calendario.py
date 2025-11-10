@@ -56,24 +56,38 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
     if rol_actual == "admin":
         usuarios = sql.obtener_usuarios()
         entrenadoras = [u for u in usuarios if u.rol == "entrenadora"]
+
         if not entrenadoras:
             st.warning("⚠️ No hay entrenadoras registradas, no se puede filtrar atletas.")
             atletas, id_entrenadora = [], None
         else:
-            opciones_entrenadora = {f"{e.nombre} (ID {e.id_usuario})": e.id_usuario for e in entrenadoras}
-            seleccion_entrenadora = st.selectbox("Filtrar atletas por entrenadora", list(opciones_entrenadora.keys()))
-            id_entrenadora = opciones_entrenadora.get(seleccion_entrenadora)
-            atletas = sql.obtener_atletas_por_usuario(id_entrenadora) if id_entrenadora else []
+            opciones_entrenadora = {
+                f"{e.nombre} (ID {e.id_usuario})": e.id_usuario for e in entrenadoras
+            }
+            seleccion_entrenadora = st.selectbox(
+                "Filtrar atletas por entrenadora",
+                list(opciones_entrenadora.keys())
+            )
+            if seleccion_entrenadora:
+                id_entrenadora = opciones_entrenadora.get(seleccion_entrenadora)
+                atletas = sql.obtener_atletas_por_usuario(id_entrenadora) if id_entrenadora else []
+            else:
+                st.info("ℹ️ Selecciona una entrenadora para ver sus atletas")
+                atletas, id_entrenadora = [], None
+
     elif rol_actual == "entrenadora":
         id_entrenadora = usuario_id
         atletas = sql.obtener_atletas_por_usuario(usuario_id)
+
     elif rol_actual == "atleta":
         # 🔒 Blindaje: el atleta solo puede ver su propio perfil
         id_atleta_vinculado = sql.obtener_id_atleta_por_usuario(usuario_id)
         atleta_obj = sql.obtener_atleta_por_id(id_atleta_vinculado)
         atletas = [atleta_obj] if atleta_obj else []
+
     else:
         atletas = []
+
     if not atletas:
         st.info("No hay atletas registrados todavía")
         return
@@ -81,14 +95,22 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
     if rol_actual == "atleta":
         # 🔒 El atleta no puede elegir, se fuerza a su propio perfil
         id_atleta_forzado = atletas[0].id_atleta if atletas else None
-        st.caption(f"👤 Perfil activo: {atletas[0].nombre} {atletas[0].apellidos or ''} (ID {id_atleta_forzado})")
+        st.caption(
+            f"👤 Perfil activo: {atletas[0].nombre} {atletas[0].apellidos or ''} (ID {id_atleta_forzado})"
+        )
     else:
-        opciones = {f"{a.nombre} {a.apellidos or ''} (ID {a.id_atleta})": a.id_atleta for a in atletas}
+        opciones = {
+            f"{a.nombre} {a.apellidos or ''} (ID {a.id_atleta})": a.id_atleta for a in atletas
+        }
         seleccion = st.selectbox("Selecciona un atleta", list(opciones.keys()))
-        id_atleta_forzado = opciones[seleccion]
+        if seleccion:
+            id_atleta_forzado = opciones.get(seleccion)
+        else:
+            st.info("ℹ️ Selecciona un atleta para continuar")
+            id_atleta_forzado = None
 
     # Mostrar entrenadora asociada al atleta
-    atleta_obj = sql.obtener_atleta_por_id(id_atleta_forzado)
+    atleta_obj = sql.obtener_atleta_por_id(id_atleta_forzado) if id_atleta_forzado else None
     nombre_entrenadora = atleta_obj.usuario.nombre if atleta_obj and atleta_obj.usuario else "—"
     st.caption(f"👩‍🏫 Entrenadora asignada: {nombre_entrenadora}")
 
