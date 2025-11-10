@@ -112,10 +112,10 @@ elif opcion == "📅 Calendario":
 
 elif opcion == "👥 Usuarios":
     st.title("👥 Gestión de Usuarios")
-    # Validación explícita de credenciales Drive
+    # Validación explícita de credenciales Drive (OAuth)
     service = backup_storage._get_service()
     if service is None:
-        st.info("❌ Cliente Drive no inicializado (Service Account). Revisa gdrive_sa en Settings.")
+        st.info("❌ Cliente Drive no inicializado (OAuth). Revisa bloque [google_drive] en Settings.")
         st.stop()
     # 🔑 Pasamos rol_actual y usuario_id reales para condicionar permisos
     usuarios.mostrar_usuarios(rol_actual=rol_actual, usuario_id=usuario_id)
@@ -123,11 +123,11 @@ elif opcion == "👥 Usuarios":
 elif opcion == "💾 Backups":
     st.title("Gestión de Backups")
 
-    # Bloque explícito de estado de credenciales
-    st.subheader("🔑 Estado de credenciales Google Drive")
-    sa = st.secrets.get("gdrive_sa", {})
-    required_keys = ["json", "folder_id", "scope"]
-    checklist = {k: bool(sa.get(k)) for k in required_keys}
+    # Bloque explícito de estado de credenciales (OAuth)
+    st.subheader("🔑 Estado de credenciales Google Drive (OAuth)")
+    gd = st.secrets.get("google_drive", {})
+    required_keys = ["client_id", "client_secret", "refresh_token", "folder_id", "scope"]
+    checklist = {k: bool(gd.get(k)) for k in required_keys}
 
     cols = st.columns(len(required_keys))
     for i, k in enumerate(required_keys):
@@ -139,7 +139,7 @@ elif opcion == "💾 Backups":
 
     service = backup_storage._get_service()
     if service is None:
-        st.info("❌ Cliente Drive no inicializado (Service Account). Revisa gdrive_sa.json, folder_id y scope.")
+        st.info("❌ Cliente Drive no inicializado (OAuth). Revisa client_id, client_secret y refresh_token en [google_drive].")
         st.stop()
     else:
         st.success("✅ Cliente Drive activo. Puedes listar y subir backups.")
@@ -238,7 +238,7 @@ elif opcion == "💾 Backups":
         try:
             service = backup_storage._get_service()
             if service is None:
-                st.info("❌ Cliente Drive no inicializado (Service Account). Revisa gdrive_sa en Settings.")
+                st.info("❌ Cliente Drive no inicializado (OAuth). Revisa bloque [google_drive] en Settings.")
                 st.stop()
 
             backups = backup_storage.listar_backups(max_results=20)
@@ -297,7 +297,7 @@ elif opcion == "🔍 Auditoría":
     st.title("🔍 Auditoría")
     service = backup_storage._get_service()
     if service is None:
-        st.info("❌ Cliente Drive no inicializado (Service Account). Revisa gdrive_sa en Settings.")
+        st.info("❌ Cliente Drive no inicializado (OAuth). Revisa bloque [google_drive] en Settings.")
         st.stop()
     auditoria.mostrar_auditoria()
 
@@ -305,7 +305,7 @@ elif opcion == "📈 Historial de Validaciones":
     st.title("📈 Historial de Validaciones")
     service = backup_storage._get_service()
     if service is None:
-        st.info("❌ Cliente Drive no inicializado (Service Account). Revisa gdrive_sa en Settings.")
+        st.info("❌ Cliente Drive no inicializado (OAuth). Revisa bloque [google_drive] en Settings.")
         st.stop()
     historial_validaciones.mostrar_historial()
 
@@ -343,7 +343,7 @@ elif opcion == "📈 Historial de Validaciones":
     try:
         service = backup_storage._get_service()
         if service is None:
-            st.info("❌ Cliente Drive no inicializado (Service Account). Revisa gdrive_sa en Settings.")
+            st.info("❌ Cliente Drive no inicializado (OAuth). Revisa bloque [google_drive] en Settings.")
             st.stop()
         backups = backup_storage.listar_backups()
         if backups:
@@ -374,7 +374,7 @@ elif opcion == "📈 Historial de Validaciones":
         try:
             service = backup_storage._get_service()
             if service is None:
-                st.info("❌ Cliente Drive no inicializado (Service Account). Revisa gdrive_sa en Settings.")
+                st.info("❌ Cliente Drive no inicializado (OAuth). Revisa bloque [google_drive] en Settings.")
                 st.stop()
             report = []
             if not os.path.exists(sql.DB_PATH):
@@ -408,7 +408,7 @@ elif opcion == "📈 Historial de Validaciones":
     try:
         service = backup_storage._get_service()
         if service is None:
-            st.info("❌ Cliente Drive no inicializado (Service Account). Revisa gdrive_sa en Settings.")
+            st.info("❌ Cliente Drive no inicializado (OAuth). Revisa bloque [google_drive] en Settings.")
             st.stop()
         backups = backup_storage.listar_backups(max_results=20)
         if backups:
@@ -467,7 +467,7 @@ elif opcion == "🔍 Auditoría":
     st.title("🔍 Auditoría")
     service = backup_storage._get_service()
     if service is None:
-        st.info("❌ Cliente Drive no inicializado (Service Account). Revisa gdrive_sa en Settings.")
+        st.info("❌ Cliente Drive no inicializado (OAuth). Revisa bloque [google_drive] en Settings.")
         st.stop()
     else:
         auditoria.mostrar_auditoria()
@@ -476,8 +476,7 @@ elif opcion == "📈 Historial de Validaciones":
     st.title("📈 Historial de Validaciones")
     service = backup_storage._get_service()
     if service is None:
-        st.info("❌ Cliente Drive no inicializado (Service Account). Revisa gdrive_sa en Settings.")
+        st.info("❌ Cliente Drive no inicializado (OAuth). Revisa bloque [google_drive] en Settings.")
         st.stop()
     else:
         historial_validaciones.mostrar_historial()
-
