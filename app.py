@@ -21,24 +21,23 @@ sql.ensure_schema()  # Parche temporal para columnas propietario_id y atleta_usu
 
 # --- RECUPERACIÓN ADMIN INICIAL ---
 from src.utils.seguridad import hash_password
-admin_email = "admin@demo.com"
-admin_nombre = "Administrador"
-admin_existente = sql.obtener_usuario_por_email(admin_email) or sql.obtener_usuario_por_nombre(admin_nombre)
+ admin_email = "admin@demo.com"
+ admin_existente = sql.obtener_usuario_por_email(admin_email)
 
-if not admin_existente:
-    ph = hash_password("admin123")
-    try:
-        sql.crear_usuario(
-            nombre=admin_nombre,
-            email=admin_email,
-            rol="admin",
-            password_hash=ph
-        )
-        print("✅ Admin inicial creado")
-    except Exception as e:
-        st.warning(f"No se pudo crear el admin inicial: {e}")
-else:
-    print("ℹ️ Admin inicial ya existe, no se recrea")
+ if not admin_existente:
+     ph = hash_password("admin123")
+     try:
+         sql.crear_usuario(
+             nombre="Administrador",
+             email=admin_email,
+             rol="admin",
+             password_hash=ph
+         )
+         print("✅ Admin inicial creado")
+     except Exception as e:
+         st.warning(f"No se pudo crear el admin inicial: {e}")
+ else:
+     print("ℹ️ Admin inicial ya existe, no se recrea")
 
 # Si no hay sesión, mostrar login y detener el resto
 if "USUARIO_ID" not in st.session_state or "ROL_ACTUAL" not in st.session_state:
