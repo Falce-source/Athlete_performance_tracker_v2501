@@ -28,8 +28,8 @@ def _get_service():
         creds.refresh(Request())
         return build("drive", "v3", credentials=creds)
 
-    except Exception as e:
-        st.warning(f"⚠️ No se pudo refrescar credenciales: {e}")
+    except RefreshError as e:
+        st.warning(f"⚠️ Refresh token inválido: {e}")
 
         # Lanzar flujo OAuth si el refresh token falla
         flow = Flow.from_client_config(
