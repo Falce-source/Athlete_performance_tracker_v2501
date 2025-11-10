@@ -820,7 +820,6 @@ def crear_metrica(id_atleta, tipo_metrica, valor, unidad, fecha=None):
                 fecha = datetime.strptime(fecha, "%Y-%m-%d").date()
             existente.fecha = datetime.combine(fecha, datetime.min.time(), timezone.utc)
             session.commit()
-            session.commit()
             session.refresh(existente)
             _sync_backup()
             return existente

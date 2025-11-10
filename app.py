@@ -44,31 +44,24 @@ if "USUARIO_ID" not in st.session_state or "ROL_ACTUAL" not in st.session_state:
     logged = auth.login_form()
     st.stop()
 
-rol_actual = st.session_state["ROL_ACTUAL"]
-usuario_id = st.session_state["USUARIO_ID"]
+rol_actual = st.session_state.get("ROL_ACTUAL", "admin")
+usuario_id = st.session_state.get("USUARIO_ID", 0)
 usuario_nombre = st.session_state.get("USUARIO_NOMBRE", "—")
 
-# Barra lateral con identidad fija
 st.sidebar.markdown(f"**🧑 Usuario activo:** {usuario_nombre} (Rol: {rol_actual})")
 if st.sidebar.button("Cerrar sesión"):
     auth.logout()
 
-# Importar control de roles
 from src.utils.roles import tabs_visibles_por_rol
-
-# Cargar variables desde .env (local) o st.secrets (Cloud)
 load_dotenv()
 
 def get_secret(section, key, default=None):
-    # Prioriza st.secrets en Cloud, si no existe usa os.getenv (local)
     if section in st.secrets and key in st.secrets[section]:
         return st.secrets[section][key]
     return os.getenv(key, default)
 
-# Configuración de Google Drive (OAuth con refresh token)
-# Se obtiene de st.secrets["google_drive"], definido en Streamlit Cloud
-FOLDER_ID = st.secrets["google_drive"].get("folder_id", "")
-SCOPE = st.secrets["google_drive"].get("scope", "https://www.googleapis.com/auth/drive.file")
+FOLDER_ID = st.secrets.get("google_drive", {}).get("folder_id", "")
+SCOPE = st.secrets.get("google_drive", {}).get("scope", "https://www.googleapis.com/auth/drive.file")
 
 # ─────────────────────────────────────────────
 # NAVEGACIÓN LATERAL
