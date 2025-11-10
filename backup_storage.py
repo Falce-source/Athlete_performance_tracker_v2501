@@ -126,7 +126,7 @@ def descargar_backup(file_id: str, destino: str) -> None:
 
     request = service.files().get_media(fileId=file_id)
     fh = io.FileIO(destino, "wb")
-    downloader = MediaFileDownload(fh, request)
+    downloader = MediaIoBaseDownload(fh, request)
 
     done = False
     while not done:

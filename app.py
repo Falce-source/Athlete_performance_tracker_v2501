@@ -126,9 +126,23 @@ elif opcion == "💾 Backups":
 
     # Bloque explícito de estado de credenciales
     st.subheader("🔑 Estado de credenciales Google Drive")
+    g = st.secrets.get("gdrive", {})
+    required_keys = ["client_id", "client_secret", "refresh_token", "folder_id", "redirect_uri"]
+    checklist = {}
+    for k in required_keys:
+        checklist[k] = bool(g.get(k))
+
+    cols = st.columns(len(required_keys))
+    for i, k in enumerate(required_keys):
+        with cols[i]:
+            if checklist[k]:
+                st.success(f"{k}")
+            else:
+                st.error(f"{k}")
+
     service = backup_storage._get_service()
     if service is None:
-        st.info("No hay credenciales válidas. Autoriza Google Drive con el enlace mostrado arriba.")
+        st.info("❌ Cliente Drive no inicializado. Revisa credenciales arriba.")
         st.stop()
     else:
         st.success("✅ Cliente Drive activo. Puedes listar y subir backups.")
@@ -222,6 +236,11 @@ elif opcion == "💾 Backups":
         # Dashboard visual
         st.subheader("📊 Dashboard de Backups en Drive")
         try:
+            service = backup_storage._get_service()
+            if service is None:
+                st.info("❌ Cliente Drive no inicializado. Revisa credenciales arriba.")
+                st.stop()
+
             backups = backup_storage.listar_backups(max_results=20)
             if backups:
                 import pandas as pd
@@ -263,8 +282,11 @@ elif opcion == "💾 Backups":
                     confirmar = st.checkbox("Confirmar eliminación", key="confirm_delete")
                     if st.button("🗑️ Eliminar seleccionado", key="delete_btn"):
                         if confirmar:
-                            service.files().delete(fileId=file_id).execute()
-                            st.warning(f"Backup eliminado: {seleccion}")
+                            try:
+                                service.files().delete(fileId=file_id).execute()
+                                st.warning(f"Backup eliminado: {seleccion}")
+                            except Exception as e:
+                                st.error(f"Error al eliminar backup: {e}")
                         else:
                             st.info("Marca la casilla de confirmación antes de eliminar.")
             else:
@@ -429,8 +451,11 @@ elif opcion == "📈 Historial de Validaciones":
                 confirmar = st.checkbox("Confirmar eliminación", key="confirm_delete")
                 if st.button("🗑️ Eliminar seleccionado", key="delete_btn"):
                     if confirmar:
-                        service.files().delete(fileId=file_id).execute()
-                        st.warning(f"Backup eliminado: {seleccion}")
+                        try:
+                            service.files().delete(fileId=file_id).execute()
+                            st.warning(f"Backup eliminado: {seleccion}")
+                        except Exception as e:
+                            st.error(f"Error al eliminar backup: {e}")
                     else:
                         st.info("Marca la casilla de confirmación antes de eliminar.")
         else:
@@ -442,15 +467,17 @@ elif opcion == "🔍 Auditoría":
     st.title("🔍 Auditoría")
     service = backup_storage._get_service()
     if service is None:
-        st.info("No hay credenciales válidas. Autoriza Google Drive con el enlace mostrado arriba.")
+        st.info("❌ Cliente Drive no inicializado. Revisa credenciales en pestaña Backups.")
         st.stop()
-    auditoria.mostrar_auditoria()
+    else:
+        auditoria.mostrar_auditoria()
 
 elif opcion == "📈 Historial de Validaciones":
     st.title("📈 Historial de Validaciones")
     service = backup_storage._get_service()
     if service is None:
-        st.info("No hay credenciales válidas. Autoriza Google Drive con el enlace mostrado arriba.")
+        st.info("❌ Cliente Drive no inicializado. Revisa credenciales en pestaña Backups.")
         st.stop()
-    historial_validaciones.mostrar_historial()
+    else:
+        historial_validaciones.mostrar_historial()
 
