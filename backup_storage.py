@@ -6,7 +6,6 @@ Encapsula toda la lógica de autenticación y operaciones CRUD sobre backups.
 from datetime import datetime
 import streamlit as st
 from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import Flow
 from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
@@ -14,55 +13,40 @@ from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 import io
 import os
 
-def _oauth_flow():
-    """Lanza flujo OAuth y devuelve servicio Drive si el admin autoriza."""
-    flow = Flow.from_client_config(
-        {
-            "web": {
-                "client_id": st.secrets["gdrive"]["client_id"],
-                "client_secret": st.secrets["gdrive"]["client_secret"],
-                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                "token_uri": "https://oauth2.googleapis.com/token",
-            }
-        },
-        scopes=[st.secrets["gdrive"].get("scope", "https://www.googleapis.com/auth/drive.file")],
-    )
-    flow.redirect_uri = st.secrets["gdrive"]["redirect_uri"]
-
-    auth_url, _ = flow.authorization_url(prompt="consent", access_type="offline")
-    st.markdown(f"[Haz clic aquí para autorizar Google Drive]({auth_url})")
-
-    code = st.experimental_get_query_params().get("code")
-    if code:
-        flow.fetch_token(code=code[0])
-        st.session_state.credentials = flow.credentials
-        st.success("✅ Nuevo refresh token generado")
-        st.write("Nuevo refresh_token:", flow.credentials.refresh_token)
-        st.info("⚠️ Copia este refresh_token en st.secrets[gdrive] para que quede persistente tras reinicios.")
-        return build("drive", "v3", credentials=flow.credentials)
-
-    return None
 
 def _get_service():
-    rt = st.secrets["gdrive"].get("refresh_token")
-    if not rt:
-        st.warning("⚠️ No hay refresh_token en secrets, inicia autorización.")
-        return _oauth_flow()
+    """Inicializa cliente Drive usando refresh_token guardado en secrets."""
+    g = st.secrets.get("gdrive", {})
+    client_id = g.get("client_id")
+    client_secret = g.get("client_secret")
+    refresh_token = g.get("refresh_token")
+    token_uri = g.get("token_uri", "https://oauth2.googleapis.com/token")
+    scope = g.get("scope", "https://www.googleapis.com/auth/drive.file")
+
+    # Validación mínima
+    if not all([client_id, client_secret, refresh_token, token_uri]):
+        st.error("❌ Faltan credenciales en st.secrets[gdrive]. "
+                 "Debes configurar client_id, client_secret, refresh_token y token_uri.")
+        return None
 
     try:
         creds = Credentials(
-            None,
-            refresh_token=rt,
-            client_id=st.secrets["gdrive"]["client_id"],
-            client_secret=st.secrets["gdrive"]["client_secret"],
-            token_uri="https://oauth2.googleapis.com/token",
-            scopes=[st.secrets["gdrive"].get("scope", "https://www.googleapis.com/auth/drive.file")]
+            token=None,
+            refresh_token=refresh_token,
+            client_id=client_id,
+            client_secret=client_secret,
+            token_uri=token_uri,
+            scopes=[scope],
         )
-        creds.refresh(Request())
+        creds.refresh(Request())  # fuerza refresh para validar
         return build("drive", "v3", credentials=creds)
     except RefreshError as e:
-        st.warning(f"⚠️ Refresh token inválido: {e}")
-        return _oauth_flow()
+        st.error(f"❌ Refresh token inválido o caducado: {e}")
+        return None
+    except Exception as e:
+        st.error(f"❌ Error al inicializar cliente Drive: {e}")
+        return None
+
 
 # --- Funciones públicas ---
 
@@ -72,6 +56,9 @@ def subir_backup(local_path: str, remote_name: str = None) -> str:
     Devuelve el file_id del archivo creado.
     """
     service = _get_service()
+    if service is None:
+        return ""
+
     folder_id = st.secrets["gdrive"]["folder_id"]
 
     if remote_name is None:
@@ -91,15 +78,19 @@ def subir_backup(local_path: str, remote_name: str = None) -> str:
 
     return file.get("id")
 
+
 def listar_backups(max_results: int = 10) -> list[dict]:
     """
     Lista los últimos backups en la carpeta de Drive.
     Devuelve una lista de diccionarios con id, nombre y fecha.
     """
     service = _get_service()
-    folder_id = st.secrets["gdrive"]["folder_id"]
+    if service is None:
+        return []
 
+    folder_id = st.secrets["gdrive"]["folder_id"]
     query = f"'{folder_id}' in parents and trashed=false"
+
     results = service.files().list(
         q=query,
         pageSize=max_results,
@@ -116,8 +107,10 @@ def rotar_backups(max_backups: int = 5) -> None:
     Elimina los más antiguos.
     """
     service = _get_service()
-    backups = listar_backups(max_results=100)  # obtenemos todos
+    if service is None:
+        return
 
+    backups = listar_backups(max_results=100)  # obtenemos todos
     if len(backups) > max_backups:
         for old in backups[max_backups:]:
             service.files().delete(fileId=old["id"]).execute()
@@ -128,9 +121,12 @@ def descargar_backup(file_id: str, destino: str) -> None:
     Descarga un backup desde Drive y lo guarda en destino local.
     """
     service = _get_service()
+    if service is None:
+        return
+
     request = service.files().get_media(fileId=file_id)
     fh = io.FileIO(destino, "wb")
-    downloader = MediaIoBaseDownload(fh, request)
+    downloader = MediaFileDownload(fh, request)
 
     done = False
     while not done:
