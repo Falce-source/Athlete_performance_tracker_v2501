@@ -79,6 +79,32 @@ def _sync_backup():
     except Exception as e:
         print(f"⚠️ Error al subir backup: {e}")
 
+# ─────────────────────────────────────────────
+# BACKUP AUTOMÁTICO CADA 24H
+# ─────────────────────────────────────────────
+from datetime import timedelta
+
+def backup_diario():
+    """Ejecuta un backup si han pasado ≥24h desde el último en Drive."""
+    try:
+        backups = backup_storage.listar_backups()
+        if backups:
+            ultimo = sorted(backups, key=lambda b: b["createdTime"], reverse=True)[0]
+            fecha_ultimo = datetime.fromisoformat(
+                ultimo["createdTime"].replace("Z", "+00:00")
+            )
+            if datetime.now(UTC) - fecha_ultimo >= timedelta(hours=24):
+                file_id = backup_storage.subir_backup(DB_PATH)
+                backup_storage.rotar_backups(max_backups=5)
+                print(f"📦 Backup diario ejecutado: {file_id}")
+            else:
+                print("ℹ️ Último backup <24h, no se crea uno nuevo.")
+        else:
+            file_id = backup_storage.subir_backup(DB_PATH)
+            print(f"📦 Primer backup creado: {file_id}")
+    except Exception as e:
+        print(f"⚠️ Error en backup diario: {e}")
+
 # Si se marcó que no había backups, inicializamos el esquema y creamos el primer backup vacío.
 if NEED_INIT_SCHEMA:
     try:
@@ -951,6 +977,8 @@ try:
         Base.metadata.create_all(bind=engine)
         _sync_backup()  # subimos primer backup vacío
         print("✅ Esquema creado y primer backup generado")
+        # Ejecutamos backup diario al arrancar
+        backup_diario()
 except Exception as e:
     print(f"⚠️ Error al crear esquema inicial: {e}")
 
