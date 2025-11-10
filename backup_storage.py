@@ -6,21 +6,50 @@ Encapsula toda la lógica de autenticación y operaciones CRUD sobre backups.
 from datetime import datetime
 import streamlit as st
 from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import Flow
+from google.auth.exceptions import RefreshError
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 import io
 
-# --- Inicialización de credenciales con refresh token ---
+# --- Inicialización de credenciales con fallback automático ---
 def _get_service():
-    creds = Credentials(
-        None,
-        refresh_token=st.secrets["gdrive"]["refresh_token"],
-        client_id=st.secrets["gdrive"]["client_id"],
-        client_secret=st.secrets["gdrive"]["client_secret"],
-        token_uri="https://oauth2.googleapis.com/token",
-        scopes=[st.secrets["gdrive"].get("scope", "https://www.googleapis.com/auth/drive.file")]
-    )
-    return build("drive", "v3", credentials=creds)
+    try:
+        creds = Credentials(
+            None,
+            refresh_token=st.secrets["gdrive"].get("refresh_token"),
+            client_id=st.secrets["gdrive"]["client_id"],
+            client_secret=st.secrets["gdrive"]["client_secret"],
+            token_uri="https://oauth2.googleapis.com/token",
+            scopes=[st.secrets["gdrive"].get("scope", "https://www.googleapis.com/auth/drive.file")]
+        )
+        return build("drive", "v3", credentials=creds)
+
+    except RefreshError:
+        # Lanzar flujo OAuth si el refresh token falla
+        flow = Flow.from_client_config(
+            {
+                "web": {
+                    "client_id": st.secrets["gdrive"]["client_id"],
+                    "client_secret": st.secrets["gdrive"]["client_secret"],
+                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                    "token_uri": "https://oauth2.googleapis.com/token",
+                }
+            },
+            scopes=[st.secrets["gdrive"].get("scope", "https://www.googleapis.com/auth/drive.file")],
+        )
+        flow.redirect_uri = st.secrets.get("redirect_uri", "https://<tu-app>.streamlit.app")
+
+        auth_url, _ = flow.authorization_url(prompt="consent", access_type="offline")
+        st.markdown(f"[Haz clic aquí para autorizar Google Drive]({auth_url})")
+
+        code = st.experimental_get_query_params().get("code")
+        if code:
+            flow.fetch_token(code=code[0])
+            st.session_state.credentials = flow.credentials
+            st.success("✅ Nuevo refresh token generado")
+            st.write("Refresh token:", flow.credentials.refresh_token)
+            return build("drive", "v3", credentials=flow.credentials)
 
 # --- Funciones públicas ---
 
