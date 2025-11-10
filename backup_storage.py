@@ -12,6 +12,7 @@ from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 import io
+import os
 
 def _oauth_flow():
     """Lanza flujo OAuth y devuelve servicio Drive si el admin autoriza."""
@@ -26,7 +27,7 @@ def _oauth_flow():
         },
         scopes=[st.secrets["gdrive"].get("scope", "https://www.googleapis.com/auth/drive.file")],
     )
-    flow.redirect_uri = st.secrets.get("redirect_uri", "https://<tu-app>.streamlit.app")
+    flow.redirect_uri = st.secrets.get("redirect_uri", "https://athleteperformancetrackerv2501.streamlit.app")
 
     auth_url, _ = flow.authorization_url(prompt="consent", access_type="offline")
     st.markdown(f"[Haz clic aquí para autorizar Google Drive]({auth_url})")
