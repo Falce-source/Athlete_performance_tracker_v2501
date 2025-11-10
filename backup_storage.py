@@ -27,7 +27,7 @@ def _oauth_flow():
         },
         scopes=[st.secrets["gdrive"].get("scope", "https://www.googleapis.com/auth/drive.file")],
     )
-    flow.redirect_uri = st.secrets.get("redirect_uri", "https://athleteperformancetrackerv2501.streamlit.app")
+    flow.redirect_uri = st.secrets["gdrive"]["redirect_uri"]
 
     auth_url, _ = flow.authorization_url(prompt="consent", access_type="offline")
     st.markdown(f"[Haz clic aquí para autorizar Google Drive]({auth_url})")
@@ -37,11 +37,11 @@ def _oauth_flow():
         flow.fetch_token(code=code[0])
         st.session_state.credentials = flow.credentials
         st.success("✅ Nuevo refresh token generado")
-        st.write("Refresh token:", flow.credentials.refresh_token)
+        st.write("Nuevo refresh_token:", flow.credentials.refresh_token)
+        st.info("⚠️ Copia este refresh_token en st.secrets[gdrive] para que quede persistente tras reinicios.")
         return build("drive", "v3", credentials=flow.credentials)
 
     return None
-
 
 def _get_service():
     rt = st.secrets["gdrive"].get("refresh_token")

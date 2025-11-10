@@ -143,6 +143,22 @@ elif opcion == "💾 Backups":
     else:
         st.success("✅ Cliente Drive activo. Puedes listar y subir backups.")
 
+elif opcion == "🔍 Auditoría":
+    st.title("🔍 Auditoría")
+    service = backup_storage._get_service()
+    if service is None:
+        st.info("No hay credenciales válidas. Autoriza Google Drive con el enlace mostrado arriba.")
+        st.stop()
+    auditoria.mostrar_auditoria()
+
+elif opcion == "📈 Historial de Validaciones":
+    st.title("📈 Historial de Validaciones")
+    service = backup_storage._get_service()
+    if service is None:
+        st.info("No hay credenciales válidas. Autoriza Google Drive con el enlace mostrado arriba.")
+        st.stop()
+    historial_validaciones.mostrar_historial()
+
     # Crear / Listar / Rotar
     st.subheader("📤 Crear / Listar / Rotar")
     if st.button("📤 Crear backup de base.db"):
@@ -175,6 +191,10 @@ elif opcion == "💾 Backups":
     # Restauración manual
     st.subheader("📥 Restaurar backup")
     try:
+        service = backup_storage._get_service()
+        if service is None:
+            st.info("No hay credenciales válidas. Autoriza Google Drive con el enlace mostrado arriba.")
+            st.stop()
         backups = backup_storage.listar_backups()
         if backups:
             opciones = {f"{b['name']} ({b['createdTime']})": b['id'] for b in backups}
@@ -202,6 +222,10 @@ elif opcion == "💾 Backups":
     st.subheader("✅ Validación completa de backups")
     if st.button("🚀 Ejecutar validación CRUD"):
         try:
+            service = backup_storage._get_service()
+            if service is None:
+                st.info("No hay credenciales válidas. Autoriza Google Drive con el enlace mostrado arriba.")
+                st.stop()
             report = []
             if not os.path.exists("base.db"):
                 st.error("No se encontró base.db en el directorio principal")
@@ -232,6 +256,10 @@ elif opcion == "💾 Backups":
     # Dashboard visual
     st.subheader("📊 Dashboard de Backups en Drive")
     try:
+        service = backup_storage._get_service()
+        if service is None:
+            st.info("No hay credenciales válidas. Autoriza Google Drive con el enlace mostrado arriba.")
+            st.stop()
         backups = backup_storage.listar_backups(max_results=20)
         if backups:
             import pandas as pd
@@ -273,7 +301,6 @@ elif opcion == "💾 Backups":
                 confirmar = st.checkbox("Confirmar eliminación", key="confirm_delete")
                 if st.button("🗑️ Eliminar seleccionado", key="delete_btn"):
                     if confirmar:
-                        service = backup_storage._get_service()
                         service.files().delete(fileId=file_id).execute()
                         st.warning(f"Backup eliminado: {seleccion}")
                     else:
