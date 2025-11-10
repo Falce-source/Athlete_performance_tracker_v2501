@@ -40,27 +40,28 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
     # Formulario para crear usuario (solo admin)
     # ───────────────────────────────
     if rol_actual == "admin":
-        # 🔑 Selectbox de asociación fuera del form → valor disponible en el primer intento
-        perfil_seleccionado_id = None
-        perfiles_sin_usuario = [a for a in sql.obtener_atletas() if not getattr(a, "usuario_id", None)]
-        if perfiles_sin_usuario:
-            opciones_perfil = {
-                f"{a.nombre} {a.apellidos or ''} (ID {a.id_atleta})": a.id_atleta
-                for a in perfiles_sin_usuario
-            }
-            seleccion_perfil = st.selectbox(
-                "Asociar a perfil atleta existente (opcional)",
-                ["— Ninguno —"] + list(opciones_perfil.keys())
-            )
-            if seleccion_perfil and seleccion_perfil != "— Ninguno —":
-                perfil_seleccionado_id = opciones_perfil.get(seleccion_perfil)
-
         with st.form("form_crear_usuario", clear_on_submit=True):
             st.subheader("➕ Crear nuevo usuario")
             nombre = st.text_input("Nombre", "")
             email = st.text_input("Email", "")
             rol = st.selectbox("Rol", ["admin", "entrenadora", "atleta"])
             password = st.text_input("Contraseña inicial", type="password")
+
+            perfil_seleccionado_id = None
+            if rol == "atleta":
+                perfiles_sin_usuario = [a for a in sql.obtener_atletas() if not getattr(a, "usuario_id", None)]
+                if perfiles_sin_usuario:
+                    opciones_perfil = {
+                        f"{a.nombre} {a.apellidos or ''} (ID {a.id_atleta})": a.id_atleta
+                        for a in perfiles_sin_usuario
+                    }
+                    seleccion_perfil = st.selectbox(
+                        "Asociar a perfil atleta existente (opcional)",
+                        ["— Ninguno —"] + list(opciones_perfil.keys())
+                    )
+                    if seleccion_perfil and seleccion_perfil != "— Ninguno —":
+                        perfil_seleccionado_id = opciones_perfil.get(seleccion_perfil)
+
             submitted = st.form_submit_button("Guardar usuario")
 
             if submitted:
@@ -128,7 +129,7 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
         "Email": u.email,
         "Rol": u.rol,
         "Creado en": u.creado_en.strftime("%Y-%m-%d %H:%M") if isinstance(u.creado_en, datetime) else str(u.creado_en),
-        # 🔑 Si es atleta, mostramos entrenadora del perfil asociado
+        # 🔑 Si es atleta, mostramos entrenadora del perfil asociado con blindaje
         "Entrenadora asignada": (
             sql.obtener_atleta_por_id(u.perfil_atleta_id).usuario.nombre
             if u.rol == "atleta"
@@ -187,6 +188,22 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
 
                 # Campo opcional para resetear contraseña
                 nueva_password = st.text_input("Nueva contraseña (dejar vacío si no quieres cambiarla)", type="password")
+                # 🔗 Asociación opcional en edición si es atleta
+                perfil_edicion_id = None
+                if nuevo_rol == "atleta":
+                    perfiles_sin_usuario = [a for a in sql.obtener_atletas() if not getattr(a, "usuario_id", None)]
+                    if perfiles_sin_usuario:
+                        opciones_perfil = {
+                            f"{a.nombre} {a.apellidos or ''} (ID {a.id_atleta})": a.id_atleta
+                            for a in perfiles_sin_usuario
+                        }
+                        seleccion_edicion = st.selectbox(
+                            "Asociar a perfil atleta existente (opcional en edición)",
+                            ["— Ninguno —"] + list(opciones_perfil.keys())
+                        )
+                        if seleccion_edicion and seleccion_edicion != "— Ninguno —":
+                            perfil_edicion_id = opciones_perfil.get(seleccion_edicion)
+
                 actualizar = st.form_submit_button("💾 Guardar cambios")
 
                 if actualizar:
@@ -209,6 +226,15 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
                                 rol=nuevo_rol
                             )
                             st.success(f"✅ Usuario '{nuevo_nombre}' actualizado correctamente. 🔄 Recarga la página para ver los cambios.")
+
+                        # 🔗 Asociación en edición
+                        if nuevo_rol == "atleta" and perfil_edicion_id:
+                            try:
+                                sql.actualizar_usuario(id_usuario=usuario.id_usuario, perfil_atleta_id=perfil_edicion_id)
+                                sql.actualizar_atleta(perfil_edicion_id, usuario_id=usuario.id_usuario)
+                                st.success(f"🔗 Usuario atleta asociado al perfil ID {perfil_edicion_id} en edición.")
+                            except Exception as e:
+                                st.warning(f"No se pudo asociar al perfil en edición: {e}")
                     except ValueError as e:
                         st.error(str(e))
 
