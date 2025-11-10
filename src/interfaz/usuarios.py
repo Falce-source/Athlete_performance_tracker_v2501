@@ -52,9 +52,12 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
             if rol == "atleta":
                 perfiles_sin_usuario = [a for a in sql.obtener_atletas() if not getattr(a, "usuario_id", None)]
                 if perfiles_sin_usuario:
-                    opciones_perfil = {f"{a.nombre} {a.apellidos or ''} (ID {a.id_atleta})": a.id_atleta for a in perfiles_sin_usuario}
+                    opciones_perfil = {
+                        f"{a.nombre} {a.apellidos or ''} (ID {a.id_atleta})": a.id_atleta
+                        for a in perfiles_sin_usuario
+                    }
                     seleccion_perfil = st.selectbox(
-                        "Asociar directamente a perfil atleta existente (opcional)",
+                        "Asociar a perfil atleta existente (opcional)",
                         ["— Ninguno —"] + list(opciones_perfil.keys())
                     )
                     if seleccion_perfil and seleccion_perfil != "— Ninguno —":
@@ -73,21 +76,36 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
                     if rol == "atleta":
                         if perfil_seleccionado_id:
                             try:
-                                sql.actualizar_usuario(id_usuario=usuario.id_usuario, perfil_atleta_id=perfil_seleccionado_id)
-                                sql.actualizar_atleta(perfil_seleccionado_id, usuario_id=usuario.id_usuario)
+                                sql.actualizar_usuario(
+                                    id_usuario=usuario.id_usuario,
+                                    perfil_atleta_id=perfil_seleccionado_id
+                                )
+                                sql.actualizar_atleta(
+                                    perfil_seleccionado_id,
+                                    usuario_id=usuario.id_usuario
+                                )
                                 st.success(f"🔗 Usuario atleta asociado al perfil ID {perfil_seleccionado_id}.")
                             except Exception as e:
                                 st.warning(f"No se pudo asociar al perfil seleccionado: {e}")
                         else:
-                            # Intento de autoasociación inmediata por nombre+apellidos único
-                            candidatos = [a for a in sql.obtener_atletas()
-                                          if (a.nombre or "").strip().lower() == nombre.strip().lower()
-                                          and (a.apellidos or "").strip().lower() == "" and not getattr(a, "usuario_id", None)]
+                            # Intento de autoasociación inmediata por nombre+apellidos
+                            candidatos = [
+                                a for a in sql.obtener_atletas()
+                                if (a.nombre or "").strip().lower() == nombre.strip().lower()
+                                and (a.apellidos or "").strip().lower() == (usuario.nombre or "").strip().lower()
+                                and not getattr(a, "usuario_id", None)
+                            ]
                             if len(candidatos) == 1:
                                 a = candidatos[0]
                                 try:
-                                    sql.actualizar_usuario(id_usuario=usuario.id_usuario, perfil_atleta_id=a.id_atleta)
-                                    sql.actualizar_atleta(a.id_atleta, usuario_id=usuario.id_usuario)
+                                    sql.actualizar_usuario(
+                                        id_usuario=usuario.id_usuario,
+                                        perfil_atleta_id=a.id_atleta
+                                    )
+                                    sql.actualizar_atleta(
+                                        a.id_atleta,
+                                        usuario_id=usuario.id_usuario
+                                    )
                                     st.success(f"🔗 Usuario atleta autoasociado al perfil '{a.nombre}' (ID {a.id_atleta}).")
                                 except Exception as e:
                                     st.warning(f"No se pudo completar la autoasociación: {e}")
@@ -112,10 +130,10 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
         "Email": u.email,
         "Rol": u.rol,
         "Creado en": u.creado_en.strftime("%Y-%m-%d %H:%M") if isinstance(u.creado_en, datetime) else str(u.creado_en),
-        # 🔑 Si es atleta, buscamos su perfil y mostramos entrenadora asignada
+        # 🔑 Si es atleta, buscamos su perfil asociado y mostramos entrenadora asignada
         "Entrenadora asignada": (
-            next((a.usuario.nombre for a in sql.obtener_atletas() if getattr(a, "atleta_usuario_id", None) == u.id_usuario and a.usuario), "—")
-            if u.rol == "atleta" else "—"
+            sql.obtener_atleta_por_id(u.perfil_atleta_id).usuario.nombre
+            if u.rol == "atleta" and getattr(u, "perfil_atleta_id", None) else "—"
         )
     } for u in usuarios])
 
@@ -144,7 +162,8 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
                 - **Email:** {usuario.email}
                 - **Rol:** {usuario.rol}
                 - **Creado en:** {usuario.creado_en}
-                {"- **Entrenadora asignada:** " + next((a.usuario.nombre for a in sql.obtener_atletas() if getattr(a, "propietario_id", None) == usuario.id_usuario and a.usuario), "—") if usuario.rol == "atleta" else ""}
+                {"- **Entrenadora asignada:** " + sql.obtener_atleta_por_id(usuario.perfil_atleta_id).usuario.nombre
+                 if usuario.rol == "atleta" and getattr(usuario, "perfil_atleta_id", None) else ""}
                 """)
     else:
         st.info("No hay usuarios disponibles para seleccionar.")
