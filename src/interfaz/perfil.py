@@ -53,8 +53,8 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
     # Caso especial: atleta puede crear solo su propio perfil si aún no existe
     if rol_actual == "atleta":
         # 🔒 Blindaje: obtener directamente el atleta vinculado al usuario
-        id_atleta_vinculado = sql.obtener_id_atleta_por_usuario(usuario_id)
-        atleta_obj = sql.obtener_atleta_por_id(id_atleta_vinculado) if id_atleta_vinculado else None
+        id_atleta_forzado = sql.obtener_id_atleta_por_usuario(usuario_id)
+        atleta_obj = sql.obtener_atleta_por_id(id_atleta_forzado) if id_atleta_forzado else None
 
         if not atleta_obj:   # 🔑 solo si no tiene ninguno
             puede_crear = True
@@ -121,6 +121,7 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
                         # 🔒 Blindaje: el atleta solo puede crear su propio perfil vinculado a su usuario
                         atleta_usuario_id = usuario_id
                         propietario_id = usuario_id
+                        id_atleta_forzado = sql.obtener_id_atleta_por_usuario(usuario_id)
                     else:
                         atleta_usuario_id = None
                         propietario_id = None
@@ -208,7 +209,7 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
         # 🔒 El atleta no puede elegir, se fuerza a su propio perfil
         if atletas:
             atleta = atletas[0]
-            id_atleta = atleta.id_atleta
+            id_atleta_forzado = atleta.id_atleta
         else:
             st.warning("⛔ No tienes perfil de atleta creado todavía")
             return
@@ -216,14 +217,14 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
         opciones = {f"{a.nombre} {a.apellidos or ''} (ID {a.id_atleta})": a.id_atleta for a in atletas}
         seleccion = st.selectbox("Selecciona un atleta para ver detalles", list(opciones.keys()))
         if seleccion:
-            id_atleta = opciones[seleccion]
-            atleta = sql.obtener_atleta_por_id(id_atleta)
+            id_atleta_forzado = opciones[seleccion]
+            atleta = sql.obtener_atleta_por_id(id_atleta_forzado)
 
         # Construir contexto de permisos para este atleta
         ctx = Contexto(
             rol_actual=rol_actual,
             usuario_id=usuario_id or 0,
-            atleta_id=id_atleta,
+            atleta_id=id_atleta_forzado,
             propietario_id=atleta.id_usuario if hasattr(atleta, "id_usuario") else None
         )
 
@@ -249,19 +250,26 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
         # ───────────────────────────────
         # 🔒 Blindaje: si es atleta, forzar su propio id_atleta en el contexto
         if rol_actual == "atleta":
-            id_atleta_vinculado = sql.obtener_id_atleta_por_usuario(usuario_id)
-            id_atleta = id_atleta_vinculado
-            atleta = sql.obtener_atleta_por_id(id_atleta) if id_atleta else None
+            id_atleta_forzado = sql.obtener_id_atleta_por_usuario(usuario_id)
+            atleta = sql.obtener_atleta_por_id(id_atleta_forzado) if id_atleta_forzado else None
             ctx = Contexto(
                 rol_actual=rol_actual,
                 usuario_id=usuario_id or 0,
-                atleta_id=id_atleta,
+                atleta_id=id_atleta_forzado,
+                propietario_id=atleta.id_usuario if atleta else None
+            )
+        else:
+            # Para admin/entrenadora se mantiene el id_atleta seleccionado previamente
+            ctx = Contexto(
+                rol_actual=rol_actual,
+                usuario_id=usuario_id or 0,
+                atleta_id=id_atleta_forzado,
                 propietario_id=atleta.id_usuario if atleta else None
             )
 
         if puede_editar_perfil_atleta(ctx):
             with st.expander("✏️ Editar atleta"):
-                with st.form(f"form_editar_{id_atleta}"):
+                with st.form(f"form_editar_{id_atleta_forzado}"):
                     nuevo_nombre = st.text_input("Nombre", atleta.nombre)
                     nuevos_apellidos = st.text_input("Apellidos", atleta.apellidos or "")
                     nueva_edad = st.number_input("Edad", min_value=0, max_value=120, step=1, value=atleta.edad or 0)
@@ -304,7 +312,7 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
         # 🔒 Solo admin/entrenadora pueden eliminar atletas
         if rol_actual in ["admin", "entrenadora"] and puede_editar_perfil_atleta(ctx):
             if st.button(f"🗑️ Eliminar atleta '{atleta.nombre}'", type="primary"):
-                sql.borrar_atleta(atleta.id_atleta)
+                sql.borrar_atleta(id_atleta_forzado)
                 st.warning(f"Atleta '{atleta.nombre}' eliminado correctamente. 🔄 Recarga la página para actualizar la lista.")
         else:
             st.caption("⛔ No tienes permisos para eliminar este atleta")
