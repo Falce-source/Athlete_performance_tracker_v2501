@@ -143,6 +143,144 @@ elif opcion == "💾 Backups":
     else:
         st.success("✅ Cliente Drive activo. Puedes listar y subir backups.")
 
+        # Crear / Listar / Rotar
+        st.subheader("📤 Crear / Listar / Rotar")
+        if st.button("📤 Crear backup de base.db"):
+            try:
+                if not os.path.exists("base.db"):
+                    st.error("No se encontró base.db en el directorio principal")
+                else:
+                    file_id = backup_storage.subir_backup("base.db")
+                    st.success(f"Backup de base.db subido correctamente con ID: {file_id}")
+            except Exception as e:
+                st.error(f"Error al subir backup: {e}")
+
+        if st.button("📋 Listar backups"):
+            try:
+                backups = backup_storage.listar_backups()
+                if not backups:
+                    st.info("No hay backups en la carpeta.")
+                for b in backups:
+                    st.write(f"{b['name']} ({b['createdTime']}) - {b.get('size','?')} bytes")
+            except Exception as e:
+                st.error(f"Error al listar backups: {e}")
+
+        if st.button("♻️ Rotar backups"):
+            try:
+                backup_storage.rotar_backups(max_backups=5)
+                st.success("Rotación completada")
+            except Exception as e:
+                st.error(f"Error al rotar backups: {e}")
+
+        # Restauración manual
+        st.subheader("📥 Restaurar backup")
+        try:
+            backups = backup_storage.listar_backups()
+            if backups:
+                opciones = {f"{b['name']} ({b['createdTime']})": b['id'] for b in backups}
+                seleccion = st.selectbox("Selecciona un backup para restaurar:", list(opciones.keys()))
+                if st.button("📥 Descargar y restaurar"):
+                    file_id = opciones[seleccion]
+                    if os.path.exists("base.db"):
+                        if os.path.exists("base.db.bak"):
+                            os.remove("base.db.bak")
+                        os.rename("base.db", "base.db.bak")
+                    destino = "base.db"
+                    try:
+                        backup_storage.descargar_backup(file_id, destino)
+                        st.success(f"Backup restaurado en {destino} (copia previa en base.db.bak)")
+                    except Exception as e:
+                        if os.path.exists("base.db.bak"):
+                            os.rename("base.db.bak", "base.db")
+                        st.error(f"Error en restauración, se recuperó la copia local: {e}")
+            else:
+                st.info("No hay backups disponibles para restaurar.")
+        except Exception as e:
+            st.error(f"Error al cargar lista de backups: {e}")
+
+        # Validación CRUD
+        st.subheader("✅ Validación completa de backups")
+        if st.button("🚀 Ejecutar validación CRUD"):
+            try:
+                report = []
+                if not os.path.exists("base.db"):
+                    st.error("No se encontró base.db en el directorio principal")
+                    st.stop()
+                file_id = backup_storage.subir_backup("base.db")
+                report.append(f"📤 Subida OK → ID: {file_id}")
+                backups = backup_storage.listar_backups()
+                if backups:
+                    report.append(f"📋 Listado OK → {len(backups)} backups encontrados")
+                else:
+                    report.append("❌ Listado vacío")
+                backup_storage.rotar_backups(max_backups=5)
+                report.append("♻️ Rotación OK (máx. 5 backups)")
+                if backups:
+                    file_id = backups[0]["id"]
+                    if os.path.exists("base.db"):
+                        if os.path.exists("base.db.bak"):
+                            os.remove("base.db.bak")
+                        os.rename("base.db", "base.db.bak")
+                    backup_storage.descargar_backup(file_id, "base.db")
+                    report.append(f"📥 Restauración OK → {backups[0]['name']} descargado")
+                st.success("Validación completada")
+                for line in report:
+                    st.write(line)
+            except Exception as e:
+                st.error(f"Error en validación CRUD: {e}")
+
+        # Dashboard visual
+        st.subheader("📊 Dashboard de Backups en Drive")
+        try:
+            backups = backup_storage.listar_backups(max_results=20)
+            if backups:
+                import pandas as pd
+                def format_size(size):
+                    if not size:
+                        return "-"
+                    size = int(size)
+                    for unit in ["B","KB","MB","GB"]:
+                        if size < 1024:
+                            return f"{size:.1f} {unit}"
+                        size /= 1024
+                df = pd.DataFrame(backups)
+                df = df.rename(columns={
+                    "name": "Nombre",
+                    "createdTime": "Fecha creación",
+                    "size": "Tamaño",
+                    "id": "ID"
+                })
+                df["Tamaño"] = df["Tamaño"].apply(format_size)
+                st.dataframe(df[["Nombre", "Fecha creación", "Tamaño"]])
+                opciones = {f"{b['name']} ({b['createdTime']})": b['id'] for b in backups}
+                seleccion = st.selectbox("Selecciona un backup para acción:", list(opciones.keys()))
+                file_id = opciones[seleccion]
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("📥 Restaurar seleccionado", key="restore_btn"):
+                        try:
+                            if os.path.exists("base.db"):
+                                if os.path.exists("base.db.bak"):
+                                    os.remove("base.db.bak")
+                                os.rename("base.db", "base.db.bak")
+                            backup_storage.descargar_backup(file_id, "base.db")
+                            st.success("Backup restaurado en base.db (copia previa en base.db.bak)")
+                        except Exception as e:
+                            if os.path.exists("base.db.bak"):
+                                os.rename("base.db.bak", "base.db")
+                            st.error(f"Error en restauración, se recuperó la copia local: {e}")
+                with col2:
+                    confirmar = st.checkbox("Confirmar eliminación", key="confirm_delete")
+                    if st.button("🗑️ Eliminar seleccionado", key="delete_btn"):
+                        if confirmar:
+                            service.files().delete(fileId=file_id).execute()
+                            st.warning(f"Backup eliminado: {seleccion}")
+                        else:
+                            st.info("Marca la casilla de confirmación antes de eliminar.")
+            else:
+                st.info("No hay backups en la carpeta.")
+        except Exception as e:
+            st.error(f"Error al cargar dashboard de backups: {e}")
 elif opcion == "🔍 Auditoría":
     st.title("🔍 Auditoría")
     service = backup_storage._get_service()
