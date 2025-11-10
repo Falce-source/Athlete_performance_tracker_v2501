@@ -56,15 +56,17 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
     if rol_actual == "admin":
         usuarios = sql.obtener_usuarios()
         entrenadoras = [u for u in usuarios if u.rol == "entrenadora"]
-        opciones_entrenadora = {f"{e.nombre} (ID {e.id_usuario})": e.id_usuario for e in entrenadoras}
-        seleccion_entrenadora = st.selectbox("Filtrar atletas por entrenadora", list(opciones_entrenadora.keys()))
-        id_entrenadora = opciones_entrenadora[seleccion_entrenadora]
-    else:
+        if not entrenadoras:
+            st.warning("⚠️ No hay entrenadoras registradas, no se puede filtrar atletas.")
+            atletas, id_entrenadora = [], None
+        else:
+            opciones_entrenadora = {f"{e.nombre} (ID {e.id_usuario})": e.id_usuario for e in entrenadoras}
+            seleccion_entrenadora = st.selectbox("Filtrar atletas por entrenadora", list(opciones_entrenadora.keys()))
+            id_entrenadora = opciones_entrenadora.get(seleccion_entrenadora)
+            atletas = sql.obtener_atletas_por_usuario(id_entrenadora) if id_entrenadora else []
+    elif rol_actual == "entrenadora":
         id_entrenadora = usuario_id
-    if rol_actual == "entrenadora":
         atletas = sql.obtener_atletas_por_usuario(usuario_id)
-    elif rol_actual == "admin":
-        atletas = sql.obtener_atletas_por_usuario(id_entrenadora)  # 🔍 admin filtra por entrenadora
     elif rol_actual == "atleta":
         # 🔒 Blindaje: el atleta solo puede ver su propio perfil
         id_atleta_vinculado = sql.obtener_id_atleta_por_usuario(usuario_id)
@@ -324,7 +326,7 @@ def mostrar_calendario(rol_actual="admin", usuario_id=None):
     # Vista calendario interactivo (FullCalendar)
     if vista == "Calendario":
         from src.interfaz.componentes.calendario_interactivo import mostrar_calendario_interactivo
-        mostrar_calendario_interactivo(eventos_fc, id_atleta, vista=vista)
+        mostrar_calendario_interactivo(eventos_fc, id_atleta_forzado, vista=vista)
 
     # ───────────────────────────────
     # Sesiones del día (planificado vs completado)

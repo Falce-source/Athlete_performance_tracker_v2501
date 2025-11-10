@@ -238,19 +238,22 @@ def mostrar_calendario_interactivo(fc_events, id_atleta, vista="Calendario"):
     cal = calendar(
         events=out_events,
         options=calendar_options,
-        key=f"calendar_{id_atleta}_{vista}"
+        key=f"calendar_{id_atleta if id_atleta is not None else 'none'}_{vista}"
     )
 
     # Modal de registro al hacer clic en un día vacío
     if cal and "dateClick" in cal:
         fecha_iso = cal["dateClick"].get("dateStr") or cal["dateClick"].get("date")
-        if isinstance(fecha_iso, str):
-            if "T" in fecha_iso:
-                fecha_iso = fecha_iso.split("T")[0]
-            fecha_local = datetime.date.fromisoformat(fecha_iso)
-        elif isinstance(fecha_iso, datetime.date):
-            fecha_local = fecha_iso
-        else:
+        try:
+            if isinstance(fecha_iso, str):
+                if "T" in fecha_iso:
+                    fecha_iso = fecha_iso.split("T")[0]
+                fecha_local = datetime.date.fromisoformat(fecha_iso)
+            elif isinstance(fecha_iso, datetime.date):
+                fecha_local = fecha_iso
+            else:
+                fecha_local = datetime.date.today()
+        except Exception:
             fecha_local = datetime.date.today()
 
         # Verificamos si ya hay un estado_diario en esa fecha
