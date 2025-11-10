@@ -78,27 +78,15 @@ def _get_service():
     if not token:
         return None
     try:
-        return build("drive", "v3", developerKey=None, credentials=None, requestBuilder=None, cache_discovery=False,
-                    )  # usamos http headers manualmente en cada llamada
-    except Exception as e:
-        # Fallback al cliente estándar con discovery (crearemos recurso vía googleapiclient build con cred adaptada)
-        pass
-    # Construcción con credenciales via google-auth-transport-requests (manual)
-    try:
-        from google.auth.credentials import Credentials as BaseCreds
-        class BearerCreds(BaseCreds):
-            def __init__(self, token):
-                super().__init__()
-                self.token = token
-            def refresh(self, request):  # no hacer nada; gestionamos refresh fuera
-                return
-            @property
-            def expired(self):
-                return False
-            @property
-            def valid(self):
-                return True if self.token else False
-        creds = BearerCreds(token)
+        from google.oauth2.credentials import Credentials
+        creds = Credentials(
+            token=token,
+            refresh_token=cfg["refresh_token"],
+            token_uri=cfg["token_uri"],
+            client_id=cfg["client_id"],
+            client_secret=cfg["client_secret"],
+            scopes=[cfg["scope"]],
+        )
         return build("drive", "v3", credentials=creds, cache_discovery=False)
     except Exception as e:
         st.error(f"❌ Error al inicializar cliente Drive (OAuth): {e}")
