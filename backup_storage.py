@@ -8,6 +8,7 @@ import streamlit as st
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 from google.auth.exceptions import RefreshError
+from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 import io
@@ -23,9 +24,13 @@ def _get_service():
             token_uri="https://oauth2.googleapis.com/token",
             scopes=[st.secrets["gdrive"].get("scope", "https://www.googleapis.com/auth/drive.file")]
         )
+        # Forzar refresh aquí para capturar el error en este bloque
+        creds.refresh(Request())
         return build("drive", "v3", credentials=creds)
 
-    except RefreshError:
+    except Exception as e:
+        st.warning(f"⚠️ No se pudo refrescar credenciales: {e}")
+
         # Lanzar flujo OAuth si el refresh token falla
         flow = Flow.from_client_config(
             {
