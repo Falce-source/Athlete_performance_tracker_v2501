@@ -57,10 +57,10 @@ def get_secret(section, key, default=None):
         return st.secrets[section][key]
     return os.getenv(key, default)
 
-# Service Account (Drive) — sin OAuth de usuario
-# Nota: la clave JSON completa debe estar en st.secrets["gdrive_sa"]["json"]
-FOLDER_ID = st.secrets["gdrive_sa"]["folder_id"]
-SCOPE = st.secrets["gdrive_sa"].get("scope", "https://www.googleapis.com/auth/drive.file")
+# Configuración de Google Drive (OAuth con refresh token)
+# Se obtiene de st.secrets["google_drive"], definido en Streamlit Cloud
+FOLDER_ID = st.secrets["google_drive"].get("folder_id", "")
+SCOPE = st.secrets["google_drive"].get("scope", "https://www.googleapis.com/auth/drive.file")
 
 # ─────────────────────────────────────────────
 # NAVEGACIÓN LATERAL
