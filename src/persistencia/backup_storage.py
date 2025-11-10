@@ -105,6 +105,10 @@ def subir_backup(local_path: str, remote_name: str = None) -> str:
 
     cfg = _load_oauth_cfg()
     folder_id = cfg.get("folder_id", "")
+    if not folder_id:
+        st.error("❌ No se ha configurado folder_id en secrets[google_drive].")
+        return []
+    query = f"'{folder_id}' in parents and trashed=false"
     if remote_name is None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         base = os.path.basename(local_path)
