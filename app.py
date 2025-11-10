@@ -57,21 +57,11 @@ def get_secret(section, key, default=None):
         return st.secrets[section][key]
     return os.getenv(key, default)
 
-CLIENT_ID = get_secret("gdrive", "client_id")
-CLIENT_SECRET = get_secret("gdrive", "client_secret")
-REFRESH_TOKEN = get_secret("gdrive", "refresh_token")
-FOLDER_ID = get_secret("gdrive", "folder_id")
-SCOPE = get_secret("gdrive", "scope", "https://www.googleapis.com/auth/drive.file")
-
-# Validación temprana de credenciales
-missing = [k for k, v in {
-    "client_id": CLIENT_ID,
-    "client_secret": CLIENT_SECRET,
-    "refresh_token": REFRESH_TOKEN,
-    "folder_id": FOLDER_ID
-}.items() if not v]
-if missing:
-    raise RuntimeError(f"Faltan credenciales en st.secrets[gdrive]: {', '.join(missing)}")
+CLIENT_ID = st.secrets["gdrive"]["client_id"]
+CLIENT_SECRET = st.secrets["gdrive"]["client_secret"]
+REFRESH_TOKEN = st.secrets["gdrive"]["refresh_token"]
+FOLDER_ID = st.secrets["gdrive"]["folder_id"]
+SCOPE = st.secrets["gdrive"].get("scope", "https://www.googleapis.com/auth/drive.file")
 
 # ─────────────────────────────────────────────
 # NAVEGACIÓN LATERAL
