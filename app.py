@@ -122,6 +122,12 @@ elif opcion == "📅 Calendario":
     calendario.mostrar_calendario(rol_actual=rol_actual, usuario_id=usuario_id)
 
 elif opcion == "👥 Usuarios":
+    st.title("👥 Gestión de Usuarios")
+    # Validación explícita de credenciales Drive
+    service = backup_storage._get_service()
+    if service is None:
+        st.info("No hay credenciales válidas. Autoriza Google Drive con el enlace mostrado arriba.")
+        st.stop()
     # 🔑 Pasamos rol_actual y usuario_id reales para condicionar permisos
     usuarios.mostrar_usuarios(rol_actual=rol_actual, usuario_id=usuario_id)
 
@@ -278,8 +284,18 @@ elif opcion == "💾 Backups":
         st.error(f"Error al cargar dashboard de backups: {e}")
     
 elif opcion == "🔍 Auditoría":
+    st.title("🔍 Auditoría")
+    service = backup_storage._get_service()
+    if service is None:
+        st.info("No hay credenciales válidas. Autoriza Google Drive con el enlace mostrado arriba.")
+        st.stop()
     auditoria.mostrar_auditoria()
 
 elif opcion == "📈 Historial de Validaciones":
+    st.title("📈 Historial de Validaciones")
+    service = backup_storage._get_service()
+    if service is None:
+        st.info("No hay credenciales válidas. Autoriza Google Drive con el enlace mostrado arriba.")
+        st.stop()
     historial_validaciones.mostrar_historial()
 
