@@ -37,6 +37,10 @@ def _get_service():
             token_uri=token_uri.strip(),
             scopes=[scope],
         )
+
+        # Depuración: ver cómo quedó el objeto
+        st.code(creds.to_json())
+
         creds.refresh(Request())  # fuerza refresh para validar
         return build("drive", "v3", credentials=creds)
     except RefreshError as e:
