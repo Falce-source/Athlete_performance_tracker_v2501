@@ -151,11 +151,11 @@ elif opcion == "💾 Backups":
         st.subheader("📤 Crear / Listar / Rotar")
         if st.button("📤 Crear backup de base.db"):
             try:
-                if not os.path.exists("base.db"):
-                    st.error("No se encontró base.db en el directorio principal")
+                if not os.path.exists(sql.DB_PATH):
+                    st.error(f"No se encontró base en {sql.DB_PATH}")
                 else:
-                    file_id = backup_storage.subir_backup("base.db")
-                    st.success(f"Backup de base.db subido correctamente con ID: {file_id}")
+                    file_id = backup_storage.subir_backup(sql.DB_PATH)
+                    st.success(f"Backup subido correctamente con ID: {file_id}")
             except Exception as e:
                 st.error(f"Error al subir backup: {e}")
 
@@ -185,17 +185,17 @@ elif opcion == "💾 Backups":
                 seleccion = st.selectbox("Selecciona un backup para restaurar:", list(opciones.keys()))
                 if st.button("📥 Descargar y restaurar"):
                     file_id = opciones[seleccion]
-                    if os.path.exists("base.db"):
-                        if os.path.exists("base.db.bak"):
-                            os.remove("base.db.bak")
-                        os.rename("base.db", "base.db.bak")
-                    destino = "base.db"
+                    if os.path.exists(sql.DB_PATH):
+                        if os.path.exists(sql.DB_PATH + ".bak"):
+                            os.remove(sql.DB_PATH + ".bak")
+                        os.rename(sql.DB_PATH, sql.DB_PATH + ".bak")
+                    destino = sql.DB_PATH
                     try:
                         backup_storage.descargar_backup(file_id, destino)
-                        st.success(f"Backup restaurado en {destino} (copia previa en base.db.bak)")
+                        st.success(f"Backup restaurado en {destino} (copia previa en {sql.DB_PATH}.bak)")
                     except Exception as e:
-                        if os.path.exists("base.db.bak"):
-                            os.rename("base.db.bak", "base.db")
+                        if os.path.exists(sql.DB_PATH + ".bak"):
+                            os.rename(sql.DB_PATH + ".bak", sql.DB_PATH)
                         st.error(f"Error en restauración, se recuperó la copia local: {e}")
             else:
                 st.info("No hay backups disponibles para restaurar.")
@@ -207,10 +207,10 @@ elif opcion == "💾 Backups":
         if st.button("🚀 Ejecutar validación CRUD"):
             try:
                 report = []
-                if not os.path.exists("base.db"):
-                    st.error("No se encontró base.db en el directorio principal")
+                if not os.path.exists(sql.DB_PATH):
+                    st.error(f"No se encontró base en {sql.DB_PATH}")
                     st.stop()
-                file_id = backup_storage.subir_backup("base.db")
+                file_id = backup_storage.subir_backup(sql.DB_PATH)
                 report.append(f"📤 Subida OK → ID: {file_id}")
                 backups = backup_storage.listar_backups()
                 if backups:
@@ -221,12 +221,12 @@ elif opcion == "💾 Backups":
                 report.append("♻️ Rotación OK (máx. 5 backups)")
                 if backups:
                     file_id = backups[0]["id"]
-                    if os.path.exists("base.db"):
-                        if os.path.exists("base.db.bak"):
-                            os.remove("base.db.bak")
-                        os.rename("base.db", "base.db.bak")
-                    backup_storage.descargar_backup(file_id, "base.db")
-                    report.append(f"📥 Restauración OK → {backups[0]['name']} descargado")
+                if os.path.exists(sql.DB_PATH):
+                    if os.path.exists(sql.DB_PATH + ".bak"):
+                        os.remove(sql.DB_PATH + ".bak")
+                    os.rename(sql.DB_PATH, sql.DB_PATH + ".bak")
+                backup_storage.descargar_backup(file_id, sql.DB_PATH)
+                report.append(f"📥 Restauración OK → {backups[0]['name']} descargado en {sql.DB_PATH}")
                 st.success("Validación completada")
                 for line in report:
                     st.write(line)
@@ -268,15 +268,15 @@ elif opcion == "💾 Backups":
                 with col1:
                     if st.button("📥 Restaurar seleccionado", key="restore_btn"):
                         try:
-                            if os.path.exists("base.db"):
-                                if os.path.exists("base.db.bak"):
-                                    os.remove("base.db.bak")
-                                os.rename("base.db", "base.db.bak")
-                            backup_storage.descargar_backup(file_id, "base.db")
-                            st.success("Backup restaurado en base.db (copia previa en base.db.bak)")
+                            if os.path.exists(sql.DB_PATH):
+                                if os.path.exists(sql.DB_PATH + ".bak"):
+                                    os.remove(sql.DB_PATH + ".bak")
+                                os.rename(sql.DB_PATH, sql.DB_PATH + ".bak")
+                            backup_storage.descargar_backup(file_id, sql.DB_PATH)
+                            st.success(f"Backup restaurado en {sql.DB_PATH} (copia previa en {sql.DB_PATH}.bak)")
                         except Exception as e:
-                            if os.path.exists("base.db.bak"):
-                                os.rename("base.db.bak", "base.db")
+                            if os.path.exists(sql.DB_PATH + ".bak"):
+                                os.rename(sql.DB_PATH + ".bak", sql.DB_PATH)
                             st.error(f"Error en restauración, se recuperó la copia local: {e}")
                 with col2:
                     confirmar = st.checkbox("Confirmar eliminación", key="confirm_delete")
@@ -313,11 +313,11 @@ elif opcion == "📈 Historial de Validaciones":
     st.subheader("📤 Crear / Listar / Rotar")
     if st.button("📤 Crear backup de base.db"):
         try:
-            if not os.path.exists("base.db"):
-                st.error("No se encontró base.db en el directorio principal")
+            if not os.path.exists(sql.DB_PATH):
+                st.error(f"No se encontró base en {sql.DB_PATH}")
             else:
-                file_id = backup_storage.subir_backup("base.db")
-                st.success(f"Backup de base.db subido correctamente con ID: {file_id}")
+                file_id = backup_storage.subir_backup(sql.DB_PATH)
+                st.success(f"Backup subido correctamente con ID: {file_id}")
         except Exception as e:
             st.error(f"Error al subir backup: {e}")
 
@@ -351,17 +351,17 @@ elif opcion == "📈 Historial de Validaciones":
             seleccion = st.selectbox("Selecciona un backup para restaurar:", list(opciones.keys()))
             if st.button("📥 Descargar y restaurar"):
                 file_id = opciones[seleccion]
-                if os.path.exists("base.db"):
-                    if os.path.exists("base.db.bak"):
-                        os.remove("base.db.bak")
-                    os.rename("base.db", "base.db.bak")
-                destino = "base.db"
+                if os.path.exists(sql.DB_PATH):
+                    if os.path.exists(sql.DB_PATH + ".bak"):
+                        os.remove(sql.DB_PATH + ".bak")
+                    os.rename(sql.DB_PATH, sql.DB_PATH + ".bak")
+                destino = sql.DB_PATH
                 try:
                     backup_storage.descargar_backup(file_id, destino)
-                    st.success(f"Backup restaurado en {destino} (copia previa en base.db.bak)")
+                    st.success(f"Backup restaurado en {destino} (copia previa en {sql.DB_PATH}.bak)")
                 except Exception as e:
-                    if os.path.exists("base.db.bak"):
-                        os.rename("base.db.bak", "base.db")
+                    if os.path.exists(sql.DB_PATH + ".bak"):
+                        os.rename(sql.DB_PATH + ".bak", sql.DB_PATH)
                     st.error(f"Error en restauración, se recuperó la copia local: {e}")
         else:
             st.info("No hay backups disponibles para restaurar.")
@@ -377,10 +377,10 @@ elif opcion == "📈 Historial de Validaciones":
                 st.info("❌ Cliente Drive no inicializado (Service Account). Revisa gdrive_sa en Settings.")
                 st.stop()
             report = []
-            if not os.path.exists("base.db"):
-                st.error("No se encontró base.db en el directorio principal")
+            if not os.path.exists(sql.DB_PATH):
+                st.error(f"No se encontró base en {sql.DB_PATH}")
                 st.stop()
-            file_id = backup_storage.subir_backup("base.db")
+            file_id = backup_storage.subir_backup(sql.DB_PATH)
             report.append(f"📤 Subida OK → ID: {file_id}")
             backups = backup_storage.listar_backups()
             if backups:
@@ -391,12 +391,12 @@ elif opcion == "📈 Historial de Validaciones":
             report.append("♻️ Rotación OK (máx. 5 backups)")
             if backups:
                 file_id = backups[0]["id"]
-                if os.path.exists("base.db"):
-                    if os.path.exists("base.db.bak"):
-                        os.remove("base.db.bak")
-                    os.rename("base.db", "base.db.bak")
-                backup_storage.descargar_backup(file_id, "base.db")
-                report.append(f"📥 Restauración OK → {backups[0]['name']} descargado")
+                if os.path.exists(sql.DB_PATH):
+                    if os.path.exists(sql.DB_PATH + ".bak"):
+                        os.remove(sql.DB_PATH + ".bak")
+                    os.rename(sql.DB_PATH, sql.DB_PATH + ".bak")
+                backup_storage.descargar_backup(file_id, sql.DB_PATH)
+                report.append(f"📥 Restauración OK → {backups[0]['name']} descargado en {sql.DB_PATH}")
             st.success("Validación completada")
             for line in report:
                 st.write(line)
@@ -437,15 +437,15 @@ elif opcion == "📈 Historial de Validaciones":
             with col1:
                 if st.button("📥 Restaurar seleccionado", key="restore_btn"):
                     try:
-                        if os.path.exists("base.db"):
-                            if os.path.exists("base.db.bak"):
-                                os.remove("base.db.bak")
-                            os.rename("base.db", "base.db.bak")
-                        backup_storage.descargar_backup(file_id, "base.db")
-                        st.success("Backup restaurado en base.db (copia previa en base.db.bak)")
+                        if os.path.exists(sql.DB_PATH):
+                            if os.path.exists(sql.DB_PATH + ".bak"):
+                                os.remove(sql.DB_PATH + ".bak")
+                            os.rename(sql.DB_PATH, sql.DB_PATH + ".bak")
+                        backup_storage.descargar_backup(file_id, sql.DB_PATH)
+                        st.success(f"Backup restaurado en {sql.DB_PATH} (copia previa en {sql.DB_PATH}.bak)")
                     except Exception as e:
-                        if os.path.exists("base.db.bak"):
-                            os.rename("base.db.bak", "base.db")
+                        if os.path.exists(sql.DB_PATH + ".bak"):
+                            os.rename(sql.DB_PATH + ".bak", sql.DB_PATH)
                         st.error(f"Error en restauración, se recuperó la copia local: {e}")
             with col2:
                 confirmar = st.checkbox("Confirmar eliminación", key="confirm_delete")
