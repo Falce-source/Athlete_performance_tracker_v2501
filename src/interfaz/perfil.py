@@ -96,43 +96,30 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
             alergias = st.text_area("Alergias", "")
             consentimiento = st.checkbox("Consentimiento informado")
 
-            # Solo entrenadora puede crear usuario vinculado
-            if rol_actual == "entrenadora":
-                st.markdown("#### 🔐 Usuario del atleta")
-            email_atleta = st.text_input("Email del atleta (login)", "")
-            password_inicial = st.text_input("Contraseña inicial", type="password")
-
             submitted = st.form_submit_button("Guardar atleta")
 
             if submitted:
                 if nombre.strip() == "":
                     st.error("El nombre es obligatorio")
-                elif rol_actual == "entrenadora" and (email_atleta.strip() == "" or password_inicial.strip() == ""):
-                    st.error("Email y contraseña del atleta son obligatorios")
                 elif rol_actual == "admin" and id_usuario_asignado is None:
                     st.error("No se puede crear atleta sin entrenadora asignada")
                 else:
-                    if rol_actual == "entrenadora":
-                        ph = hash_password(password_inicial)
-                        usuario_atleta = sql.crear_usuario(
-                            nombre=nombre,
-                            email=email_atleta,
-                            rol="atleta",
-                            password_hash=ph
-                        )
-                        atleta_usuario_id = usuario_atleta.id_usuario
+                    if rol_actual == "admin":
+                        atleta_usuario_id = None
                         propietario_id = usuario_id
-                    elif rol_actual == "admin":
+                    elif rol_actual == "entrenadora":
+                        # 🔒 Entrenadora crea perfil sin usuario asociado
                         atleta_usuario_id = None
                         propietario_id = usuario_id
                     elif rol_actual == "atleta":
-                        # 🔒 Blindaje: el atleta solo puede crear su propio perfil vinculado a su usuario
+                        # 🔒 El atleta solo puede crear su propio perfil vinculado a su usuario
                         atleta_usuario_id = usuario_id
                         propietario_id = usuario_id
                         id_atleta_forzado = sql.obtener_id_atleta_por_usuario(usuario_id)
                     else:
                         atleta_usuario_id = None
                         propietario_id = None
+
                     atleta = sql.crear_atleta(
                         nombre=nombre,
                         apellidos=apellidos,
@@ -149,7 +136,7 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
                         propietario_id=propietario_id,
                         atleta_usuario_id=atleta_usuario_id
                     )
-                    st.success(f"✅ Atleta '{atleta.nombre}' creado correctamente con usuario vinculado.")
+                    st.success(f"✅ Atleta '{atleta.nombre}' creado correctamente. Pendiente de asociación con usuario si aplica.")
 
     else:
         st.caption("⛔ No tienes permisos para crear atletas")
@@ -234,8 +221,12 @@ def mostrar_perfil(rol_actual="admin", usuario_id=None):
         opciones = {f"{a.nombre} {a.apellidos or ''} (ID {a.id_atleta})": a.id_atleta for a in atletas}
         seleccion = st.selectbox("Selecciona un atleta para ver detalles", list(opciones.keys()))
         if seleccion:
-            id_atleta_forzado = opciones[seleccion]
-            atleta = sql.obtener_atleta_por_id(id_atleta_forzado)
+            id_atleta_forzado = opciones.get(seleccion)
+            if id_atleta_forzado:
+                atleta = sql.obtener_atleta_por_id(id_atleta_forzado)
+            else:
+                st.warning("⚠️ Selección inválida de atleta")
+                return
 
     # Construir contexto de permisos para este atleta
     ctx = Contexto(

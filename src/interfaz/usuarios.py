@@ -50,22 +50,10 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
             # Campo de contraseña inicial
             password = st.text_input("Contraseña inicial", type="password")
 
-            # 🔑 Si el rol es atleta, mostrar subformulario de perfil
+            # 🔑 Si el rol es atleta, solo se crea el usuario login.
+            # El perfil atleta lo crea después la entrenadora y se vincula.
             if rol == "atleta":
-                nombre_atleta = st.text_input("Nombre atleta", "")
-                apellidos_atleta = st.text_input("Apellidos", "")
-                edad_atleta = st.number_input("Edad", min_value=0, max_value=120, step=1)
-                deporte_atleta = st.text_input("Deporte", "")
-                nivel_atleta = st.selectbox("Nivel", ["Iniciado", "Intermedio", "Avanzado", "Elite"])
-                email_atleta = st.text_input("Email del atleta (login)", "")
-                password_inicial = st.text_input("Contraseña inicial del atleta", type="password")
-
-                # Admin asigna entrenadora
-                usuarios = sql.obtener_usuarios()
-                entrenadoras = [u for u in usuarios if u.rol == "entrenadora"]
-                opciones_entrenadora = {f"{e.nombre} (ID {e.id_usuario})": e.id_usuario for e in entrenadoras}
-                seleccion_entrenadora = st.selectbox("Asignar entrenadora", list(opciones_entrenadora.keys()))
-                id_entrenadora = opciones_entrenadora[seleccion_entrenadora]
+                st.info("ℹ️ Recuerda: el perfil atleta será creado posteriormente por la entrenadora y vinculado a este usuario.")
 
             submitted = st.form_submit_button("Guardar usuario")
 
@@ -77,47 +65,10 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
                     usuario = sql.crear_usuario(nombre=nombre, email=email, rol=rol, password_hash=ph)
                     st.success(f"✅ Usuario '{usuario.nombre}' creado correctamente con contraseña inicial")
 
-                    # 🔑 Si es atleta, crear también perfil vinculado
+                    # 🔑 Si es atleta, no se crea perfil aquí.
+                    # El perfil será creado por la entrenadora y luego vinculado.
                     if rol == "atleta":
-                        if email_atleta.strip() == "" or password_inicial.strip() == "":
-                            st.error("Email y contraseña inicial del atleta son obligatorios")
-                        else:
-                            ph_atleta = hash_password(password_inicial)
-                            usuario_atleta = sql.crear_usuario(
-                                nombre=nombre_atleta,
-                                email=email_atleta,
-                                rol="atleta",
-                                password_hash=ph
-                            )
-                            atleta = sql.crear_atleta(
-                                nombre=nombre_atleta,
-                                apellidos=apellidos_atleta,
-                                edad=int(edad_atleta) if edad_atleta else None,
-                                deporte=deporte_atleta,
-                                nivel=nivel_atleta,
-                                id_usuario=id_entrenadora,                      # Entrendora asignada
-                                propietario_id=usuario.id_usuario,              # quien lo creó (admin)
-                                atleta_usuario_id=usuario_atleta.id_usuario,    # login del atleta
-                                contacto=email_atleta
-                            )
-                            st.success(f"✅ Usuario y perfil de atleta '{atleta.nombre}' creados correctamente.")
-                        # 🧩 Autoenlace: si este usuario es atleta creado después del perfil
-                        if rol == "atleta":
-                            # Buscar perfil por email (contacto) o por nombre+apellidos
-                            atletas = sql.obtener_atletas()
-                            candidato = next(
-                                (a for a in atletas if (a.contacto and a.contacto.strip().lower() == email.strip().lower())),
-                                None
-                            )
-                            if not candidato:
-                                candidato = next(
-                                    (a for a in atletas if a.nombre.strip() == nombre.strip()
-                                    and (a.apellidos or "").strip() == (apellidos_atleta or "").strip()),
-                                    None
-                                )
-                            if candidato and not getattr(candidato, "atleta_usuario_id", None):
-                                sql.actualizar_atleta(candidato.id_atleta, atleta_usuario_id=usuario.id_usuario)
-                                st.info(f"🔗 Usuario atleta enlazado con perfil '{candidato.nombre}'.")
+                        st.info("🔗 Usuario atleta creado. Pendiente de asociación con perfil.")
 
     st.markdown("---")
 
