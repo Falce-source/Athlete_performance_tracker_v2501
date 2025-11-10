@@ -23,13 +23,6 @@ def _get_service():
     token_uri = g.get("token_uri", "https://oauth2.googleapis.com/token")
     scope = g.get("scope", "https://www.googleapis.com/auth/drive.file")
 
-# Prueba
-    st.write("DEBUG → client_id:", client_id)
-    st.write("DEBUG → client_secret:", client_secret)
-    st.write("DEBUG → refresh_token:", refresh_token)
-    st.write("DEBUG → token_uri:", token_uri)
-# ------
-
     # Validación mínima
     if not all([client_id, client_secret, refresh_token, token_uri]):
         st.error("❌ Faltan credenciales en st.secrets[gdrive]. "
@@ -38,10 +31,10 @@ def _get_service():
 
     try:
         creds = Credentials(
-            refresh_token=refresh_token,
-            client_id=client_id,
-            client_secret=client_secret,
-            token_uri=token_uri,
+            refresh_token=refresh_token.strip(),
+            client_id=client_id.strip(),
+            client_secret=client_secret.strip(),
+            token_uri=token_uri.strip(),
             scopes=[scope],
         )
         creds.refresh(Request())  # fuerza refresh para validar
