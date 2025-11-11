@@ -155,6 +155,10 @@ class Usuario(Base):
     password_hash = Column(String, nullable=False)  # 🔑 nuevo campo para login seguro
     creado_en = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
+    # 🔗 Asociación directa con perfil atleta
+    perfil_atleta_id = Column(Integer, ForeignKey("atletas.id_atleta"), nullable=True)
+    perfil_atleta = relationship("Atleta", foreign_keys=[perfil_atleta_id])
+
     # Relación con atletas como entrenadora asignada
     atletas = relationship("Atleta", back_populates="usuario", foreign_keys="Atleta.id_usuario")
 
@@ -933,13 +937,10 @@ def obtener_id_atleta_por_usuario(usuario_id: int) -> int | None:
 
 
 def obtener_usuario_por_atleta(id_atleta: int) -> int | None:
-    """
-    Devuelve el usuario_id vinculado a un atleta dado.
-    Usa la columna atleta_usuario_id en la tabla Atleta.
-    """
+    """Devuelve el objeto Usuario vinculado a un atleta dado."""
     with SessionLocal() as session:
         atleta = session.query(Atleta).filter(Atleta.id_atleta == id_atleta).first()
-        return atleta.atleta_usuario_id if atleta else None
+        return session.query(Usuario).filter(Usuario.id_usuario == atleta.atleta_usuario_id).first() if atleta else None
 
 # ─────────────────────────────────────────────
 # CRUD: COMENTARIOS

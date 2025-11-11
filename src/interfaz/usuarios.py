@@ -81,7 +81,7 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
                                 )
                                 sql.actualizar_atleta(
                                     perfil_seleccionado_id,
-                                    usuario_id=usuario.id_usuario
+                                    atleta_usuario_id=usuario.id_usuario
                                 )
                                 st.success(f"🔗 Usuario atleta asociado al perfil ID {perfil_seleccionado_id}.")
                             except Exception as e:
@@ -133,7 +133,7 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
         "Entrenadora asignada": (
             sql.obtener_atleta_por_id(u.perfil_atleta_id).usuario.nombre
             if u.rol == "atleta"
-            and getattr(u, "perfil_atleta_id", None)
+            and u.perfil_atleta_id
             and sql.obtener_atleta_por_id(u.perfil_atleta_id)
             and sql.obtener_atleta_por_id(u.perfil_atleta_id).usuario
             else "—"
@@ -231,7 +231,7 @@ def mostrar_usuarios(rol_actual: str, usuario_id: int):
                         if nuevo_rol == "atleta" and perfil_edicion_id:
                             try:
                                 sql.actualizar_usuario(id_usuario=usuario.id_usuario, perfil_atleta_id=perfil_edicion_id)
-                                sql.actualizar_atleta(perfil_edicion_id, usuario_id=usuario.id_usuario)
+                                sql.actualizar_atleta(perfil_edicion_id, atleta_usuario_id=usuario.id_usuario)
                                 st.success(f"🔗 Usuario atleta asociado al perfil ID {perfil_edicion_id} en edición.")
                             except Exception as e:
                                 st.warning(f"No se pudo asociar al perfil en edición: {e}")
