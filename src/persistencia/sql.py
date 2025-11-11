@@ -71,6 +71,22 @@ def ensure_schema():
     except Exception as e:
         print(f"⚠️ Error al asegurar esquema atletas: {e}")
 
+def ensure_schema_usuarios():
+    """Asegura que la tabla usuarios tenga la columna perfil_atleta_id"""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("PRAGMA table_info(usuarios);")
+        cols = [row[1] for row in cursor.fetchall()]
+        if "perfil_atleta_id" not in cols:
+            cursor.execute("ALTER TABLE usuarios ADD COLUMN perfil_atleta_id INTEGER;")
+            conn.commit()
+            print("✅ Esquema usuarios actualizado (perfil_atleta_id)")
+        conn.close()
+    except Exception as e:
+        print(f"⚠️ Error al asegurar esquema usuarios: {e}")
+
+
 # Helper para sincronizar backup tras cada commit
 def _sync_backup():
     try:
@@ -117,6 +133,13 @@ if NEED_INIT_SCHEMA:
         # Aquí no llamamos directamente para evitar dependencia del orden: se crea en init_db().
     except Exception as e:
         print(f"⚠️ Error al inicializar esquema: {e}")
+
+# Ejecutar migraciones defensivas tras levantar engine (aplica a DB restaurada)
+try:
+    ensure_schema()
+    ensure_schema_usuarios()
+except Exception as e:
+    print(f"⚠️ Error en migraciones defensivas: {e}")
 
 # ─────────────────────────────────────────────
 # CHECK VISUAL DE BACKUPS
